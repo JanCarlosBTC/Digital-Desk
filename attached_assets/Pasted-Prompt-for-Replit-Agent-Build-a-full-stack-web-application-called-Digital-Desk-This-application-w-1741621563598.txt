@@ -1,0 +1,37 @@
+Prompt for Replit Agent
+Build a full-stack web application called “Digital Desk.” This application will serve as a central hub for Clarity Clients, providing separate pages for each tool listed below. The main page will feature a simple menu displaying all tools, allowing users to navigate to the relevant pages for a full view of each.
+
+Project Requirements
+	1.	Homepage (Digital Desk)
+	•	Displays a list of tools for users to select: Thinking Desk, Personal Clarity System, Decision Log, and Offer Vault.
+	•	Offers clear navigation to each tool’s dedicated page.
+	2.	Thinking Desk
+	•	Brain Dump: A free-form text area where users can quickly record ideas.
+	•	Problem Trees: A structured layout to break down problems into root causes and sub-issues.
+	•	Drafted Plans: A section to capture tasks or initiatives that need more detail before execution.
+	•	Clarity Lab: A place to log lessons learned, document workflows that enhance efficiency, and outline solutions for recurring problems.
+	3.	Personal Clarity System
+	•	Weekly Reflections: A form to note successes and challenges from the week.
+	•	Monthly Check-Ins: A monthly review page to revisit priorities and track progress.
+	•	“What Matters Most?” Tracker: A minimal interface for users to input their top focus areas.
+	4.	Decision Log
+	•	Allows users to record what they decided, why they made that decision, and what they would do differently next time.
+	5.	Offer Vault (For Founders)
+	•	A space to refine pricing, positioning, and previous iterations of offers or products.
+
+Technical Outline
+	•	Use a modern JavaScript framework (e.g., React, Next.js, or Vue) for the front end.
+	•	Create a backend with a simple API to handle data persistence. This can be done with Node.js, Express, or a serverless approach.
+	•	Implement basic CRUD operations for each tool’s data (create, read, update, delete).
+	•	Incorporate user authentication if desired (e.g., JWT-based or third-party OAuth).
+	•	Maintain a clean, intuitive user interface with separate pages for each tool.
+	•	Provide comments in the code explaining core decisions and functionality.
+
+Instructions
+	1.	Generate the file structure for this project.
+	2.	Create a main navigation component that links to each tool’s page.
+	3.	Implement forms and components for each of the tools described above.
+	4.	Include basic styling for a professional yet relaxed look.
+	5.	Explain each step as you build the solution, including setup instructions, dependencies, and best practices for data handling and security.
+
+Begin coding now. Provide a walkthrough of the setup, file structure, and relevant code snippets for each component and page. Include any necessary dependencies and recommended configurations.
