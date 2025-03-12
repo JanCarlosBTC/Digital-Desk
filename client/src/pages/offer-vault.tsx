@@ -81,7 +81,7 @@ const OfferVault = () => {
             
             <div className="flex justify-end">
               <Button 
-                className="bg-warning text-white hover:bg-amber-600"
+                className="bg-yellow-400 text-white hover:bg-yellow-500"
                 onClick={handleSaveNotes}
                 disabled={notesLoading || updateNotesMutation.isPending}
               >

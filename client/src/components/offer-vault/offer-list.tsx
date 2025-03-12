@@ -177,7 +177,7 @@ const OfferList = () => {
           <Button
             onClick={handleNewOffer}
             variant="default"
-            className="bg-warning text-white hover:bg-amber-600 transition-colors font-medium shadow-sm"
+            className="bg-yellow-400 text-white hover:bg-yellow-500 transition-colors font-medium shadow-sm"
           >
             <PlusIcon className="mr-2 h-4 w-4" /> New Offer
           </Button>
@@ -387,7 +387,7 @@ const OfferList = () => {
                 <Button 
                   type="submit"
                   variant="default"
-                  className="bg-warning text-white hover:bg-amber-600 font-medium shadow-sm"
+                  className="bg-yellow-400 text-white hover:bg-yellow-500 font-medium shadow-sm"
                   disabled={createMutation.isPending}
                 >
                   {createMutation.isPending ? "Saving..." : "Save Offer"}
