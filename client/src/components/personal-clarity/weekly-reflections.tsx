@@ -209,7 +209,7 @@ const WeeklyReflections = () => {
               </Button>
               <Button 
                 variant="default" 
-                className="bg-secondary hover:bg-violet-600 text-white font-medium shadow-sm"
+                className="clarity-button"
                 onClick={() => handleSave(false)}
                 disabled={mutation.isPending}
               >
