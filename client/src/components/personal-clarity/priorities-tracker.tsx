@@ -1,17 +1,19 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { Priority } from "@shared/schema";
+import { Edit as EditIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EditIcon, PlusIcon, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { Priority } from "@shared/schema";
+import { X } from "lucide-react";
 
 const formSchema = z.object({
   priority1: z.string().min(3, "Priority must be at least 3 characters"),
@@ -159,12 +161,12 @@ const PrioritiesTracker = () => {
       <div className="mb-6">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-medium text-gray-800">Current Priorities</h3>
-          <button 
+          <Button 
             className="text-secondary hover:text-violet-700 text-sm font-medium clarity-button"
             onClick={handleEditPriorities}
           >
             <EditIcon className="inline-block mr-1 h-4 w-4" /> Edit
-          </button>
+          </Button>
         </div>
 
         {isLoading ? (
