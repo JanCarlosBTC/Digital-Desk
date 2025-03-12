@@ -114,7 +114,7 @@ const MonthlyCheckIns = () => {
         <Button 
           onClick={handleNewCheckIn}
           variant="default"
-          className="clarity-button"
+          className="clarity-button bg-purple-500 hover:bg-purple-600 text-white" // Modified line
         >
           <CalendarIcon className="mr-2 h-4 w-4" /> {getMonthName(currentMonth)} Check-in
         </Button>
@@ -188,7 +188,7 @@ const MonthlyCheckIns = () => {
                         </span>
                       </div>
                       <div>
-                        <button className="text-gray-500 hover:text-gray-700 p-1 clarity-button">
+                        <button className="bg-purple-500 hover:bg-purple-600 text-white p-1"> {/* Modified line */}
                           <EyeIcon className="h-4 w-4" />
                         </button>
                       </div>

@@ -136,7 +136,7 @@ const WeeklyReflections = () => {
         <h2 className="text-xl font-semibold text-gray-800">Weekly Reflections</h2>
         <Button 
           onClick={handleNewReflection}
-          className="clarity-button"
+          className="bg-purple-500 hover:bg-purple-600 text-white"
         >
           <PlusIcon className="mr-2 h-4 w-4" /> New Reflection
         </Button>
