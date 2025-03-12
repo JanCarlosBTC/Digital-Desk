@@ -1,0 +1,12 @@
+
+.clarity-button {
+  background-color: #e9d5ff; /* Light purple */
+  color: #6b21a8; /* Dark purple text */
+  transition: background-color 0.2s ease-in-out;
+}
+
+.clarity-button:hover,
+.clarity-button:focus {
+  background-color: #a855f7; /* Darker purple on hover/focus */
+  color: white;
+}

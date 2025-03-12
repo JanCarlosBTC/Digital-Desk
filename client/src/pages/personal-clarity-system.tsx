@@ -2,6 +2,7 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import WeeklyReflections from "@/components/personal-clarity/weekly-reflections";
 import MonthlyCheckIns from "@/components/personal-clarity/monthly-check-ins";
 import PrioritiesTracker from "@/components/personal-clarity/priorities-tracker";
+import "@/components/personal-clarity/button-styles.css";
 
 const PersonalClaritySystem = () => {
   return (

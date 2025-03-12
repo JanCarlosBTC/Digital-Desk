@@ -23,14 +23,14 @@ const WeeklyReflections = () => {
   const getCurrentWeekDate = () => {
     const now = new Date();
     const day = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    
+
     // Calculate the date of Monday of the current week
     const monday = new Date(now);
     monday.setDate(now.getDate() - day + (day === 0 ? -6 : 1));
-    
+
     return monday;
   };
-  
+
   // Format the week date for display
   const formatWeekDate = (date: Date) => {
     return `Week of ${format(date, 'MMMM d, yyyy')}`;
@@ -53,7 +53,7 @@ const WeeklyReflections = () => {
       isDraft: boolean;
     }) => {
       const { id, ...payload } = data;
-      
+
       if (id) {
         return apiRequest('PUT', `/api/weekly-reflections/${id}`, payload);
       } else {
@@ -88,7 +88,7 @@ const WeeklyReflections = () => {
           && reflectionDate.getMonth() === currentWeekDate.getMonth() 
           && reflectionDate.getDate() === currentWeekDate.getDate();
       });
-      
+
       if (currentWeekReflection) {
         setWentWell(currentWeekReflection.wentWell || "");
         setChallenges(currentWeekReflection.challenges || "");
@@ -102,7 +102,7 @@ const WeeklyReflections = () => {
 
   const handleSave = (asDraft: boolean) => {
     const weekDate = getCurrentWeekDate();
-    
+
     mutation.mutate({
       id: currentReflectionId || undefined,
       weekDate,
@@ -112,7 +112,7 @@ const WeeklyReflections = () => {
       nextWeekFocus,
       isDraft: asDraft
     });
-    
+
     setIsDraft(asDraft);
   };
 
@@ -123,7 +123,7 @@ const WeeklyReflections = () => {
     setNextWeekFocus("");
     setIsDraft(true);
     setCurrentReflectionId(null);
-    
+
     toast({
       title: "New reflection started",
       description: "You can now fill in your weekly reflection.",
@@ -136,15 +136,14 @@ const WeeklyReflections = () => {
         <h2 className="text-xl font-semibold text-gray-800">Weekly Reflections</h2>
         <Button 
           onClick={handleNewReflection}
-          variant="default"
-          className="bg-secondary text-white hover:bg-violet-600 transition-colors font-medium shadow-sm"
+          className="clarity-button"
         >
           <PlusIcon className="mr-2 h-4 w-4" /> New Reflection
         </Button>
       </div>
-      
+
       <p className="text-gray-600 mb-4">Record your wins, challenges, and insights from each week.</p>
-      
+
       {isLoading ? (
         <Skeleton className="h-96 w-full" />
       ) : (
@@ -154,7 +153,7 @@ const WeeklyReflections = () => {
             <h3 className="font-medium text-gray-800 mb-3">
               {formatWeekDate(getCurrentWeekDate())}
             </h3>
-            
+
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-medium mb-2">What went well this week?</label>
               <Textarea 
@@ -165,7 +164,7 @@ const WeeklyReflections = () => {
                 onChange={(e) => setWentWell(e.target.value)}
               />
             </div>
-            
+
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-medium mb-2">What challenges did you face?</label>
               <Textarea 
@@ -176,7 +175,7 @@ const WeeklyReflections = () => {
                 onChange={(e) => setChallenges(e.target.value)}
               />
             </div>
-            
+
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-medium mb-2">What did you learn?</label>
               <Textarea 
@@ -187,7 +186,7 @@ const WeeklyReflections = () => {
                 onChange={(e) => setLearnings(e.target.value)}
               />
             </div>
-            
+
             <div className="mb-4">
               <label className="block text-gray-700 text-sm font-medium mb-2">Focus for next week</label>
               <Textarea 
@@ -198,7 +197,7 @@ const WeeklyReflections = () => {
                 onChange={(e) => setNextWeekFocus(e.target.value)}
               />
             </div>
-            
+
             <div className="flex justify-end">
               <Button 
                 variant="outline" 
@@ -218,7 +217,7 @@ const WeeklyReflections = () => {
               </Button>
             </div>
           </div>
-          
+
           {/* Previous Reflections */}
           {weeklyReflections && weeklyReflections.length > 0 && (
             <>

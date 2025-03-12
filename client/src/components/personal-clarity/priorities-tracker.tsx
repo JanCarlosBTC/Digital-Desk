@@ -25,7 +25,7 @@ const PrioritiesTracker = () => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [newPriority, setNewPriority] = useState("");
-  
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -98,7 +98,7 @@ const PrioritiesTracker = () => {
           return createMutation.mutationFn(priority);
         }
       });
-      
+
       return Promise.all(updates);
     },
     onSuccess: () => {
@@ -122,12 +122,12 @@ const PrioritiesTracker = () => {
   useEffect(() => {
     if (priorities) {
       const values: Partial<FormValues> = {};
-      
+
       priorities.slice(0, 3).forEach((priority, index) => {
         const fieldName = `priority${index + 1}` as keyof FormValues;
         values[fieldName] = priority.priority;
       });
-      
+
       form.reset(values as FormValues);
     }
   }, [priorities, form]);
@@ -154,19 +154,19 @@ const PrioritiesTracker = () => {
     <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 sticky top-6">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">What Matters Most?</h2>
       <p className="text-gray-600 mb-6">Keep your top priorities visible and top-of-mind.</p>
-      
+
       {/* Priorities List */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-medium text-gray-800">Current Priorities</h3>
           <button 
-            className="text-secondary hover:text-violet-700 text-sm font-medium"
+            className="text-secondary hover:text-violet-700 text-sm font-medium clarity-button"
             onClick={handleEditPriorities}
           >
             <EditIcon className="inline-block mr-1 h-4 w-4" /> Edit
           </button>
         </div>
-        
+
         {isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-12 w-full" />
@@ -182,7 +182,7 @@ const PrioritiesTracker = () => {
                 </div>
                 <span className="font-medium text-gray-800 flex-1">{priority.priority}</span>
                 <button 
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 clarity-button"
                   onClick={() => handleDeletePriority(priority.id)}
                 >
                   <X className="h-4 w-4" />
@@ -197,7 +197,7 @@ const PrioritiesTracker = () => {
           </div>
         )}
       </div>
-      
+
       {/* Quote */}
       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
         <blockquote className="italic text-gray-600">
@@ -205,7 +205,7 @@ const PrioritiesTracker = () => {
         </blockquote>
         <p className="text-right text-sm text-gray-500 mt-2">— Stephen Covey</p>
       </div>
-      
+
       {/* Quick Add Form */}
       <div>
         <h3 className="font-medium text-gray-800 mb-3">Add a Priority</h3>
@@ -223,7 +223,7 @@ const PrioritiesTracker = () => {
           />
           <Button 
             variant="default"
-            className="bg-secondary text-white rounded-r-lg hover:bg-violet-600 transition-colors font-medium shadow-sm"
+            className="bg-secondary text-white rounded-r-lg hover:bg-violet-600 transition-colors font-medium shadow-sm clarity-button"
             onClick={handleAddPriority}
             disabled={createMutation.isPending || !newPriority.trim()}
           >
@@ -238,7 +238,7 @@ const PrioritiesTracker = () => {
           <DialogHeader>
             <DialogTitle>Edit Top Priorities</DialogTitle>
           </DialogHeader>
-          
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -253,7 +253,7 @@ const PrioritiesTracker = () => {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="priority2"
@@ -266,7 +266,7 @@ const PrioritiesTracker = () => {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="priority3"
@@ -279,7 +279,7 @@ const PrioritiesTracker = () => {
                   </FormItem>
                 )}
               />
-              
+
               <div className="flex justify-end space-x-2 pt-4">
                 <Button
                   type="button"
@@ -291,7 +291,7 @@ const PrioritiesTracker = () => {
                 <Button 
                   type="submit"
                   variant="default"
-                  className="bg-secondary text-white hover:bg-violet-600 font-medium shadow-sm"
+                  className="bg-secondary text-white hover:bg-violet-600 font-medium shadow-sm clarity-button"
                   disabled={updateAllMutation.isPending}
                 >
                   {updateAllMutation.isPending ? "Saving..." : "Save Priorities"}

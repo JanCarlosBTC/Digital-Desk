@@ -24,7 +24,7 @@ type FormValues = z.infer<typeof formSchema>;
 const MonthlyCheckIns = () => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
-  
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -61,7 +61,7 @@ const MonthlyCheckIns = () => {
         ], // Default progress for demo
         nextMonthPriorities: data.nextMonthPriorities.split('\n').filter(Boolean),
       };
-      
+
       return apiRequest('POST', '/api/monthly-check-ins', formattedData);
     },
     onSuccess: () => {
@@ -114,14 +114,14 @@ const MonthlyCheckIns = () => {
         <Button 
           onClick={handleNewCheckIn}
           variant="default"
-          className="bg-secondary text-white hover:bg-violet-600 transition-colors font-medium shadow-sm"
+          className="clarity-button"
         >
           <CalendarIcon className="mr-2 h-4 w-4" /> {getMonthName(currentMonth)} Check-in
         </Button>
       </div>
-      
+
       <p className="text-gray-600 mb-4">Monthly reviews to revisit priorities and track your progress.</p>
-      
+
       {isLoading ? (
         <Skeleton className="h-64 w-full" />
       ) : (
@@ -129,19 +129,19 @@ const MonthlyCheckIns = () => {
           {/* Monthly Progress Visualization */}
           <div className="border border-gray-200 rounded-lg p-4 mb-6">
             <h3 className="font-medium text-gray-800 mb-3">{currentYear} Progress</h3>
-            
+
             <div className="grid grid-cols-12 gap-2 mb-4">
               {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => {
                 const isCurrentMonth = month === currentMonth;
                 const isPastMonth = month < currentMonth;
-                
+
                 // Check if this month has a completed check-in
                 const hasCompletedCheckIn = monthlyCheckIns?.some(
                   checkIn => checkIn.month === month && 
                   checkIn.year === currentYear && 
                   checkIn.completedOn
                 );
-                
+
                 return (
                   <div 
                     key={month}
@@ -160,14 +160,14 @@ const MonthlyCheckIns = () => {
                 );
               })}
             </div>
-            
+
             <p className="text-sm text-gray-600">
               <span className="font-medium">
                 {monthlyCheckIns?.filter(checkIn => checkIn.year === currentYear && checkIn.completedOn).length || 0} out of 12
               </span> monthly check-ins completed this year
             </p>
           </div>
-          
+
           {/* Previous Check-ins */}
           {monthlyCheckIns && monthlyCheckIns.length > 0 && (
             <>
@@ -188,7 +188,7 @@ const MonthlyCheckIns = () => {
                         </span>
                       </div>
                       <div>
-                        <button className="text-gray-500 hover:text-gray-700 p-1">
+                        <button className="text-gray-500 hover:text-gray-700 p-1 clarity-button">
                           <EyeIcon className="h-4 w-4" />
                         </button>
                       </div>
@@ -206,7 +206,7 @@ const MonthlyCheckIns = () => {
           <DialogHeader>
             <DialogTitle>{getMonthName(currentMonth)} {currentYear} Check-in</DialogTitle>
           </DialogHeader>
-          
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -225,7 +225,7 @@ const MonthlyCheckIns = () => {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="challenges"
@@ -242,7 +242,7 @@ const MonthlyCheckIns = () => {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="nextMonthPriorities"
@@ -259,7 +259,7 @@ const MonthlyCheckIns = () => {
                   </FormItem>
                 )}
               />
-              
+
               <div className="flex justify-end space-x-2 pt-4">
                 <Button
                   type="button"
@@ -271,7 +271,7 @@ const MonthlyCheckIns = () => {
                 <Button 
                   type="submit"
                   variant="default"
-                  className="bg-secondary text-white hover:bg-violet-600 font-medium shadow-sm"
+                  className="clarity-button"
                   disabled={createMutation.isPending}
                 >
                   {createMutation.isPending ? "Saving..." : "Complete Check-in"}
