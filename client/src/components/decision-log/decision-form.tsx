@@ -35,7 +35,7 @@ type FormValues = z.infer<typeof formSchema>;
 const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
-  
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -104,7 +104,7 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
           ? "Your decision has been updated successfully." 
           : "Your decision has been logged successfully.",
       });
-      
+
       if (!selectedDecision) {
         form.reset({
           title: "",
@@ -153,7 +153,7 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
       <p className="text-gray-600 mb-6">
         Record important decisions to track outcomes and improve over time.
       </p>
-      
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <FormField
@@ -168,7 +168,7 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="category"
@@ -193,7 +193,7 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="decisionDate"
@@ -206,7 +206,7 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="why"
@@ -223,7 +223,7 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="alternatives"
@@ -240,7 +240,7 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="expectedOutcome"
@@ -257,7 +257,7 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="followUpDate"
@@ -273,7 +273,7 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
               </FormItem>
             )}
           />
-          
+
           {isEditing && (
             <FormField
               control={form.control}
@@ -292,13 +292,13 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
               )}
             />
           )}
-          
+
           <div className="flex justify-end space-x-2 pt-4">
             {isEditing && (
               <Button
                 type="button"
                 variant="outline"
-                className="border-gray-300 font-medium hover:bg-gray-100"
+                className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-medium"
                 onClick={handleCancel}
               >
                 Cancel
@@ -307,7 +307,7 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
             <Button 
               type="submit"
               variant="default"
-              className="bg-success text-white hover:bg-green-600/90 font-medium shadow-sm"
+              className="bg-emerald-500 text-white hover:bg-emerald-600 font-medium shadow-sm"
               disabled={mutation.isPending}
             >
               {mutation.isPending 

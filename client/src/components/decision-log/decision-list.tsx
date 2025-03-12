@@ -110,13 +110,13 @@ const DecisionList = ({ decisions, isLoading, setSelectedDecision }: DecisionLis
           </Select>
           <Button
             onClick={() => setSelectedDecision(null)}
-            className="bg-success text-white hover:bg-green-600/90 transition-colors font-medium"
+            className="bg-emerald-500 text-white hover:bg-emerald-600 transition-colors font-medium"
           >
             New Decision
           </Button>
         </div>
       </div>
-      
+
       {isLoading ? (
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
@@ -148,7 +148,7 @@ const DecisionList = ({ decisions, isLoading, setSelectedDecision }: DecisionLis
                   {format(new Date(decision.decisionDate), "MMMM d, yyyy")}
                 </span>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                 <div>
                   <h4 className="font-medium text-gray-700 text-sm mb-1">What was decided</h4>
@@ -172,7 +172,7 @@ const DecisionList = ({ decisions, isLoading, setSelectedDecision }: DecisionLis
                   </p>
                 </div>
               </div>
-              
+
               <div className="border-t border-gray-200 pt-3 flex justify-end">
                 {decision.status === "Pending" && (
                   <button 
@@ -188,7 +188,7 @@ const DecisionList = ({ decisions, isLoading, setSelectedDecision }: DecisionLis
               </div>
             </div>
           ))}
-          
+
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-between items-center mt-6">
