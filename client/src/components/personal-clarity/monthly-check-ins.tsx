@@ -271,7 +271,7 @@ const MonthlyCheckIns = () => {
                 <Button 
                   type="submit"
                   variant="default"
-                  className="clarity-button"
+                  className="clarity-button bg-violet-500 hover:bg-violet-600 text-white" // Modified line
                   disabled={createMutation.isPending}
                 >
                   {createMutation.isPending ? "Saving..." : "Complete Check-in"}

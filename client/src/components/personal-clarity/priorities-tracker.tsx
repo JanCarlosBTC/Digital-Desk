@@ -162,7 +162,7 @@ const PrioritiesTracker = () => {
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-medium text-gray-800">Current Priorities</h3>
           <Button 
-            className="text-secondary hover:text-violet-700 text-sm font-medium clarity-button"
+            className="bg-violet-100 text-secondary hover:bg-violet-200 hover:text-violet-700 text-sm font-medium"
             onClick={handleEditPriorities}
           >
             <EditIcon className="inline-block mr-1 h-4 w-4" /> Edit
