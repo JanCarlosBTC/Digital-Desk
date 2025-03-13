@@ -117,15 +117,29 @@ export const weeklyReflections = pgTable("weekly_reflections", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const insertWeeklyReflectionSchema = createInsertSchema(weeklyReflections).pick({
-  userId: true,
-  weekDate: true,
-  wentWell: true,
-  challenges: true,
-  learnings: true,
-  nextWeekFocus: true,
-  isDraft: true,
-});
+// Create insert schema and modify it to accept ISO string for weekDate
+export const insertWeeklyReflectionSchema = createInsertSchema(weeklyReflections)
+  .omit({
+    weekDate: true,
+  })
+  .pick({
+    userId: true,
+    wentWell: true,
+    challenges: true,
+    learnings: true,
+    nextWeekFocus: true,
+    isDraft: true,
+  })
+  .extend({
+    // Define weekDate to accept string and properly transform it
+    weekDate: z.preprocess(
+      (val) => (typeof val === 'string' ? new Date(val) : val),
+      z.date({
+        required_error: "Week date is required",
+        invalid_type_error: "Week date must be a valid date",
+      })
+    ),
+  });
 
 // Monthly Check-ins schema
 export const monthlyCheckIns = pgTable("monthly_check_ins", {
@@ -142,16 +156,28 @@ export const monthlyCheckIns = pgTable("monthly_check_ins", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const insertMonthlyCheckInSchema = createInsertSchema(monthlyCheckIns).pick({
-  userId: true,
-  month: true,
-  year: true,
-  completedOn: true,
-  achievements: true,
-  challenges: true,
-  goalProgress: true,
-  nextMonthPriorities: true,
-});
+export const insertMonthlyCheckInSchema = createInsertSchema(monthlyCheckIns)
+  .omit({
+    completedOn: true,
+  })
+  .pick({
+    userId: true,
+    month: true,
+    year: true,
+    achievements: true,
+    challenges: true,
+    goalProgress: true,
+    nextMonthPriorities: true,
+  })
+  .extend({
+    // Use preprocess for better date handling
+    completedOn: z.preprocess(
+      (val) => (val === null || val === undefined ? undefined : typeof val === 'string' ? new Date(val) : val),
+      z.date({
+        invalid_type_error: "Completed date must be a valid date",
+      }).optional()
+    ),
+  });
 
 // Priorities schema
 export const priorities = pgTable("priorities", {
@@ -186,18 +212,37 @@ export const decisions = pgTable("decisions", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const insertDecisionSchema = createInsertSchema(decisions).pick({
-  userId: true,
-  title: true,
-  category: true,
-  decisionDate: true,
-  why: true,
-  alternatives: true,
-  expectedOutcome: true,
-  followUpDate: true,
-  status: true,
-  whatDifferent: true,
-});
+export const insertDecisionSchema = createInsertSchema(decisions)
+  .omit({
+    decisionDate: true,
+    followUpDate: true,
+  })
+  .pick({
+    userId: true,
+    title: true,
+    category: true,
+    why: true,
+    alternatives: true,
+    expectedOutcome: true,
+    status: true,
+    whatDifferent: true,
+  })
+  .extend({
+    // Use preprocess for better date handling
+    decisionDate: z.preprocess(
+      (val) => (typeof val === 'string' ? new Date(val) : val),
+      z.date({
+        required_error: "Decision date is required",
+        invalid_type_error: "Decision date must be a valid date",
+      })
+    ),
+    followUpDate: z.preprocess(
+      (val) => (val === null || val === undefined ? undefined : typeof val === 'string' ? new Date(val) : val),
+      z.date({
+        invalid_type_error: "Follow-up date must be a valid date",
+      }).optional()
+    ),
+  });
 
 // Offer Vault schema
 export const offers = pgTable("offers", {
@@ -215,17 +260,29 @@ export const offers = pgTable("offers", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const insertOfferSchema = createInsertSchema(offers).pick({
-  userId: true,
-  title: true,
-  description: true,
-  status: true,
-  price: true,
-  duration: true,
-  format: true,
-  clientCount: true,
-  archivedAt: true,
-});
+export const insertOfferSchema = createInsertSchema(offers)
+  .omit({
+    archivedAt: true,
+  })
+  .pick({
+    userId: true,
+    title: true,
+    description: true,
+    status: true,
+    price: true,
+    duration: true,
+    format: true,
+    clientCount: true,
+  })
+  .extend({
+    // Use preprocess for better date handling
+    archivedAt: z.preprocess(
+      (val) => (val === null || val === undefined ? undefined : typeof val === 'string' ? new Date(val) : val),
+      z.date({
+        invalid_type_error: "Archived date must be a valid date",
+      }).optional()
+    ),
+  });
 
 // Offer Notes schema
 export const offerNotes = pgTable("offer_notes", {

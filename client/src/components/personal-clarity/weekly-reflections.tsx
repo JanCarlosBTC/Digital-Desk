@@ -20,6 +20,7 @@ const WeeklyReflections = () => {
   const [isDraft, setIsDraft] = useState(true);
   const [currentReflectionId, setCurrentReflectionId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false); // Added for submitting state
+  const [errorMessage, setErrorMessage] = useState<string | null>(null); // Track error messages
 
   // Get current date for the week reflection
   const getCurrentWeekDate = () => {
@@ -56,6 +57,7 @@ const WeeklyReflections = () => {
     }) => {
       const { id, ...payload } = data;
       setIsSubmitting(true); // Set submitting state to true
+      setErrorMessage(null); // Clear any previous error messages
 
       try {
         if (id) {
@@ -64,9 +66,11 @@ const WeeklyReflections = () => {
           return apiRequest('POST', '/api/weekly-reflections', payload);
         }
       } catch (error) {
+        const errorMsg = (error as Error).message || "An unexpected error occurred.";
+        setErrorMessage(errorMsg);
         toast({
           title: "Error saving reflection",
-          description: (error as Error).message || "An unexpected error occurred.",
+          description: errorMsg,
           variant: "destructive",
         });
         throw error; // Re-throw the error to be caught by the onError handler
@@ -76,6 +80,7 @@ const WeeklyReflections = () => {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/weekly-reflections'] });
+      setErrorMessage(null); // Clear any error messages on success
       toast({
         title: variables.isDraft ? "Draft saved" : "Reflection completed",
         description: variables.isDraft 
@@ -86,9 +91,22 @@ const WeeklyReflections = () => {
     },
     onError: (error: any) => {
       console.error("Error saving reflection:", error);
+      // Extract the error message
+      let errorMsg = "There was a problem saving your reflection. Please try again.";
+      
+      if (error?.data?.message && typeof error.data.message === 'string') {
+        errorMsg = error.data.message;
+      } else if (error?.message) {
+        errorMsg = error.message;
+      } else if (error?.data?.errors && Array.isArray(error.data.errors)) {
+        // Handle structured validation errors
+        errorMsg = error.data.errors.map((e: any) => e.message).join(', ');
+      }
+      
+      setErrorMessage(errorMsg);
       toast({
         title: "Error saving reflection",
-        description: error?.message || error?.data?.message || "There was a problem saving your reflection. Please try again.",
+        description: errorMsg,
         variant: "destructive"
       });
     }
