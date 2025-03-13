@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Priority } from "@shared/schema";
 import { X } from "lucide-react";
+import "@/components/ui/clipboard.css"; // Added import for clipboard styles
 
 const formSchema = z.object({
   priority1: z.string().min(3, "Priority must be at least 3 characters"),

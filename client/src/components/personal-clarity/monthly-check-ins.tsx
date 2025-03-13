@@ -12,6 +12,7 @@ import { z } from "zod";
 import { MonthlyCheckIn } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EyeIcon, CalendarIcon } from "lucide-react";
+import "@/components/ui/clipboard.css"; // Added import statement
 
 const formSchema = z.object({
   achievements: z.string().min(5, "Achievements must be at least 5 characters"),
@@ -114,7 +115,7 @@ const MonthlyCheckIns = () => {
         <Button 
           onClick={handleNewCheckIn}
           variant="default"
-          className="clarity-button bg-purple-500 hover:bg-purple-600 text-white" // Modified line
+          className="clarity-button bg-purple-500 hover:bg-purple-600 text-white" 
         >
           <CalendarIcon className="mr-2 h-4 w-4" /> {getMonthName(currentMonth)} Check-in
         </Button>
@@ -188,7 +189,7 @@ const MonthlyCheckIns = () => {
                         </span>
                       </div>
                       <div>
-                        <button className="bg-purple-500 hover:bg-purple-600 text-white p-1"> {/* Modified line */}
+                        <button className="bg-purple-500 hover:bg-purple-600 text-white p-1"> 
                           <EyeIcon className="h-4 w-4" />
                         </button>
                       </div>
@@ -271,7 +272,7 @@ const MonthlyCheckIns = () => {
                 <Button 
                   type="submit"
                   variant="default"
-                  className="clarity-button bg-violet-500 hover:bg-violet-600 text-white" // Modified line
+                  className="clarity-button bg-violet-500 hover:bg-violet-600 text-white" 
                   disabled={createMutation.isPending}
                 >
                   {createMutation.isPending ? "Saving..." : "Complete Check-in"}

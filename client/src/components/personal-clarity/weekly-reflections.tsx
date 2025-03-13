@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PlusIcon, EyeIcon } from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { format } from "date-fns";
+import "@/components/ui/clipboard.css"
 
 const WeeklyReflections = () => {
   const { toast } = useToast();

@@ -10,3 +10,15 @@
   background-color: #a855f7; /* Darker purple on hover/focus */
   color: white;
 }
+
+/* Adding clipboard icon styling to match buttons */
+.clipboard-icon {
+  background-color: #e9d5ff; /* Light purple - matching clarity button */
+  color: #6b21a8; /* Dark purple text */
+}
+
+.clipboard-icon:hover,
+.clipboard-icon:focus {
+  background-color: #a855f7; /* Darker purple on hover/focus */
+  color: white;
+}
