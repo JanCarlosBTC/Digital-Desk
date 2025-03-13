@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Server Connection Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #6b21a8;
+      margin-top: 0;
+    }
+    .card {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .success {
+      background-color: #dcfce7;
+      color: #166534;
+    }
+    .error {
+      background-color: #fee2e2;
+      color: #b91c1c;
+    }
+    .warning {
+      background-color: #fef3c7;
+      color: #92400e;
+    }
+    .code {
+      background-color: #f1f5f9;
+      padding: 12px;
+      border-radius: 4px;
+      font-family: monospace;
+      overflow-x: auto;
+    }
+    button {
+      background-color: #6b21a8;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #7c3aed;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Server Connection Test</h1>
+    
+    <div class="card">
+      <h2>API Connection</h2>
+      <div>
+        Status: <span id="api-status" class="status warning">Checking...</span>
+      </div>
+      <div id="api-result">Waiting for test...</div>
+      <div class="code" id="api-response"></div>
+      <button onclick="testApiConnection()">Test API Connection</button>
+    </div>
+    
+    <div class="card">
+      <h2>Host Information</h2>
+      <div class="code" id="host-info"></div>
+    </div>
+    
+    <div class="card">
+      <h2>CORS Test</h2>
+      <div>
+        Status: <span id="cors-status" class="status warning">Not tested</span>
+      </div>
+      <div id="cors-result">Waiting for test...</div>
+      <button onclick="testCorsHeaders()">Test CORS Headers</button>
+    </div>
+  </div>
+
+  <script>
+    // Display host information
+    document.getElementById('host-info').innerHTML = `
+      Current URL: ${window.location.href}
+      Hostname: ${window.location.hostname}
+      Protocol: ${window.location.protocol}
+      Port: ${window.location.port || '(default)'}
+    `;
+    
+    // Test API Connection
+    async function testApiConnection() {
+      const apiStatus = document.getElementById('api-status');
+      const apiResult = document.getElementById('api-result');
+      const apiResponse = document.getElementById('api-response');
+      
+      apiStatus.className = 'status warning';
+      apiStatus.textContent = 'Testing...';
+      apiResult.textContent = 'Connecting to API...';
+      
+      try {
+        const response = await fetch('/api/hello');
+        const data = await response.json();
+        
+        apiStatus.className = 'status success';
+        apiStatus.textContent = 'Connected';
+        apiResult.textContent = 'Successfully connected to API';
+        apiResponse.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        apiStatus.className = 'status error';
+        apiStatus.textContent = 'Failed';
+        apiResult.textContent = `Error: ${error.message}`;
+        apiResponse.textContent = '';
+        
+        console.error('API connection error:', error);
+      }
+    }
+    
+    // Test CORS Headers
+    async function testCorsHeaders() {
+      const corsStatus = document.getElementById('cors-status');
+      const corsResult = document.getElementById('cors-result');
+      
+      corsStatus.className = 'status warning';
+      corsStatus.textContent = 'Testing...';
+      corsResult.textContent = 'Checking CORS headers...';
+      
+      try {
+        const response = await fetch('/api/hello', {
+          method: 'OPTIONS',
+          headers: {
+            'Origin': window.location.origin,
+            'Access-Control-Request-Method': 'GET',
+            'Access-Control-Request-Headers': 'Content-Type'
+          }
+        });
+        
+        const corsHeaders = {
+          'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+          'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+          'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers')
+        };
+        
+        const hasValidCors = corsHeaders['Access-Control-Allow-Origin'] !== null;
+        
+        if (hasValidCors) {
+          corsStatus.className = 'status success';
+          corsStatus.textContent = 'Supported';
+          corsResult.innerHTML = 'CORS is properly configured<br><pre>' + 
+            JSON.stringify(corsHeaders, null, 2) + '</pre>';
+        } else {
+          corsStatus.className = 'status error';
+          corsStatus.textContent = 'Not supported';
+          corsResult.textContent = 'CORS headers are missing';
+        }
+      } catch (error) {
+        corsStatus.className = 'status error';
+        corsStatus.textContent = 'Error';
+        corsResult.textContent = `Error testing CORS: ${error.message}`;
+        
+        console.error('CORS test error:', error);
+      }
+    }
+    
+    // Auto-run API test when page loads
+    window.addEventListener('load', () => {
+      setTimeout(testApiConnection, 500);
+    });
+  </script>
+</body>
+</html>
