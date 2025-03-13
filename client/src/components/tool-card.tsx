@@ -32,8 +32,8 @@ const ToolCard = ({
       hover: "hover:text-blue-700"
     },
     secondary: {
-      bg: "bg-violet-100",
-      text: "text-secondary",
+      bg: "bg-violet-500", // Updated from light violet to deeper violet to match buttons
+      text: "text-white", // Changed text to white for better contrast
       hover: "hover:text-blue-700" // Changed to blue for consistency
     },
     success: {
