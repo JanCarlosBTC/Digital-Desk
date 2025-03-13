@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -47,7 +47,7 @@ const WeeklyReflections = () => {
   const mutation = useMutation({
     mutationFn: async (data: { 
       id?: number; 
-      weekDate: Date; 
+      weekDate: string | Date; 
       wentWell: string; 
       challenges: string; 
       learnings: string; 
@@ -84,8 +84,13 @@ const WeeklyReflections = () => {
         variant: "success"
       });
     },
-    onError: (error) => {
-      // Error handling already included in mutationFn
+    onError: (error: any) => {
+      console.error("Error saving reflection:", error);
+      toast({
+        title: "Error saving reflection",
+        description: error?.message || error?.data?.message || "There was a problem saving your reflection. Please try again.",
+        variant: "destructive"
+      });
     }
   });
 
@@ -113,10 +118,11 @@ const WeeklyReflections = () => {
 
   const handleSave = (asDraft: boolean) => {
     const weekDate = getCurrentWeekDate();
-
+    
+    // Format weekDate as ISO string for proper serialization
     mutation.mutate({
       id: currentReflectionId || undefined,
-      weekDate,
+      weekDate: weekDate.toISOString(),
       wentWell,
       challenges,
       learnings,
@@ -125,6 +131,17 @@ const WeeklyReflections = () => {
     });
 
     setIsDraft(asDraft);
+    
+    // Debug information
+    console.log("Submitting weekly reflection with data:", {
+      id: currentReflectionId || undefined,
+      weekDate: weekDate.toISOString(),
+      wentWell,
+      challenges,
+      learnings,
+      nextWeekFocus,
+      isDraft: asDraft
+    });
   };
 
   const handleNewReflection = () => {
