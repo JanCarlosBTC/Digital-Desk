@@ -19,6 +19,7 @@ const WeeklyReflections = () => {
   const [nextWeekFocus, setNextWeekFocus] = useState("");
   const [isDraft, setIsDraft] = useState(true);
   const [currentReflectionId, setCurrentReflectionId] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Added for submitting state
 
   // Get current date for the week reflection
   const getCurrentWeekDate = () => {
@@ -54,28 +55,37 @@ const WeeklyReflections = () => {
       isDraft: boolean;
     }) => {
       const { id, ...payload } = data;
+      setIsSubmitting(true); // Set submitting state to true
 
-      if (id) {
-        return apiRequest('PUT', `/api/weekly-reflections/${id}`, payload);
-      } else {
-        return apiRequest('POST', '/api/weekly-reflections', payload);
+      try {
+        if (id) {
+          return apiRequest('PUT', `/api/weekly-reflections/${id}`, payload);
+        } else {
+          return apiRequest('POST', '/api/weekly-reflections', payload);
+        }
+      } catch (error) {
+        toast({
+          title: "Error saving reflection",
+          description: (error as Error).message || "An unexpected error occurred.",
+          variant: "destructive",
+        });
+        throw error; // Re-throw the error to be caught by the onError handler
+      } finally {
+        setIsSubmitting(false); // Set submitting state to false after the request completes
       }
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/weekly-reflections'] });
       toast({
-        title: isDraft ? "Draft saved" : "Reflection completed",
-        description: isDraft 
+        title: variables.isDraft ? "Draft saved" : "Reflection completed",
+        description: variables.isDraft 
           ? "Your reflection draft has been saved." 
           : "Your weekly reflection has been completed.",
+        variant: "success"
       });
     },
     onError: (error) => {
-      toast({
-        title: "Error saving reflection",
-        description: error.message || "Please try again.",
-        variant: "destructive",
-      });
+      // Error handling already included in mutationFn
     }
   });
 
@@ -204,7 +214,7 @@ const WeeklyReflections = () => {
                 variant="outline" 
                 className="mr-2"
                 onClick={() => handleSave(true)}
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || isSubmitting} // Disable button while submitting
               >
                 Save Draft
               </Button>
@@ -212,9 +222,9 @@ const WeeklyReflections = () => {
                 variant="default" 
                 className="bg-purple-500 hover:bg-purple-600 text-white"
                 onClick={() => handleSave(false)}
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || isSubmitting} // Disable button while submitting
               >
-                {mutation.isPending ? "Saving..." : "Complete Reflection"}
+                {mutation.isPending || isSubmitting ? "Saving..." : "Complete Reflection"}
               </Button>
             </div>
           </div>

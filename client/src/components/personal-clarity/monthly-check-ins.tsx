@@ -12,7 +12,7 @@ import { z } from "zod";
 import { MonthlyCheckIn } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EyeIcon, CalendarIcon } from "lucide-react";
-import "@/components/ui/clipboard.css"; // Added import statement
+import "@/components/ui/clipboard.css";
 
 const formSchema = z.object({
   achievements: z.string().min(5, "Achievements must be at least 5 characters"),
@@ -37,7 +37,7 @@ const MonthlyCheckIns = () => {
 
   // Get current month and year
   const currentDate = new Date();
-  const currentMonth = currentDate.getMonth() + 1; // getMonth() is 0-indexed
+  const currentMonth = currentDate.getMonth() + 1; 
   const currentYear = currentDate.getFullYear();
 
   // Fetch monthly check-ins
@@ -59,7 +59,7 @@ const MonthlyCheckIns = () => {
           { goal: "Increase client retention", progress: 75 },
           { goal: "Launch new product", progress: 30 },
           { goal: "Hire team member", progress: 100 }
-        ], // Default progress for demo
+        ], 
         nextMonthPriorities: data.nextMonthPriorities.split('\n').filter(Boolean),
       };
 
@@ -70,6 +70,7 @@ const MonthlyCheckIns = () => {
       toast({
         title: "Check-in completed",
         description: "Your monthly check-in has been completed successfully.",
+        variant: "success" // Added variant for success message
       });
       setIsOpen(false);
       form.reset();
@@ -175,8 +176,8 @@ const MonthlyCheckIns = () => {
               <h3 className="font-medium text-gray-800 mb-3">Previous Check-ins</h3>
               <ul className="space-y-2">
                 {monthlyCheckIns
-                  .filter(checkIn => checkIn.completedOn) // Only show completed check-ins
-                  .slice(0, 5) // Limit to 5 most recent check-ins
+                  .filter(checkIn => checkIn.completedOn) 
+                  .slice(0, 5) 
                   .map((checkIn) => (
                     <li 
                       key={checkIn.id} 

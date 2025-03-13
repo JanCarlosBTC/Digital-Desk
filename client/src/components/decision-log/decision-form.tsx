@@ -35,6 +35,7 @@ type FormValues = z.infer<typeof formSchema>;
 const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Added for loading state
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -103,6 +104,7 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
         description: selectedDecision 
           ? "Your decision has been updated successfully." 
           : "Your decision has been logged successfully.",
+        variant: "success", // Added success variant
       });
 
       if (!selectedDecision) {
@@ -124,7 +126,14 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
         description: error.message || "Please try again.",
         variant: "destructive",
       });
-    }
+    },
+    onMutate: () => {
+      setIsSubmitting(true);
+    },
+    onSettled: () => {
+      setIsSubmitting(false);
+    },
+
   });
 
   const onSubmit = (data: FormValues) => {
@@ -308,9 +317,9 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
               type="submit"
               variant="default"
               className="bg-emerald-500 text-white hover:bg-emerald-600 font-medium shadow-sm"
-              disabled={mutation.isPending}
+              disabled={mutation.isPending || isSubmitting} //Added isSubmitting to disable button
             >
-              {mutation.isPending 
+              {mutation.isPending || isSubmitting
                 ? "Saving..." 
                 : isEditing 
                   ? "Update Decision" 

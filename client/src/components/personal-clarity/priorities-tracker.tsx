@@ -28,6 +28,7 @@ const PrioritiesTracker = () => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [newPriority, setNewPriority] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false); // Added state for submitting
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -135,9 +136,42 @@ const PrioritiesTracker = () => {
     }
   }, [priorities, form]);
 
-  const handleAddPriority = () => {
-    if (newPriority.trim()) {
-      createMutation.mutate(newPriority.trim());
+  const handleAddPriority = async () => {
+    if (!newPriority.trim()) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/priorities", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          priority: newPriority,
+          order: priorities?.length +1 || 1, // Handle case where priorities is null or undefined
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to add priority"); //Improved error handling
+      }
+
+      toast({
+        title: "Priority added",
+        description: "Your new priority has been added to the tracker.",
+        variant: "success",
+      });
+      setNewPriority("");
+    } catch (error: any) {
+      console.error("Error adding priority:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add priority. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -228,9 +262,9 @@ const PrioritiesTracker = () => {
             variant="default"
             className="bg-secondary text-white rounded-r-lg hover:bg-violet-600 transition-colors font-medium shadow-sm clarity-button"
             onClick={handleAddPriority}
-            disabled={createMutation.isPending || !newPriority.trim()}
+            disabled={isSubmitting || !newPriority.trim()} // Use isSubmitting state
           >
-            {createMutation.isPending ? "Adding..." : "Add"}
+            {isSubmitting ? "Adding..." : "Add"}
           </Button>
         </div>
       </div>
