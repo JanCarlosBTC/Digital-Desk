@@ -190,7 +190,7 @@ const PrioritiesTracker = () => {
           <ul className="space-y-3">
             {priorities.map((priority, index) => (
               <li key={priority.id} className="flex items-center p-3 bg-violet-50 border border-violet-100 rounded-md">
-                <div className="h-6 w-6 bg-secondary text-white rounded-full flex items-center justify-center mr-3">
+                <div className="h-6 w-6 bg-purple-200 text-black rounded-full flex items-center justify-center mr-3">
                   {index + 1}
                 </div>
                 <span className="font-medium text-gray-800 flex-1">{priority.priority}</span>
