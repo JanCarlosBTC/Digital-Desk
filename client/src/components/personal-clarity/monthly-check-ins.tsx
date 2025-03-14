@@ -25,6 +25,11 @@ type FormValues = z.infer<typeof formSchema>;
 const MonthlyCheckIns = () => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedCheckIn, setSelectedCheckIn] = useState<MonthlyCheckIn | null>(null);
+
+  const handleViewCheckIn = (checkIn: MonthlyCheckIn) => {
+    setSelectedCheckIn(checkIn);
+  };
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -190,7 +195,10 @@ const MonthlyCheckIns = () => {
                         </span>
                       </div>
                       <div>
-                        <button className="bg-purple-500 hover:bg-purple-600 text-white p-1"> 
+                        <button 
+                          onClick={() => handleViewCheckIn(checkIn)}
+                          className="bg-purple-500 hover:bg-purple-600 text-white p-1 rounded-md"
+                        > 
                           <EyeIcon className="h-4 w-4" />
                         </button>
                       </div>
@@ -199,6 +207,43 @@ const MonthlyCheckIns = () => {
               </ul>
             </>
           )}
+
+          {/* View Check-in Dialog */}
+          <Dialog open={!!selectedCheckIn} onOpenChange={() => setSelectedCheckIn(null)}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>
+                  {selectedCheckIn && `${getMonthName(selectedCheckIn.month)} ${selectedCheckIn.year} Check-in`}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium mb-2">Achievements</h4>
+                  <ul className="list-disc pl-4 space-y-1">
+                    {selectedCheckIn?.achievements.map((achievement, i) => (
+                      <li key={i} className="text-gray-700">{achievement}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Challenges</h4>
+                  <ul className="list-disc pl-4 space-y-1">
+                    {selectedCheckIn?.challenges.map((challenge, i) => (
+                      <li key={i} className="text-gray-700">{challenge}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Next Month Priorities</h4>
+                  <ul className="list-disc pl-4 space-y-1">
+                    {selectedCheckIn?.nextMonthPriorities.map((priority, i) => (
+                      <li key={i} className="text-gray-700">{priority}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </>
       )}
 
