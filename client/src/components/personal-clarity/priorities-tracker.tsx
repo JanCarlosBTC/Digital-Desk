@@ -138,31 +138,17 @@ const PrioritiesTracker = () => {
 
   const handleAddPriority = () => {
     if (!newPriority.trim()) return;
-    createMutation.mutate({
-      priority: newPriority,
-      order: priorities?.length + 1 || 1
-    });
-    setNewPriority('');
-  };
-        throw new Error(errorData.message || "Failed to add priority"); //Improved error handling
+    setIsSubmitting(true);
+    createMutation.mutate(newPriority, {
+      onSuccess: () => {
+        setNewPriority('');
+        setIsSubmitting(false);
+      },
+      onError: (error) => {
+        console.error("Error adding priority:", error);
+        setIsSubmitting(false);
       }
-
-      toast({
-        title: "Priority added",
-        description: "Your new priority has been added to the tracker.",
-        variant: "success",
-      });
-      setNewPriority("");
-    } catch (error: any) {
-      console.error("Error adding priority:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to add priority. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    });
   };
 
   const handleDeletePriority = (id: number) => {
