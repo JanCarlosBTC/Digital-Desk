@@ -136,21 +136,9 @@ const PrioritiesTracker = () => {
     }
   }, [priorities, form]);
 
-  const handleAddPriority = async () => {
+  const handleAddPriority = () => {
     if (!newPriority.trim()) return;
-
-    setIsSubmitting(true);
-    try {
-      const response = await fetch("/api/priorities", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          priority: newPriority,
-          order: priorities?.length +1 || 1, // Handle case where priorities is null or undefined
-        }),
-      });
+    createMutation.mutate(newPriority);
 
       if (!response.ok) {
         const errorData = await response.json();
