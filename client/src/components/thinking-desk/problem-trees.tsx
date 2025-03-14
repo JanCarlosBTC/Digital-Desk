@@ -154,6 +154,14 @@ const ProblemTrees = () => {
   };
 
   const handleNewProblemTree = () => {
+    if (problemTrees && problemTrees.length >= 3) {
+      toast({
+        title: "Maximum limit reached",
+        description: "You can only create up to 3 problem trees.",
+        variant: "destructive"
+      });
+      return;
+    }
     setSelectedProblemTree(null);
     form.reset({
       title: "",
@@ -367,7 +375,18 @@ const ProblemTrees = () => {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-gray-400 hover:text-primary hover:bg-primary/10"
-                          onClick={() => {/* View functionality */}}
+                          onClick={() => {
+                            // Find current featured tree index
+                            const currentIndex = problemTrees.findIndex(t => t.id === tree.id);
+                            // Create new array with selected tree first
+                            const reorderedTrees = [
+                              tree,
+                              ...problemTrees.slice(0, currentIndex),
+                              ...problemTrees.slice(currentIndex + 1)
+                            ];
+                            // Update query data
+                            queryClient.setQueryData(['/api/problem-trees'], reorderedTrees);
+                          }}
                         >
                           <EyeIcon className="h-4 w-4" />
                         </Button>
