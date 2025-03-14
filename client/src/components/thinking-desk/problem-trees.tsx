@@ -131,6 +131,19 @@ const ProblemTrees = () => {
     setIsOpen(true);
   };
 
+  const handleEditProblemTree = (tree: ProblemTree) => {
+    setSelectedProblemTree(tree);
+    form.reset({
+      title: tree.title,
+      mainProblem: tree.mainProblem,
+      subProblems: tree.subProblems.join('\n'),
+      rootCauses: tree.rootCauses.join('\n'),
+      potentialSolutions: tree.potentialSolutions.join('\n'),
+      nextActions: tree.nextActions.join('\n'),
+    });
+    setIsOpen(true);
+  };
+
   const handleDeleteProblemTree = (id: number) => {
     if (confirm("Are you sure you want to delete this problem tree?")) {
       deleteMutation.mutate(id);
@@ -184,7 +197,7 @@ const ProblemTrees = () => {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-gray-500 hover:text-primary hover:bg-primary/10"
-                      onClick={() => {/* View/edit functionality */}}
+                      onClick={() => handleEditProblemTree(problemTrees[0])}
                     >
                       <EditIcon className="h-4 w-4" />
                     </Button>
@@ -219,7 +232,7 @@ const ProblemTrees = () => {
                     </div>
                     
                     {/* Sub Problems (Level 1) */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full mb-4">
+                    <div className="grid grid-cols-1 gap-3 w-full max-w-3xl mx-auto mb-4">
                       {problemTrees[0].subProblems.slice(0, 3).map((subProblem, index) => (
                         <div key={index} className="bg-gradient-to-r from-orange-50 to-orange-100 shadow-sm border border-orange-200 rounded-lg p-3 text-center flex flex-col items-center">
                           <Badge variant="outline" className="bg-orange-100 border-orange-300 text-orange-700 mb-1">Sub-problem {index + 1}</Badge>
@@ -234,7 +247,7 @@ const ProblemTrees = () => {
                     </div>
                     
                     {/* Root Causes (Level 2) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full mb-1">
+                    <div className="grid grid-cols-1 gap-3 w-full max-w-2xl mx-auto mb-1">
                       {problemTrees[0].rootCauses.slice(0, 2).map((rootCause, index) => (
                         <div key={index} className="bg-gradient-to-r from-yellow-50 to-yellow-100 shadow-sm border border-yellow-200 rounded-lg p-3 text-center flex flex-col items-center">
                           <Badge variant="outline" className="bg-yellow-100 border-yellow-300 text-yellow-700 mb-1">Root Cause {index + 1}</Badge>
