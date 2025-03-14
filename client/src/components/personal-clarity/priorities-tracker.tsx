@@ -138,10 +138,12 @@ const PrioritiesTracker = () => {
 
   const handleAddPriority = () => {
     if (!newPriority.trim()) return;
-    createMutation.mutate(newPriority);
-
-      if (!response.ok) {
-        const errorData = await response.json();
+    createMutation.mutate({
+      priority: newPriority,
+      order: priorities?.length + 1 || 1
+    });
+    setNewPriority('');
+  };
         throw new Error(errorData.message || "Failed to add priority"); //Improved error handling
       }
 
