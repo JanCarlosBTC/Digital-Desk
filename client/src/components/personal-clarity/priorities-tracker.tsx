@@ -260,7 +260,7 @@ const PrioritiesTracker = () => {
           />
           <Button 
             variant="default"
-            className="bg-secondary text-white rounded-r-lg hover:bg-violet-600 transition-colors font-medium shadow-sm clarity-button"
+            className="bg-purple-300 text-white rounded-r-lg hover:bg-purple-400 transition-colors font-medium shadow-sm clarity-button"
             onClick={handleAddPriority}
             disabled={isSubmitting || !newPriority.trim()} // Use isSubmitting state
           >
