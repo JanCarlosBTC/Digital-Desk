@@ -51,6 +51,7 @@ const BrainDump = () => {
   }, [brainDump]);
   
   const handleSave = () => {
+    if (!brainDump || content === brainDump.content) return;
     setIsSaving(true);
     mutation.mutate(content);
   };
@@ -131,9 +132,6 @@ const BrainDump = () => {
             <span className="text-sm text-gray-700 font-medium">Your brain dump is private by default</span>
           </div>
           <div>
-            <Button variant="outline" size="sm" className="text-gray-600 mr-2 border-gray-200">
-              <TagIcon className="mr-1 h-4 w-4" /> Add Tags
-            </Button>
             <Button variant="outline" size="sm" className="text-gray-600 border-gray-200">
               <ShareIcon className="mr-1 h-4 w-4" /> Share
             </Button>

@@ -178,6 +178,15 @@ export class MemStorage implements IStorage {
       updatedAt: new Date() 
     };
     this.brainDumps.set(id, updated);
+    
+    // Create activity log
+    await this.createActivity({
+      userId: brainDump.userId,
+      type: "update",
+      entityType: "Brain Dump",
+      entityName: "Brain Dump Entry"
+    });
+    
     return updated;
   }
 
