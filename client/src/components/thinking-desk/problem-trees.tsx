@@ -114,8 +114,43 @@ const ProblemTrees = () => {
     }
   });
 
+  // Update problem tree mutation
+  const updateMutation = useMutation({
+    mutationFn: async (data: { id: number; problemTree: FormValues }) => {
+      return apiRequest('PUT', `/api/problem-trees/${data.id}`, data.problemTree);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
+      toast({
+        title: "Problem tree updated",
+        description: "Your problem tree has been updated successfully.",
+      });
+      setIsOpen(false);
+      form.reset();
+    },
+    onError: (error) => {
+      toast({
+        title: "Error updating problem tree",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const onSubmit = (data: FormValues) => {
-    createMutation.mutate(data);
+    if (selectedProblemTree) {
+      // Format data for update
+      const formattedData = {
+        ...data,
+        subProblems: data.subProblems.split('\n').filter(Boolean),
+        rootCauses: data.rootCauses.split('\n').filter(Boolean),
+        potentialSolutions: data.potentialSolutions.split('\n').filter(Boolean),
+        nextActions: data.nextActions.split('\n').filter(Boolean),
+      };
+      updateMutation.mutate({ id: selectedProblemTree.id, problemTree: formattedData });
+    } else {
+      createMutation.mutate(data);
+    }
   };
 
   const handleNewProblemTree = () => {
