@@ -30,6 +30,8 @@ type FormValues = z.infer<typeof formSchema>;
 const OfferList = () => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [sortBy, setSortBy] = useState<string>("status");
   
   const form = useForm<FormValues>({
@@ -73,11 +75,40 @@ const OfferList = () => {
     }
   });
 
+  // Update offer
+  const updateMutation = useMutation({
+    mutationFn: async (data: FormValues & { id: number }) => {
+      const { id, ...rest } = data;
+      return apiRequest('PUT', `/api/offers/${id}`, rest);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
+      toast({
+        title: "Offer updated",
+        description: "Your offer has been updated successfully.",
+      });
+      setIsEditOpen(false);
+      setSelectedOffer(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error updating offer",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const onSubmit = (data: FormValues) => {
-    createMutation.mutate(data);
+    if (selectedOffer) {
+      updateMutation.mutate({ ...data, id: selectedOffer.id });
+    } else {
+      createMutation.mutate(data);
+    }
   };
 
   const handleNewOffer = () => {
+    setSelectedOffer(null);
     form.reset({
       title: "",
       description: "",
@@ -88,6 +119,20 @@ const OfferList = () => {
       clientCount: 0,
     });
     setIsOpen(true);
+  };
+  
+  const handleManageOffer = (offer: Offer) => {
+    setSelectedOffer(offer);
+    form.reset({
+      title: offer.title,
+      description: offer.description,
+      status: offer.status,
+      price: offer.price,
+      duration: offer.duration || "",
+      format: offer.format || "",
+      clientCount: offer.clientCount || 0,
+    });
+    setIsEditOpen(true);
   };
 
   const sortOffers = (offers: Offer[]) => {
@@ -234,7 +279,10 @@ const OfferList = () => {
                       : `Created: ${formatDate(offer.createdAt.toString())} • ${offer.clientCount} clients`
                     }
                   </div>
-                  <button className="text-amber-500 hover:text-amber-700">
+                  <button 
+                    className="text-amber-500 hover:text-amber-700"
+                    onClick={() => offer.status === "Archived" ? null : handleManageOffer(offer)}
+                  >
                     {offer.status === "Archived" 
                       ? <><HistoryIcon className="inline-block mr-1 h-4 w-4" /> View History</>
                       : <><EditIcon className="inline-block mr-1 h-4 w-4" /> Manage</>
@@ -391,6 +439,145 @@ const OfferList = () => {
                   disabled={createMutation.isPending}
                 >
                   {createMutation.isPending ? "Saving..." : "Save Offer"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit Offer Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Offer</DialogTitle>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Offer Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="E.g., Executive Coaching Package" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Describe your offer and its value proposition" 
+                        rows={3} 
+                        {...field} 
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Active">Active</SelectItem>
+                          <SelectItem value="Coming Soon">Coming Soon</SelectItem>
+                          <SelectItem value="Archived">Archived</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price</FormLabel>
+                      <FormControl>
+                        <Input placeholder="E.g., $2,500 / month" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="duration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duration (optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="E.g., 6-month commitment" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="format"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Format (optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="E.g., In-person or virtual" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="clientCount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Current Client Count</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="0" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  variant="default"
+                  className="bg-yellow-400 text-white hover:bg-yellow-500 font-medium shadow-sm"
+                  disabled={updateMutation.isPending}
+                >
+                  {updateMutation.isPending ? "Updating..." : "Update Offer"}
                 </Button>
               </div>
             </form>
