@@ -242,7 +242,7 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
                 <FormLabel>Category</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-10 px-4 py-2 flex items-center">
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                   </FormControl>
@@ -349,7 +349,7 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
                     <FormLabel>Decision Status</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-10 px-4 py-2 flex items-center">
                           <SelectValue placeholder="Select the status" />
                         </SelectTrigger>
                       </FormControl>
@@ -406,10 +406,10 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel className="h-10">Cancel</AlertDialogCancel>
+                      <AlertDialogCancel className="h-10 px-4 py-2 flex items-center">Cancel</AlertDialogCancel>
                       <AlertDialogAction 
                         onClick={handleDelete}
-                        className="bg-red-500 text-white hover:bg-red-600 h-10"
+                        className="bg-red-500 text-white hover:bg-red-600 h-10 px-4 py-2 flex items-center"
                       >
                         Delete
                       </AlertDialogAction>
