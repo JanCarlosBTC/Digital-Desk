@@ -1,6 +1,11 @@
 // Script to update package.json to address security vulnerabilities
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get the current directory name
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Read the current package.json
 const packageJsonPath = path.join(__dirname, 'package.json');
@@ -8,11 +13,18 @@ const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
 // Function to update dependencies to more secure versions
 function updateDependencies() {
-  // Add your security updates here
-  // For example:
-  // packageJson.dependencies['vulnerable-package'] = '^1.2.3'; // Updated secure version
+  // Update vulnerable dependencies
+  if (packageJson.devDependencies) {
+    packageJson.devDependencies['drizzle-kit'] = '^0.19.1'; // Update to more secure version
+    packageJson.devDependencies['esbuild'] = '^0.25.2'; // Update to patched version
+  }
   
-  // You can update multiple packages as needed
+  // Update esbuild-kit dependencies
+  if (packageJson.dependencies) {
+    packageJson.dependencies['@esbuild-kit/core-utils'] = '^3.3.2'; // Latest version
+    packageJson.dependencies['@esbuild-kit/esm-loader'] = '^2.6.5'; // Latest version
+  }
+  
   console.log('Updated dependencies with secure versions');
 }
 
