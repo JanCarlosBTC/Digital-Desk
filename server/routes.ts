@@ -528,8 +528,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityType: "Decision",
         entityName: decision.title,
         metadata: {
-          category: decision.category,
-          initialStatus: decision.status,
+          category: decision.category || "",
+          initialStatus: decision.status || "",
           decisionDate: decision.decisionDate,
           date: new Date()
         }
@@ -650,6 +650,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertOfferSchema.parse(data);
       const offer = await storage.createOffer(validatedData);
       
+      // Track offer creation as an activity
+      await storage.createActivity({
+        userId: DEMO_USER_ID,
+        type: "add",
+        entityType: "Offer",
+        entityName: offer.title,
+        metadata: {
+          category: offer.category,
+          initialStatus: offer.status,
+          price: offer.price.toString(),
+          date: new Date()
+        }
+      });
+      
       res.status(201).json(offer);
     } catch (error) {
       handleZodError(error, res);
@@ -660,10 +674,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const data = req.body;
+      const parsedId = parseInt(id);
       
-      const updatedOffer = await storage.updateOffer(parseInt(id), data);
-      if (!updatedOffer) {
+      // Get existing offer to detect status changes
+      const existingOffer = await storage.getOffer(parsedId);
+      if (!existingOffer) {
         return res.status(404).json({ message: "Offer not found" });
+      }
+      
+      const updatedOffer = await storage.updateOffer(parsedId, data);
+      if (!updatedOffer) {
+        return res.status(404).json({ message: "Offer not found after update" });
+      }
+      
+      // Track offer status change as an activity
+      if (existingOffer.status !== updatedOffer.status) {
+        await storage.createActivity({
+          userId: DEMO_USER_ID,
+          type: "status_change",
+          entityType: "Offer",
+          entityName: updatedOffer.title,
+          metadata: {
+            oldStatus: existingOffer.status,
+            newStatus: updatedOffer.status,
+            category: updatedOffer.category,
+            price: updatedOffer.price.toString(),
+            date: new Date()
+          }
+        });
       }
       
       res.json(updatedOffer);
@@ -675,11 +713,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/offers/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const deleted = await storage.deleteOffer(parseInt(id));
+      const parsedId = parseInt(id);
       
-      if (!deleted) {
+      // Get the offer before deleting to use its title in the activity log
+      const offer = await storage.getOffer(parsedId);
+      if (!offer) {
         return res.status(404).json({ message: "Offer not found" });
       }
+      
+      const deleted = await storage.deleteOffer(parsedId);
+      if (!deleted) {
+        return res.status(404).json({ message: "Offer not found after delete attempt" });
+      }
+      
+      // Track offer deletion as an activity
+      await storage.createActivity({
+        userId: DEMO_USER_ID,
+        type: "delete",
+        entityType: "Offer",
+        entityName: offer.title,
+        metadata: {
+          category: offer.category,
+          status: offer.status,
+          price: offer.price.toString(),
+          date: new Date()
+        }
+      });
       
       res.status(204).end();
     } catch (error) {
