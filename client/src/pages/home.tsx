@@ -137,8 +137,18 @@ const Home = () => {
                   "edit": "updated",
                   "update": "updated",
                   "delete": "deleted",
-                  "complete": "completed"
+                  "complete": "completed",
+                  "status_change": "updated the status of"
                 };
+                
+                // Special handling for status changes to be more descriptive
+                if (activity.type === "status_change" && activity.entityType === "Decision") {
+                  return (
+                    <p className="text-gray-700">
+                      You changed the status of <span className="font-medium">{activity.entityName}</span>
+                    </p>
+                  );
+                }
                 
                 return (
                   <p className="text-gray-700">

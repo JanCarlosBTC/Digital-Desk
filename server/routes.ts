@@ -521,6 +521,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertDecisionSchema.parse(data);
       const decision = await storage.createDecision(validatedData);
       
+      // Track decision creation as an activity
+      await storage.createActivity({
+        userId: DEMO_USER_ID,
+        type: "add",
+        entityType: "Decision",
+        entityName: decision.title
+      });
+      
       res.status(201).json(decision);
     } catch (error) {
       handleZodError(error, res);
@@ -531,10 +539,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const data = req.body;
+      const parsedId = parseInt(id);
       
-      const updatedDecision = await storage.updateDecision(parseInt(id), data);
-      if (!updatedDecision) {
+      // Get existing decision to detect status changes
+      const existingDecision = await storage.getDecision(parsedId);
+      if (!existingDecision) {
         return res.status(404).json({ message: "Decision not found" });
+      }
+      
+      const updatedDecision = await storage.updateDecision(parsedId, data);
+      if (!updatedDecision) {
+        return res.status(404).json({ message: "Decision not found after update" });
+      }
+      
+      // Track decision status change as an activity
+      if (existingDecision.status !== updatedDecision.status) {
+        await storage.createActivity({
+          userId: DEMO_USER_ID,
+          type: "status_change",
+          entityType: "Decision",
+          entityName: updatedDecision.title
+        });
       }
       
       res.json(updatedDecision);
@@ -546,11 +571,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/decisions/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const deleted = await storage.deleteDecision(parseInt(id));
+      const parsedId = parseInt(id);
       
-      if (!deleted) {
+      // Get the decision before deleting to use its title in the activity log
+      const decision = await storage.getDecision(parsedId);
+      if (!decision) {
         return res.status(404).json({ message: "Decision not found" });
       }
+      
+      const deleted = await storage.deleteDecision(parsedId);
+      if (!deleted) {
+        return res.status(404).json({ message: "Decision not found after delete attempt" });
+      }
+      
+      // Track decision deletion as an activity
+      await storage.createActivity({
+        userId: DEMO_USER_ID,
+        type: "delete",
+        entityType: "Decision",
+        entityName: decision.title
+      });
       
       res.status(204).end();
     } catch (error) {
