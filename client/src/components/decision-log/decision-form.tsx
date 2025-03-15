@@ -393,7 +393,7 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
                     <Button
                       type="button"
                       variant="outline"
-                      className="border-red-500 text-red-600 hover:bg-red-50 font-medium"
+                      className="border-red-500 text-red-600 hover:bg-red-50 font-medium h-10"
                     >
                       <TrashIcon className="mr-1 h-4 w-4" /> Delete
                     </Button>
@@ -406,10 +406,10 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel className="h-10">Cancel</AlertDialogCancel>
                       <AlertDialogAction 
                         onClick={handleDelete}
-                        className="bg-red-500 text-white hover:bg-red-600"
+                        className="bg-red-500 text-white hover:bg-red-600 h-10"
                       >
                         Delete
                       </AlertDialogAction>
@@ -423,7 +423,7 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
                 <Button
                   type="button"
                   variant="outline"
-                  className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-medium"
+                  className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-medium h-10"
                   onClick={handleCancel}
                 >
                   Cancel
@@ -432,7 +432,7 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
               <Button 
                 type="submit"
                 variant="default"
-                className="bg-emerald-500 text-white hover:bg-emerald-600 font-medium shadow-sm"
+                className="bg-emerald-500 text-white hover:bg-emerald-600 font-medium shadow-sm h-10"
                 disabled={mutation.isPending || isSubmitting} //Added isSubmitting to disable button
               >
                 {mutation.isPending || isSubmitting
