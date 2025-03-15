@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Decision } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FilterIcon, EyeIcon, CheckCircleIcon } from "lucide-react";
+import { FilterIcon, EyeIcon, CheckCircleIcon, PlusIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -13,9 +13,10 @@ interface DecisionListProps {
   decisions: Decision[];
   isLoading: boolean;
   setSelectedDecision: (decision: Decision | null) => void;
+  onNewDecisionClick?: () => void;
 }
 
-const DecisionList = ({ decisions, isLoading, setSelectedDecision }: DecisionListProps) => {
+const DecisionList = ({ decisions, isLoading, setSelectedDecision, onNewDecisionClick }: DecisionListProps) => {
   const { toast } = useToast();
   const [filter, setFilter] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -54,6 +55,13 @@ const DecisionList = ({ decisions, isLoading, setSelectedDecision }: DecisionLis
   const handleFilterChange = (value: string) => {
     setFilter(value === "all" ? null : value);
     setPage(1);
+  };
+
+  const handleNewDecisionClick = () => {
+    setSelectedDecision(null);
+    if (onNewDecisionClick) {
+      onNewDecisionClick();
+    }
   };
 
   // Filter decisions
@@ -109,10 +117,10 @@ const DecisionList = ({ decisions, isLoading, setSelectedDecision }: DecisionLis
             </SelectContent>
           </Select>
           <Button
-            onClick={() => setSelectedDecision(null)}
+            onClick={handleNewDecisionClick}
             className="bg-emerald-500 text-white hover:bg-emerald-600 transition-colors font-medium"
           >
-            New Decision
+            <PlusIcon className="mr-1 h-4 w-4" /> New Decision
           </Button>
         </div>
       </div>

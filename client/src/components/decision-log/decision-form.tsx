@@ -15,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface DecisionFormProps {
   selectedDecision: Decision | null;
+  onSuccess?: () => void;
+  isDialog?: boolean;
 }
 
 const formSchema = z.object({
@@ -32,7 +34,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
+const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: DecisionFormProps) => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false); // Added for loading state
@@ -119,6 +121,11 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
           whatDifferent: "",
         });
       }
+      
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
     },
     onError: (error) => {
       toast({
@@ -133,7 +140,6 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
     onSettled: () => {
       setIsSubmitting(false);
     },
-
   });
 
   const onSubmit = (data: FormValues) => {
@@ -155,7 +161,7 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 sticky top-6">
+    <div className={`bg-white ${!isDialog ? 'rounded-lg shadow-md p-6 border border-gray-200 sticky top-6' : ''}`}>
       <h2 className="text-xl font-semibold text-gray-800 mb-4">
         {isEditing ? "Edit Decision" : "Log a New Decision"}
       </h2>
