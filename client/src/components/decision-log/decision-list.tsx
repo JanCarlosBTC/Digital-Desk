@@ -545,13 +545,13 @@ const DecisionList = ({
                 {decision.status === "Pending" && (
                   <>
                     <button 
-                      className="text-success hover:text-green-700 mr-3 font-medium transition-colors flex items-center text-sm"
+                      className="text-success hover:text-green-700 mr-3 font-medium transition-colors flex items-center text-sm h-10 px-4 py-2"
                       onClick={(e) => handleMarkSuccessful(decision.id, e)}
                     >
                       <CheckCircleIcon className="mr-1 h-4 w-4" /> Mark as Successful
                     </button>
                     <button 
-                      className="text-red-600 hover:text-red-700 mr-3 font-medium transition-colors flex items-center text-sm"
+                      className="text-red-600 hover:text-red-700 mr-3 font-medium transition-colors flex items-center text-sm h-10 px-4 py-2"
                       onClick={(e) => handleMarkFailed(decision.id, e)}
                     >
                       <XCircleIcon className="mr-1 h-4 w-4" /> Mark as Failed
@@ -559,13 +559,13 @@ const DecisionList = ({
                   </>
                 )}
                 <button 
-                  className="text-gray-600 hover:text-primary font-medium transition-colors flex items-center text-sm mr-3"
+                  className="text-gray-600 hover:text-primary font-medium transition-colors flex items-center text-sm mr-3 h-10 px-4 py-2"
                   onClick={(e) => handleViewDetails(decision, e)}
                 >
                   <EyeIcon className="mr-1 h-4 w-4" /> View Details
                 </button>
                 <button 
-                  className="text-blue-600 hover:text-blue-800 font-medium transition-colors flex items-center text-sm"
+                  className="text-blue-600 hover:text-blue-800 font-medium transition-colors flex items-center text-sm h-10 px-4 py-2"
                   onClick={(e) => handleEditDecision(decision, e)}
                 >
                   <EditIcon className="mr-1 h-4 w-4" /> Edit
@@ -578,7 +578,7 @@ const DecisionList = ({
           {totalPages > 1 && (
             <div className="flex justify-between items-center mt-6">
               <button 
-                className="text-gray-600 hover:text-primary font-medium disabled:opacity-50 transition-colors flex items-center" 
+                className="text-gray-600 hover:text-primary font-medium disabled:opacity-50 transition-colors flex items-center h-10 px-4 py-2" 
                 disabled={page === 1}
                 onClick={() => setPage(page - 1)}
               >
@@ -588,7 +588,7 @@ const DecisionList = ({
                 Showing <span className="font-medium">{(page - 1) * decisionsPerPage + 1}-{Math.min(page * decisionsPerPage, filteredDecisions.length)}</span> of <span className="font-medium">{filteredDecisions.length}</span> decisions
               </div>
               <button 
-                className="text-gray-600 hover:text-primary font-medium disabled:opacity-50 transition-colors flex items-center" 
+                className="text-gray-600 hover:text-primary font-medium disabled:opacity-50 transition-colors flex items-center h-10 px-4 py-2" 
                 disabled={page === totalPages}
                 onClick={() => setPage(page + 1)}
               >

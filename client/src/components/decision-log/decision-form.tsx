@@ -393,7 +393,7 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
                     <Button
                       type="button"
                       variant="outline"
-                      className="border-red-500 text-red-600 hover:bg-red-50 font-medium h-10"
+                      className="border-red-500 text-red-600 hover:bg-red-50 font-medium h-10 px-4 py-2 flex items-center"
                     >
                       <TrashIcon className="mr-1 h-4 w-4" /> Delete
                     </Button>
@@ -423,7 +423,7 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
                 <Button
                   type="button"
                   variant="outline"
-                  className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-medium h-10"
+                  className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-medium h-10 px-4 py-2 flex items-center"
                   onClick={handleCancel}
                 >
                   Cancel
@@ -432,7 +432,7 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
               <Button 
                 type="submit"
                 variant="default"
-                className="bg-emerald-500 text-white hover:bg-emerald-600 font-medium shadow-sm h-10"
+                className="bg-emerald-500 text-white hover:bg-emerald-600 font-medium shadow-sm h-10 px-4 py-2 flex items-center"
                 disabled={mutation.isPending || isSubmitting} //Added isSubmitting to disable button
               >
                 {mutation.isPending || isSubmitting
