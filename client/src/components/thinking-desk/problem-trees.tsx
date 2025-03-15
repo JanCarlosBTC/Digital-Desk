@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,13 @@ import {
   ArrowDown,
   Lightbulb,
   ListTodo,
-  Calendar
+  Calendar,
+  SearchIcon,
+  FilterIcon,
+  SortAscIcon,
+  TagIcon,
+  LayoutGridIcon,
+  LayoutListIcon
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription } from "@/components/ui/form";
@@ -26,6 +32,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -42,6 +61,10 @@ const ProblemTrees = () => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedProblemTree, setSelectedProblemTree] = useState<ProblemTree | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [sortOption, setSortOption] = useState<"newest" | "oldest" | "alphabetical">("newest");
+  const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
