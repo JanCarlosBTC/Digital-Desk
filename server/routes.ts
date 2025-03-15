@@ -216,6 +216,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/drafted-plans/:id', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteDraftedPlan(parseInt(id));
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Drafted plan not found" });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting drafted plan" });
+    }
+  });
+
   // Clarity Lab endpoints
   app.get('/api/clarity-labs', async (req: Request, res: Response) => {
     try {
@@ -255,6 +270,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(clarityLab);
     } catch (error) {
       handleZodError(error, res);
+    }
+  });
+
+  app.put('/api/clarity-labs/:id', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const data = req.body;
+      
+      const updatedClarityLab = await storage.updateClarityLab(parseInt(id), data);
+      if (!updatedClarityLab) {
+        return res.status(404).json({ message: "Clarity lab entry not found" });
+      }
+      
+      res.json(updatedClarityLab);
+    } catch (error) {
+      res.status(500).json({ message: "Error updating clarity lab entry" });
+    }
+  });
+
+  app.delete('/api/clarity-labs/:id', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteClarityLab(parseInt(id));
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Clarity lab entry not found" });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting clarity lab entry" });
     }
   });
 
@@ -497,6 +543,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/decisions/:id', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteDecision(parseInt(id));
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Decision not found" });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting decision" });
+    }
+  });
+
   // Offer Vault endpoints
   app.get('/api/offers', async (req: Request, res: Response) => {
     try {
@@ -551,6 +612,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedOffer);
     } catch (error) {
       res.status(500).json({ message: "Error updating offer" });
+    }
+  });
+
+  app.delete('/api/offers/:id', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteOffer(parseInt(id));
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Offer not found" });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting offer" });
     }
   });
 

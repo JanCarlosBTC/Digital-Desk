@@ -94,6 +94,7 @@ export const clarityLabs = pgTable("clarity_labs", {
   description: text("description").notNull(),
   category: text("category").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const insertClarityLabSchema = createInsertSchema(clarityLabs).pick({
