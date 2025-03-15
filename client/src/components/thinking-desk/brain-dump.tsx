@@ -7,13 +7,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { 
   SaveIcon, 
-  TagIcon, 
   ShareIcon, 
   BrainIcon, 
   ClockIcon, 
   FileTextIcon, 
   ListIcon,
-  InfoIcon 
+  InfoIcon
 } from "lucide-react";
 import { BrainDump as BrainDumpType } from "@shared/schema";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -37,6 +36,7 @@ const BrainDump = () => {
   const [characterCount, setCharacterCount] = useState(0);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isDirtyRef = useRef(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   // Fetch brain dump
   const { data: brainDump, isLoading } = useQuery<BrainDumpType>({
@@ -121,6 +121,96 @@ const BrainDump = () => {
     mutation.mutate(content);
   };
   
+  // Format text as paragraph (properly formatted with line breaks)
+  const formatAsParagraph = () => {
+    if (!textareaRef.current) return;
+    
+    // Get current selection or cursor position
+    const start = textareaRef.current.selectionStart;
+    const end = textareaRef.current.selectionEnd;
+    
+    // Get selected text
+    const selectedText = content.substring(start, end);
+    
+    if (selectedText) {
+      // Format selected text: ensure double line breaks between paragraphs
+      const formattedText = selectedText
+        .split(/\n{3,}/).join("\n\n")  // Replace 3+ line breaks with 2
+        .split(/\n/).filter(line => line.trim() !== "").join("\n\n");  // Add double line breaks between non-empty lines
+          
+      // Replace the selected text with formatted text
+      const newContent = content.substring(0, start) + formattedText + content.substring(end);
+      setContent(newContent);
+      isDirtyRef.current = true;
+      
+      // Adjust cursor position
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.selectionStart = start;
+          textareaRef.current.selectionEnd = start + formattedText.length;
+          textareaRef.current.focus();
+        }
+      }, 0);
+      
+      toast({
+        title: "Text formatted",
+        description: "Selected text has been formatted as paragraphs.",
+      });
+    } else {
+      toast({
+        title: "No text selected",
+        description: "Please select text to format.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Format text as bullet points
+  const formatAsBullets = () => {
+    if (!textareaRef.current) return;
+    
+    // Get current selection or cursor position
+    const start = textareaRef.current.selectionStart;
+    const end = textareaRef.current.selectionEnd;
+    
+    // Get selected text
+    const selectedText = content.substring(start, end);
+    
+    if (selectedText) {
+      // Format selected text as bullet points
+      const lines = selectedText.split('\n').filter(line => line.trim() !== "");
+      const bulletedText = lines.map(line => {
+        // If line already starts with a bullet, don't add another
+        return line.trim().startsWith('• ') ? line : `• ${line.trim()}`;
+      }).join('\n');
+      
+      // Replace the selected text with bulleted text
+      const newContent = content.substring(0, start) + bulletedText + content.substring(end);
+      setContent(newContent);
+      isDirtyRef.current = true;
+      
+      // Adjust cursor position
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.selectionStart = start;
+          textareaRef.current.selectionEnd = start + bulletedText.length;
+          textareaRef.current.focus();
+        }
+      }, 0);
+      
+      toast({
+        title: "Text formatted",
+        description: "Selected text has been formatted as bullet points.",
+      });
+    } else {
+      toast({
+        title: "No text selected",
+        description: "Please select text to format.",
+        variant: "destructive",
+      });
+    }
+  };
+  
   // Format the last edited time
   const formatLastEdited = (date: Date) => {
     const now = new Date();
@@ -183,7 +273,12 @@ const BrainDump = () => {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 px-2 text-gray-700">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 px-2 text-gray-700"
+                      onClick={formatAsParagraph}
+                    >
                       <FileTextIcon className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
@@ -196,7 +291,12 @@ const BrainDump = () => {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 px-2 text-gray-700">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 px-2 text-gray-700"
+                      onClick={formatAsBullets}
+                    >
                       <ListIcon className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
@@ -225,6 +325,7 @@ const BrainDump = () => {
           ) : (
             <div className="mb-1">
               <Textarea
+                ref={textareaRef}
                 className="w-full h-64 border border-gray-200 rounded-lg p-4 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white shadow-inner"
                 placeholder="Start typing your thoughts here..."
                 value={content}
@@ -250,8 +351,7 @@ const BrainDump = () => {
                 </div>
                 <Progress 
                   value={(characterCount / MAX_CHARACTERS) * 100} 
-                  className="w-32 h-2"
-                  indicatorClassName={characterCount > MAX_CHARACTERS * 0.9 ? "bg-red-500" : "bg-primary"}
+                  className={`w-32 h-2 ${characterCount > MAX_CHARACTERS * 0.9 ? "[&>div]:bg-red-500" : "[&>div]:bg-primary"}`}
                 />
               </div>
             </div>
@@ -266,9 +366,6 @@ const BrainDump = () => {
             <span className="text-sm text-gray-700 font-medium">Your brain dump is private by default</span>
           </div>
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm" className="text-gray-600 border-gray-200">
-              <TagIcon className="mr-1 h-4 w-4" /> Add Tags
-            </Button>
             <Button variant="outline" size="sm" className="text-gray-600 border-gray-200">
               <ShareIcon className="mr-1 h-4 w-4" /> Share
             </Button>
