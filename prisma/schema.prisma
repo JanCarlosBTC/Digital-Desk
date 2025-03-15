@@ -1,0 +1,223 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int      @id @default(autoincrement())
+  username String   @unique
+  password String
+  name     String
+  plan     String   @default("Free")
+  initials String
+  
+  // Relationships
+  brainDumps        BrainDump[]
+  problemTrees      ProblemTree[]
+  draftedPlans      DraftedPlan[]
+  clarityLabs       ClarityLab[]
+  weeklyReflections WeeklyReflection[]
+  monthlyCheckIns   MonthlyCheckIn[]
+  priorities        Priority[]
+  decisions         Decision[]
+  offers            Offer[]
+  offerNotes        OfferNote[]
+  activities        Activity[]
+
+  @@map("users")
+}
+
+model BrainDump {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  content   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+  
+  // Relationship to User
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("brain_dumps")
+}
+
+model ProblemTree {
+  id                Int      @id @default(autoincrement())
+  userId           Int      @map("user_id")
+  title            String
+  mainProblem      String   @map("main_problem")
+  subProblems      String[] @map("sub_problems")
+  rootCauses       String[] @map("root_causes")
+  potentialSolutions String[] @map("potential_solutions")
+  nextActions      String[] @map("next_actions")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @map("updated_at")
+  
+  // Relationship to User
+  user             User     @relation(fields: [userId], references: [id])
+
+  @@map("problem_trees")
+}
+
+model DraftedPlan {
+  id               Int      @id @default(autoincrement())
+  userId           Int      @map("user_id")
+  title            String
+  description      String
+  status           String   @default("Draft")
+  components       String[]
+  resourcesNeeded  String[] @map("resources_needed")
+  expectedOutcomes String[] @map("expected_outcomes")
+  comments         Int      @default(0)
+  attachments      Int      @default(0)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @map("updated_at")
+  
+  // Relationship to User
+  user             User     @relation(fields: [userId], references: [id])
+
+  @@map("drafted_plans")
+}
+
+model ClarityLab {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  title       String
+  description String
+  category    String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @map("updated_at")
+  
+  // Relationship to User
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("clarity_labs")
+}
+
+model WeeklyReflection {
+  id             Int       @id @default(autoincrement())
+  userId         Int       @map("user_id")
+  weekDate       DateTime  @map("week_date")
+  wentWell       String?   @map("went_well")
+  challenges     String?
+  learnings      String?
+  nextWeekFocus  String?   @map("next_week_focus")
+  isDraft        Boolean   @default(true) @map("is_draft")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @map("updated_at")
+  
+  // Relationship to User
+  user           User      @relation(fields: [userId], references: [id])
+
+  @@map("weekly_reflections")
+}
+
+model MonthlyCheckIn {
+  id                  Int       @id @default(autoincrement())
+  userId              Int       @map("user_id")
+  month               Int
+  year                Int
+  completedOn         DateTime? @map("completed_on")
+  achievements        String[]
+  challenges          String[]
+  goalProgress        Json      @map("goal_progress") // Store as JSON for complex structure
+  nextMonthPriorities String[]  @map("next_month_priorities")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @default(now()) @map("updated_at")
+  
+  // Relationship to User
+  user                User      @relation(fields: [userId], references: [id])
+
+  @@map("monthly_check_ins")
+}
+
+model Priority {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  priority  String
+  order     Int
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+  
+  // Relationship to User
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("priorities")
+}
+
+model Decision {
+  id              Int       @id @default(autoincrement())
+  userId          Int       @map("user_id")
+  title           String
+  category        String
+  decisionDate    DateTime  @map("decision_date")
+  why             String
+  alternatives    String?
+  expectedOutcome String?   @map("expected_outcome")
+  followUpDate    DateTime? @map("follow_up_date")
+  status          String    @default("Pending")
+  whatDifferent   String?   @map("what_different")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @default(now()) @map("updated_at")
+  
+  // Relationship to User
+  user            User      @relation(fields: [userId], references: [id])
+
+  @@map("decisions")
+}
+
+model Offer {
+  id             Int       @id @default(autoincrement())
+  userId         Int       @map("user_id")
+  title          String
+  company        String
+  contactPerson  String?   @map("contact_person")
+  role           String
+  offerDate      DateTime  @map("offer_date")
+  status         String    @default("Received")
+  price          String?
+  deadline       DateTime?
+  notes          String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @map("updated_at")
+  
+  // Relationship to User
+  user           User      @relation(fields: [userId], references: [id])
+
+  @@map("offers")
+}
+
+model OfferNote {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+  
+  // Relationship to User
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("offer_notes")
+}
+
+model Activity {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  type       String
+  entityType String   @map("entity_type")
+  entityId   Int      @map("entity_id")
+  action     String
+  metadata   Json
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  // Relationship to User
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@map("activities")
+} 
