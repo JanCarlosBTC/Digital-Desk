@@ -139,8 +139,17 @@ const ProblemTrees = () => {
 
   // Update problem tree mutation
   const updateMutation = useMutation({
-    mutationFn: async (data: { id: number; problemTree: FormValues }) => {
-      return apiRequest('PUT', `/api/problem-trees/${data.id}`, data.problemTree);
+    mutationFn: async (data: { id: number; problemTree: any }) => {
+      // Convert form values to the proper format
+      const formattedData = {
+        title: data.problemTree.title,
+        mainProblem: data.problemTree.mainProblem,
+        subProblems: data.problemTree.subProblems.split('\n').filter(Boolean),
+        rootCauses: data.problemTree.rootCauses.split('\n').filter(Boolean),
+        potentialSolutions: data.problemTree.potentialSolutions.split('\n').filter(Boolean),
+        nextActions: data.problemTree.nextActions.split('\n').filter(Boolean),
+      };
+      return apiRequest('PUT', `/api/problem-trees/${data.id}`, formattedData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
@@ -162,15 +171,8 @@ const ProblemTrees = () => {
 
   const onSubmit = (data: FormValues) => {
     if (selectedProblemTree) {
-      // Format data for update
-      const formattedData = {
-        ...data,
-        subProblems: data.subProblems.split('\n').filter(Boolean),
-        rootCauses: data.rootCauses.split('\n').filter(Boolean),
-        potentialSolutions: data.potentialSolutions.split('\n').filter(Boolean),
-        nextActions: data.nextActions.split('\n').filter(Boolean),
-      };
-      updateMutation.mutate({ id: selectedProblemTree.id, problemTree: formattedData });
+      // For update, pass the form data directly
+      updateMutation.mutate({ id: selectedProblemTree.id, problemTree: data });
     } else {
       createMutation.mutate(data);
     }
@@ -366,57 +368,218 @@ const ProblemTrees = () => {
               </CardContent>
             </Card>
             
-            {/* Problem Tree List */}
+            {/* Problem Tree Search and Filters */}
             {problemTrees.length > 1 && (
               <div className="mt-6">
-                <div className="flex items-center mb-3">
-                  <h3 className="font-medium text-gray-700">Your Other Problem Trees</h3>
-                  <Badge variant="outline" className="ml-2 bg-gray-100 text-gray-700">
-                    {problemTrees.length - 1}
-                  </Badge>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                  <div className="flex items-center">
+                    <h3 className="font-medium text-gray-700">Your Other Problem Trees</h3>
+                    <Badge variant="outline" className="ml-2 bg-gray-100 text-gray-700">
+                      {problemTrees.length - 1}
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    {/* Search */}
+                    <div className="relative">
+                      <Input 
+                        placeholder="Search trees..." 
+                        className="pl-8 h-9 text-sm w-full sm:w-auto"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                      <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+                    </div>
+                    
+                    {/* Sort Dropdown */}
+                    <Select value={sortOption} onValueChange={(value: any) => setSortOption(value)}>
+                      <SelectTrigger className="h-9 w-[130px] text-sm">
+                        <SortAscIcon className="h-3.5 w-3.5 mr-1" />
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="newest">Newest first</SelectItem>
+                        <SelectItem value="oldest">Oldest first</SelectItem>
+                        <SelectItem value="alphabetical">Alphabetical</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    {/* View Mode Toggle */}
+                    <div className="bg-gray-100 rounded-md p-0.5 flex items-center">
+                      <Button
+                        variant={viewMode === "grid" ? "default" : "ghost"}
+                        size="sm"
+                        className={`h-8 rounded-sm px-2 ${viewMode === "grid" ? "bg-white shadow-sm" : "bg-transparent"}`}
+                        onClick={() => setViewMode("grid")}
+                      >
+                        <LayoutGridIcon className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant={viewMode === "list" ? "default" : "ghost"}
+                        size="sm"
+                        className={`h-8 rounded-sm px-2 ${viewMode === "list" ? "bg-white shadow-sm" : "bg-transparent"}`}
+                        onClick={() => setViewMode("list")}
+                      >
+                        <LayoutListIcon className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {problemTrees.slice(1).map((tree) => (
-                    <Card 
-                      key={tree.id}
-                      className="bg-white hover:bg-gray-50 cursor-pointer transition-colors border shadow-sm"
-                    >
-                      <CardContent className="p-4 flex justify-between items-center">
-                        <div className="flex items-center">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
-                            <ChevronDown className="h-4 w-4 text-primary" />
+                {/* Filter & Process Trees */}
+                {(() => {
+                  let filteredTrees = problemTrees.slice(1);
+                  
+                  // Apply search filter
+                  if (searchTerm) {
+                    filteredTrees = filteredTrees.filter(tree => 
+                      tree.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      tree.mainProblem.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      tree.subProblems.some(p => p.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                      tree.rootCauses.some(c => c.toLowerCase().includes(searchTerm.toLowerCase()))
+                    );
+                  }
+                  
+                  // Apply sorting
+                  if (sortOption === "newest") {
+                    filteredTrees.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+                  } else if (sortOption === "oldest") {
+                    filteredTrees.sort((a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
+                  } else if (sortOption === "alphabetical") {
+                    filteredTrees.sort((a, b) => a.title.localeCompare(b.title));
+                  }
+                  
+                  // Display empty state for filtered results
+                  if (filteredTrees.length === 0) {
+                    return (
+                      <div className="text-center p-8 border border-dashed border-gray-200 rounded-lg bg-gray-50/50">
+                        <p className="text-gray-500">No problem trees found matching your search criteria.</p>
+                        {searchTerm && (
+                          <Button
+                            variant="ghost"
+                            className="mt-2 text-sm"
+                            onClick={() => setSearchTerm("")}
+                          >
+                            Clear search
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  }
+                  
+                  // Return appropriate view
+                  return viewMode === "grid" ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {filteredTrees.map((tree) => (
+                        <Card 
+                          key={tree.id}
+                          className="bg-white hover:bg-gray-50 cursor-pointer transition-colors border shadow-sm"
+                        >
+                          <CardContent className="p-4 flex justify-between items-center">
+                            <div className="flex items-center">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                                <ChevronDown className="h-4 w-4 text-primary" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">{tree.title}</p>
+                                <p className="text-gray-500 text-xs">
+                                  {new Date(tree.updatedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-gray-400 hover:text-primary hover:bg-primary/10"
+                                onClick={() => {
+                                  // Find current featured tree index
+                                  const currentIndex = problemTrees.findIndex(t => t.id === tree.id);
+                                  // Create new array with selected tree first
+                                  const reorderedTrees = [
+                                    tree,
+                                    ...problemTrees.slice(0, currentIndex),
+                                    ...problemTrees.slice(currentIndex + 1)
+                                  ];
+                                  // Update query data
+                                  queryClient.setQueryData(['/api/problem-trees'], reorderedTrees);
+                                }}
+                              >
+                                <EyeIcon className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-gray-400 hover:text-primary hover:bg-primary/10"
+                                onClick={() => handleEditProblemTree(tree)}
+                              >
+                                <EditIcon className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="border rounded-md overflow-hidden">
+                      {filteredTrees.map((tree, index) => (
+                        <div key={tree.id} className={`flex items-center justify-between p-3 ${index !== filteredTrees.length - 1 ? 'border-b' : ''}`}>
+                          <div className="flex items-center">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                              <ChevronDown className="h-4 w-4 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">{tree.title}</p>
+                              <div className="flex items-center text-gray-500 text-xs">
+                                <span>{new Date(tree.updatedAt).toLocaleDateString()}</span>
+                                <Badge variant="outline" className="ml-2 h-5 px-1.5 text-xs bg-gray-50">
+                                  {tree.subProblems.length} sub-problem{tree.subProblems.length !== 1 ? 's' : ''}
+                                </Badge>
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-medium text-sm">{tree.title}</p>
-                            <p className="text-gray-500 text-xs">
-                              {new Date(tree.updatedAt).toLocaleDateString()}
-                            </p>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-gray-400 hover:text-primary hover:bg-primary/10"
+                              onClick={() => {
+                                // Find current featured tree index
+                                const currentIndex = problemTrees.findIndex(t => t.id === tree.id);
+                                // Create new array with selected tree first
+                                const reorderedTrees = [
+                                  tree,
+                                  ...problemTrees.slice(0, currentIndex),
+                                  ...problemTrees.slice(currentIndex + 1)
+                                ];
+                                // Update query data
+                                queryClient.setQueryData(['/api/problem-trees'], reorderedTrees);
+                              }}
+                            >
+                              <EyeIcon className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-gray-400 hover:text-primary hover:bg-primary/10"
+                              onClick={() => handleEditProblemTree(tree)}
+                            >
+                              <EditIcon className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                              onClick={() => handleDeleteProblemTree(tree.id)}
+                            >
+                              <TrashIcon className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-gray-400 hover:text-primary hover:bg-primary/10"
-                          onClick={() => {
-                            // Find current featured tree index
-                            const currentIndex = problemTrees.findIndex(t => t.id === tree.id);
-                            // Create new array with selected tree first
-                            const reorderedTrees = [
-                              tree,
-                              ...problemTrees.slice(0, currentIndex),
-                              ...problemTrees.slice(currentIndex + 1)
-                            ];
-                            // Update query data
-                            queryClient.setQueryData(['/api/problem-trees'], reorderedTrees);
-                          }}
-                        >
-                          <EyeIcon className="h-4 w-4" />
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </>
