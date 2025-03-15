@@ -344,7 +344,7 @@ const DecisionList = ({
             {/* Category Filter */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-9 px-3 text-sm">
+                <Button variant="outline" className="h-10 px-3 text-sm">
                   <TagIcon className="h-4 w-4 mr-2" />
                   {categoryFilter || "Category"}
                   {categoryFilter && <span className="ml-1 text-xs">×</span>}
@@ -408,7 +408,7 @@ const DecisionList = ({
             {/* Time Filter */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-9 px-3 text-sm">
+                <Button variant="outline" className="h-10 px-3 text-sm">
                   <CalendarIcon className="h-4 w-4 mr-2" />
                   {timeFilter === "last30days" 
                     ? "Last 30 Days" 
@@ -456,7 +456,7 @@ const DecisionList = ({
             
             {/* Sort By */}
             <Select value={sortBy} onValueChange={handleSortByChange}>
-              <SelectTrigger className="h-9 w-[130px] text-sm">
+              <SelectTrigger className="h-10 w-[130px] text-sm">
                 <SortAscIcon className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
@@ -470,7 +470,7 @@ const DecisionList = ({
             {(categoryFilter || statusFilter || timeFilter || searchQuery) && (
               <Button 
                 variant="ghost" 
-                className="h-9 px-3 text-sm text-gray-500"
+                className="h-10 px-3 text-sm text-gray-500"
                 onClick={() => {
                   setCategoryFilter(null);
                   setStatusFilter(null);
@@ -604,7 +604,7 @@ const DecisionList = ({
           <Button
             onClick={() => setSelectedDecision(null)}
             variant="outline"
-            className="border-success text-success hover:bg-green-50 font-medium"
+            className="border-success text-success hover:bg-green-50 font-medium h-10"
           >
             Log Your First Decision
           </Button>
