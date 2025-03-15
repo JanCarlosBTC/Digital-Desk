@@ -216,6 +216,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/drafted-plans/:id', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteDraftedPlan(parseInt(id));
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Drafted plan not found" });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting drafted plan" });
+    }
+  });
+
   // Clarity Lab endpoints
   app.get('/api/clarity-labs', async (req: Request, res: Response) => {
     try {
@@ -255,6 +270,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(clarityLab);
     } catch (error) {
       handleZodError(error, res);
+    }
+  });
+
+  app.put('/api/clarity-labs/:id', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const data = req.body;
+      
+      const updatedClarityLab = await storage.updateClarityLab(parseInt(id), data);
+      if (!updatedClarityLab) {
+        return res.status(404).json({ message: "Clarity lab entry not found" });
+      }
+      
+      res.json(updatedClarityLab);
+    } catch (error) {
+      res.status(500).json({ message: "Error updating clarity lab entry" });
+    }
+  });
+
+  app.delete('/api/clarity-labs/:id', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteClarityLab(parseInt(id));
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Clarity lab entry not found" });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting clarity lab entry" });
     }
   });
 
@@ -475,6 +521,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertDecisionSchema.parse(data);
       const decision = await storage.createDecision(validatedData);
       
+      // Track decision creation as an activity
+      await storage.createActivity({
+        userId: DEMO_USER_ID,
+        type: "add",
+        entityType: "Decision",
+        entityName: decision.title,
+        metadata: {
+          category: decision.category || "",
+          initialStatus: decision.status || "",
+          decisionDate: decision.decisionDate,
+          date: new Date()
+        }
+      });
+      
       res.status(201).json(decision);
     } catch (error) {
       handleZodError(error, res);
@@ -485,15 +545,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const data = req.body;
+      const parsedId = parseInt(id);
       
-      const updatedDecision = await storage.updateDecision(parseInt(id), data);
-      if (!updatedDecision) {
+      // Get existing decision to detect status changes
+      const existingDecision = await storage.getDecision(parsedId);
+      if (!existingDecision) {
         return res.status(404).json({ message: "Decision not found" });
+      }
+      
+      const updatedDecision = await storage.updateDecision(parsedId, data);
+      if (!updatedDecision) {
+        return res.status(404).json({ message: "Decision not found after update" });
+      }
+      
+      // Track decision status change as an activity
+      if (existingDecision.status !== updatedDecision.status) {
+        await storage.createActivity({
+          userId: DEMO_USER_ID,
+          type: "status_change",
+          entityType: "Decision",
+          entityName: updatedDecision.title,
+          metadata: {
+            oldStatus: existingDecision.status,
+            newStatus: updatedDecision.status,
+            category: updatedDecision.category,
+            date: new Date()
+          }
+        });
       }
       
       res.json(updatedDecision);
     } catch (error) {
       res.status(500).json({ message: "Error updating decision" });
+    }
+  });
+
+  app.delete('/api/decisions/:id', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const parsedId = parseInt(id);
+      
+      // Get the decision before deleting to use its title in the activity log
+      const decision = await storage.getDecision(parsedId);
+      if (!decision) {
+        return res.status(404).json({ message: "Decision not found" });
+      }
+      
+      const deleted = await storage.deleteDecision(parsedId);
+      if (!deleted) {
+        return res.status(404).json({ message: "Decision not found after delete attempt" });
+      }
+      
+      // Track decision deletion as an activity
+      await storage.createActivity({
+        userId: DEMO_USER_ID,
+        type: "delete",
+        entityType: "Decision",
+        entityName: decision.title,
+        metadata: {
+          category: decision.category,
+          status: decision.status,
+          date: new Date()
+        }
+      });
+      
+      res.status(204).end();
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting decision" });
     }
   });
 
@@ -532,6 +650,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertOfferSchema.parse(data);
       const offer = await storage.createOffer(validatedData);
       
+      // Track offer creation as an activity
+      await storage.createActivity({
+        userId: DEMO_USER_ID,
+        type: "add",
+        entityType: "Offer",
+        entityName: offer.title,
+        metadata: {
+          category: offer.category,
+          initialStatus: offer.status,
+          price: offer.price.toString(),
+          date: new Date()
+        }
+      });
+      
       res.status(201).json(offer);
     } catch (error) {
       handleZodError(error, res);
@@ -542,15 +674,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const data = req.body;
+      const parsedId = parseInt(id);
       
-      const updatedOffer = await storage.updateOffer(parseInt(id), data);
-      if (!updatedOffer) {
+      // Get existing offer to detect status changes
+      const existingOffer = await storage.getOffer(parsedId);
+      if (!existingOffer) {
         return res.status(404).json({ message: "Offer not found" });
+      }
+      
+      const updatedOffer = await storage.updateOffer(parsedId, data);
+      if (!updatedOffer) {
+        return res.status(404).json({ message: "Offer not found after update" });
+      }
+      
+      // Track offer status change as an activity
+      if (existingOffer.status !== updatedOffer.status) {
+        await storage.createActivity({
+          userId: DEMO_USER_ID,
+          type: "status_change",
+          entityType: "Offer",
+          entityName: updatedOffer.title,
+          metadata: {
+            oldStatus: existingOffer.status,
+            newStatus: updatedOffer.status,
+            category: updatedOffer.category,
+            price: updatedOffer.price.toString(),
+            date: new Date()
+          }
+        });
       }
       
       res.json(updatedOffer);
     } catch (error) {
       res.status(500).json({ message: "Error updating offer" });
+    }
+  });
+
+  app.delete('/api/offers/:id', async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const parsedId = parseInt(id);
+      
+      // Get the offer before deleting to use its title in the activity log
+      const offer = await storage.getOffer(parsedId);
+      if (!offer) {
+        return res.status(404).json({ message: "Offer not found" });
+      }
+      
+      const deleted = await storage.deleteOffer(parsedId);
+      if (!deleted) {
+        return res.status(404).json({ message: "Offer not found after delete attempt" });
+      }
+      
+      // Track offer deletion as an activity
+      await storage.createActivity({
+        userId: DEMO_USER_ID,
+        type: "delete",
+        entityType: "Offer",
+        entityName: offer.title,
+        metadata: {
+          category: offer.category,
+          status: offer.status,
+          price: offer.price.toString(),
+          date: new Date()
+        }
+      });
+      
+      res.status(204).end();
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting offer" });
     }
   });
 

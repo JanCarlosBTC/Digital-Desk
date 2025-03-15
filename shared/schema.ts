@@ -94,6 +94,7 @@ export const clarityLabs = pgTable("clarity_labs", {
   description: text("description").notNull(),
   category: text("category").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const insertClarityLabSchema = createInsertSchema(clarityLabs).pick({
@@ -252,6 +253,7 @@ export const offers = pgTable("offers", {
   description: text("description").notNull(),
   status: text("status").default("Active").notNull(),
   price: text("price").notNull(),
+  category: text("category").default("Service").notNull(),
   duration: text("duration"),
   format: text("format"),
   clientCount: integer("client_count").default(0),
@@ -270,6 +272,7 @@ export const insertOfferSchema = createInsertSchema(offers)
     description: true,
     status: true,
     price: true,
+    category: true,
     duration: true,
     format: true,
     clientCount: true,
@@ -297,6 +300,18 @@ export const insertOfferNoteSchema = createInsertSchema(offerNotes).pick({
   content: true,
 });
 
+// Activity metadata types
+export type ActivityMetadata = {
+  oldStatus?: string;
+  newStatus?: string;
+  initialStatus?: string;
+  status?: string;
+  category?: string;
+  decisionDate?: Date;
+  date?: Date;
+  price?: string;
+};
+
 // Activities schema
 export const activities = pgTable("activities", {
   id: serial("id").primaryKey(),
@@ -304,14 +319,30 @@ export const activities = pgTable("activities", {
   type: text("type").notNull(),
   entityType: text("entity_type").notNull(),
   entityName: text("entity_name").notNull(),
+  metadata: json("metadata").default({}),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertActivitySchema = createInsertSchema(activities).pick({
+// Create base schema then extend with typed metadata
+const baseActivitySchema = createInsertSchema(activities).pick({
   userId: true,
   type: true,
   entityType: true,
   entityName: true,
+});
+
+// Add metadata field with proper typing
+export const insertActivitySchema = baseActivitySchema.extend({
+  metadata: z.object({
+    oldStatus: z.string().optional(),
+    newStatus: z.string().optional(), 
+    initialStatus: z.string().optional(),
+    status: z.string().optional(), 
+    category: z.string().optional(),
+    decisionDate: z.date().optional(),
+    date: z.date().optional(),
+    price: z.string().optional()
+  }).optional()
 });
 
 // Export types

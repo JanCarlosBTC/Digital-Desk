@@ -36,11 +36,14 @@ export interface IStorage {
   getDraftedPlan(id: number): Promise<DraftedPlan | undefined>;
   createDraftedPlan(draftedPlan: InsertDraftedPlan): Promise<DraftedPlan>;
   updateDraftedPlan(id: number, draftedPlan: Partial<InsertDraftedPlan>): Promise<DraftedPlan | undefined>;
+  deleteDraftedPlan(id: number): Promise<boolean>;
   
   // Clarity Lab methods
   getClarityLabs(userId: number, category?: string): Promise<ClarityLab[]>;
   getClarityLab(id: number): Promise<ClarityLab | undefined>;
   createClarityLab(clarityLab: InsertClarityLab): Promise<ClarityLab>;
+  updateClarityLab(id: number, clarityLab: Partial<InsertClarityLab>): Promise<ClarityLab | undefined>;
+  deleteClarityLab(id: number): Promise<boolean>;
   
   // Weekly Reflections methods
   getWeeklyReflections(userId: number): Promise<WeeklyReflection[]>;
@@ -65,12 +68,14 @@ export interface IStorage {
   getDecision(id: number): Promise<Decision | undefined>;
   createDecision(decision: InsertDecision): Promise<Decision>;
   updateDecision(id: number, decision: Partial<InsertDecision>): Promise<Decision | undefined>;
+  deleteDecision(id: number): Promise<boolean>;
   
   // Offer methods
   getOffers(userId: number): Promise<Offer[]>;
   getOffer(id: number): Promise<Offer | undefined>;
   createOffer(offer: InsertOffer): Promise<Offer>;
   updateOffer(id: number, offer: Partial<InsertOffer>): Promise<Offer | undefined>;
+  deleteOffer(id: number): Promise<boolean>;
   
   // Offer Notes methods
   getOfferNotesByUserId(userId: number): Promise<OfferNote | undefined>;
@@ -315,6 +320,25 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
+  async deleteDraftedPlan(id: number): Promise<boolean> {
+    const existing = this.draftedPlans.get(id);
+    if (!existing) return false;
+    
+    const deleted = this.draftedPlans.delete(id);
+    
+    if (deleted) {
+      // Create activity
+      await this.createActivity({
+        userId: existing.userId,
+        type: "delete",
+        entityType: "Drafted Plan",
+        entityName: existing.title
+      });
+    }
+    
+    return deleted;
+  }
+
   // Clarity Lab methods
   async getClarityLabs(userId: number, category?: string): Promise<ClarityLab[]> {
     let labs = Array.from(this.clarityLabs.values()).filter(lab => lab.userId === userId);
@@ -335,6 +359,7 @@ export class MemStorage implements IStorage {
       ...insertClarityLab, 
       id, 
       createdAt: now, 
+      updatedAt: now
     };
     this.clarityLabs.set(id, clarityLab);
     
@@ -347,6 +372,47 @@ export class MemStorage implements IStorage {
     });
     
     return clarityLab;
+  }
+
+  async updateClarityLab(id: number, clarityLab: Partial<InsertClarityLab>): Promise<ClarityLab | undefined> {
+    const existing = this.clarityLabs.get(id);
+    if (!existing) return undefined;
+    
+    const updated: ClarityLab = { 
+      ...existing, 
+      ...clarityLab, 
+      updatedAt: new Date() 
+    };
+    this.clarityLabs.set(id, updated);
+    
+    // Create activity if updated
+    await this.createActivity({
+      userId: existing.userId,
+      type: "edit",
+      entityType: "Clarity Lab",
+      entityName: updated.title
+    });
+    
+    return updated;
+  }
+
+  async deleteClarityLab(id: number): Promise<boolean> {
+    const existing = this.clarityLabs.get(id);
+    if (!existing) return false;
+    
+    const deleted = this.clarityLabs.delete(id);
+    
+    if (deleted) {
+      // Create activity
+      await this.createActivity({
+        userId: existing.userId,
+        type: "delete",
+        entityType: "Clarity Lab",
+        entityName: existing.title
+      });
+    }
+    
+    return deleted;
   }
 
   // Weekly Reflections methods
@@ -597,9 +663,32 @@ export class MemStorage implements IStorage {
         entityType: "Decision Log",
         entityName: existing.title
       });
+    } else if (decision.title && existing.title !== decision.title) {
+      // Create activity if title changed (edit)
+      await this.createActivity({
+        userId: existing.userId,
+        type: "edit",
+        entityType: "Decision Log",
+        entityName: decision.title
+      });
     }
     
     return updated;
+  }
+
+  async deleteDecision(id: number): Promise<boolean> {
+    const decision = this.decisions.get(id);
+    if (!decision) return false;
+    
+    // Create activity for deletion
+    await this.createActivity({
+      userId: decision.userId,
+      type: "delete",
+      entityType: "Decision Log",
+      entityName: decision.title
+    });
+    
+    return this.decisions.delete(id);
   }
 
   // Offer methods
@@ -664,6 +753,21 @@ export class MemStorage implements IStorage {
     }
     
     return updated;
+  }
+
+  async deleteOffer(id: number): Promise<boolean> {
+    const offer = this.offers.get(id);
+    if (!offer) return false;
+    
+    // Create activity for deletion
+    await this.createActivity({
+      userId: offer.userId,
+      type: "delete",
+      entityType: "Offer",
+      entityName: offer.title
+    });
+    
+    return this.offers.delete(id);
   }
 
   // Offer Notes methods

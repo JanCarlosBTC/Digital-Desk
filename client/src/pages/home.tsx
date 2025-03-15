@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import ToolCard from "@/components/tool-card";
 import { BrainIcon, ClipboardCheckIcon, ListChecksIcon, ArchiveIcon } from "lucide-react";
-import { Activity } from "@shared/schema";
+import { Activity, ActivityMetadata } from "@shared/schema";
 
 const Home = () => {
   // Fetch recent activities
@@ -137,9 +137,44 @@ const Home = () => {
                   "edit": "updated",
                   "update": "updated",
                   "delete": "deleted",
-                  "complete": "completed"
+                  "complete": "completed",
+                  "status_change": "updated the status of"
                 };
                 
+                // Special handling for status changes to be more descriptive
+                if (activity.type === "status_change" && activity.entityType === "Decision" && activity.metadata) {
+                  const metadata = activity.metadata as ActivityMetadata;
+                  return (
+                    <p className="text-gray-700">
+                      You changed the status of <span className="font-medium">{activity.entityName}</span> 
+                      from <span className="text-gray-800 font-medium">{metadata.oldStatus}</span> to <span className="text-gray-800 font-medium">{metadata.newStatus}</span>
+                    </p>
+                  );
+                }
+                
+                // For adding decisions with metadata
+                if (activity.type === "add" && activity.entityType === "Decision" && activity.metadata) {
+                  const metadata = activity.metadata as ActivityMetadata;
+                  return (
+                    <p className="text-gray-700">
+                      You created a new decision <span className="font-medium">{activity.entityName}</span> with 
+                      initial status <span className="text-gray-800 font-medium">{metadata.initialStatus || 'Unknown'}</span>
+                    </p>
+                  );
+                }
+                
+                // For deleting decisions with metadata
+                if (activity.type === "delete" && activity.entityType === "Decision" && activity.metadata) {
+                  const metadata = activity.metadata as ActivityMetadata;
+                  return (
+                    <p className="text-gray-700">
+                      You deleted the decision <span className="font-medium">{activity.entityName}</span> that had 
+                      status <span className="text-gray-800 font-medium">{metadata.status || 'Unknown'}</span>
+                    </p>
+                  );
+                }
+                
+                // Default case
                 return (
                   <p className="text-gray-700">
                     You {actionVerb[activity.type as keyof typeof actionVerb] || activity.type} <span className="font-medium">{activity.entityName}</span>

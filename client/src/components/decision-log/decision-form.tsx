@@ -12,9 +12,23 @@ import { z } from "zod";
 import { Decision } from "@shared/schema";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { TrashIcon } from "lucide-react";
 
 interface DecisionFormProps {
   selectedDecision: Decision | null;
+  onSuccess?: () => void;
+  isDialog?: boolean;
 }
 
 const formSchema = z.object({
@@ -28,14 +42,16 @@ const formSchema = z.object({
   expectedOutcome: z.string().optional(),
   followUpDate: z.string().optional(),
   whatDifferent: z.string().optional(),
+  status: z.enum(["Pending", "Successful", "Failed"]).default("Pending"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
+const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: DecisionFormProps) => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Added for loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -48,6 +64,7 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
       expectedOutcome: "",
       followUpDate: "",
       whatDifferent: "",
+      status: "Pending",
     },
   });
 
@@ -66,6 +83,7 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
           ? format(new Date(selectedDecision.followUpDate), "yyyy-MM-dd") 
           : "",
         whatDifferent: selectedDecision.whatDifferent || "",
+        status: (selectedDecision.status as "Pending" | "Successful" | "Failed") || "Pending",
       });
     } else {
       setIsEditing(false);
@@ -78,6 +96,7 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
         expectedOutcome: "",
         followUpDate: "",
         whatDifferent: "",
+        status: "Pending",
       });
     }
   }, [selectedDecision, form]);
@@ -117,7 +136,13 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
           expectedOutcome: "",
           followUpDate: "",
           whatDifferent: "",
+          status: "Pending",
         });
+      }
+      
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
       }
     },
     onError: (error) => {
@@ -133,7 +158,33 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
     onSettled: () => {
       setIsSubmitting(false);
     },
+  });
 
+  // Delete decision mutation
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedDecision) return;
+      return apiRequest('DELETE', `/api/decisions/${selectedDecision.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/decisions'] });
+      toast({
+        title: "Decision deleted",
+        description: "The decision has been deleted successfully.",
+        variant: "success",
+      });
+      setIsEditing(false);
+      if (onSuccess) {
+        onSuccess();
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Error deleting decision",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    }
   });
 
   const onSubmit = (data: FormValues) => {
@@ -150,12 +201,17 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
       expectedOutcome: "",
       followUpDate: "",
       whatDifferent: "",
+      status: "Pending",
     });
     setIsEditing(false);
   };
 
+  const handleDelete = () => {
+    deleteMutation.mutate();
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 sticky top-6">
+    <div className={`bg-white ${!isDialog ? 'rounded-lg shadow-md p-6 border border-gray-200 sticky top-6' : ''}`}>
       <h2 className="text-xl font-semibold text-gray-800 mb-4">
         {isEditing ? "Edit Decision" : "Log a New Decision"}
       </h2>
@@ -186,7 +242,7 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
                 <FormLabel>Category</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-10 px-4 py-2 flex items-center">
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                   </FormControl>
@@ -284,48 +340,109 @@ const DecisionForm = ({ selectedDecision }: DecisionFormProps) => {
           />
 
           {isEditing && (
-            <FormField
-              control={form.control}
-              name="whatDifferent"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>What would you do differently?</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Reflecting on this decision, what would you change?"
-                      rows={2}
-                      {...field} 
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+            <>
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Decision Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-10 px-4 py-2 flex items-center">
+                          <SelectValue placeholder="Select the status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                        <SelectItem value="Successful">Successful</SelectItem>
+                        <SelectItem value="Failed">Failed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Track whether this decision was successful or failed over time.
+                    </p>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="whatDifferent"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>What would you do differently?</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Reflecting on this decision, what would you change?"
+                        rows={2}
+                        {...field} 
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </>
           )}
 
-          <div className="flex justify-end space-x-2 pt-4">
-            {isEditing && (
-              <Button
-                type="button"
-                variant="outline"
-                className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-medium"
-                onClick={handleCancel}
+          <div className="flex justify-between space-x-2 pt-4">
+            <div>
+              {isEditing && (
+                <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-red-500 text-red-600 hover:bg-red-50 font-medium h-10 px-4 py-2 flex items-center"
+                    >
+                      <TrashIcon className="mr-1 h-4 w-4" /> Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the decision.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="h-10 px-4 py-2 flex items-center">Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleDelete}
+                        className="bg-red-500 text-white hover:bg-red-600 h-10 px-4 py-2 flex items-center"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
+            <div className="flex justify-end space-x-2">
+              {isEditing && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-medium h-10 px-4 py-2 flex items-center"
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </Button>
+              )}
+              <Button 
+                type="submit"
+                variant="default"
+                className="bg-emerald-500 text-white hover:bg-emerald-600 font-medium shadow-sm h-10 px-4 py-2 flex items-center"
+                disabled={mutation.isPending || isSubmitting} //Added isSubmitting to disable button
               >
-                Cancel
+                {mutation.isPending || isSubmitting
+                  ? "Saving..." 
+                  : isEditing 
+                    ? "Update Decision" 
+                    : "Save Decision"
+                }
               </Button>
-            )}
-            <Button 
-              type="submit"
-              variant="default"
-              className="bg-emerald-500 text-white hover:bg-emerald-600 font-medium shadow-sm"
-              disabled={mutation.isPending || isSubmitting} //Added isSubmitting to disable button
-            >
-              {mutation.isPending || isSubmitting
-                ? "Saving..." 
-                : isEditing 
-                  ? "Update Decision" 
-                  : "Save Decision"
-              }
-            </Button>
+            </div>
           </div>
         </form>
       </Form>
