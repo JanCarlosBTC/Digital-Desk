@@ -526,7 +526,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: DEMO_USER_ID,
         type: "add",
         entityType: "Decision",
-        entityName: decision.title
+        entityName: decision.title,
+        metadata: {
+          category: decision.category,
+          initialStatus: decision.status,
+          decisionDate: decision.decisionDate,
+          date: new Date()
+        }
       });
       
       res.status(201).json(decision);
@@ -558,7 +564,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: DEMO_USER_ID,
           type: "status_change",
           entityType: "Decision",
-          entityName: updatedDecision.title
+          entityName: updatedDecision.title,
+          metadata: {
+            oldStatus: existingDecision.status,
+            newStatus: updatedDecision.status,
+            category: updatedDecision.category,
+            date: new Date()
+          }
         });
       }
       
@@ -589,7 +601,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: DEMO_USER_ID,
         type: "delete",
         entityType: "Decision",
-        entityName: decision.title
+        entityName: decision.title,
+        metadata: {
+          category: decision.category,
+          status: decision.status,
+          date: new Date()
+        }
       });
       
       res.status(204).end();

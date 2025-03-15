@@ -305,6 +305,7 @@ export const activities = pgTable("activities", {
   type: text("type").notNull(),
   entityType: text("entity_type").notNull(),
   entityName: text("entity_name").notNull(),
+  metadata: json("metadata").$type<Record<string, any>>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -313,6 +314,7 @@ export const insertActivitySchema = createInsertSchema(activities).pick({
   type: true,
   entityType: true,
   entityName: true,
+  metadata: true,
 });
 
 // Export types

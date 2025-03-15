@@ -142,14 +142,36 @@ const Home = () => {
                 };
                 
                 // Special handling for status changes to be more descriptive
-                if (activity.type === "status_change" && activity.entityType === "Decision") {
+                if (activity.type === "status_change" && activity.entityType === "Decision" && activity.metadata) {
                   return (
                     <p className="text-gray-700">
-                      You changed the status of <span className="font-medium">{activity.entityName}</span>
+                      You changed the status of <span className="font-medium">{activity.entityName}</span> 
+                      from <span className="text-gray-800 font-medium">{activity.metadata.oldStatus}</span> to <span className="text-gray-800 font-medium">{activity.metadata.newStatus}</span>
                     </p>
                   );
                 }
                 
+                // For adding decisions with metadata
+                if (activity.type === "add" && activity.entityType === "Decision" && activity.metadata) {
+                  return (
+                    <p className="text-gray-700">
+                      You created a new decision <span className="font-medium">{activity.entityName}</span> with 
+                      initial status <span className="text-gray-800 font-medium">{activity.metadata.initialStatus}</span>
+                    </p>
+                  );
+                }
+                
+                // For deleting decisions with metadata
+                if (activity.type === "delete" && activity.entityType === "Decision" && activity.metadata) {
+                  return (
+                    <p className="text-gray-700">
+                      You deleted the decision <span className="font-medium">{activity.entityName}</span> that had 
+                      status <span className="text-gray-800 font-medium">{activity.metadata.status}</span>
+                    </p>
+                  );
+                }
+                
+                // Default case
                 return (
                   <p className="text-gray-700">
                     You {actionVerb[activity.type as keyof typeof actionVerb] || activity.type} <span className="font-medium">{activity.entityName}</span>
