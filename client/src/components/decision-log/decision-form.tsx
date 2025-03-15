@@ -42,6 +42,7 @@ const formSchema = z.object({
   expectedOutcome: z.string().optional(),
   followUpDate: z.string().optional(),
   whatDifferent: z.string().optional(),
+  status: z.enum(["Pending", "Successful", "Failed"]).default("Pending"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -63,6 +64,7 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
       expectedOutcome: "",
       followUpDate: "",
       whatDifferent: "",
+      status: "Pending",
     },
   });
 
@@ -81,6 +83,7 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
           ? format(new Date(selectedDecision.followUpDate), "yyyy-MM-dd") 
           : "",
         whatDifferent: selectedDecision.whatDifferent || "",
+        status: (selectedDecision.status as "Pending" | "Successful" | "Failed") || "Pending",
       });
     } else {
       setIsEditing(false);
@@ -93,6 +96,7 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
         expectedOutcome: "",
         followUpDate: "",
         whatDifferent: "",
+        status: "Pending",
       });
     }
   }, [selectedDecision, form]);
@@ -132,6 +136,7 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
           expectedOutcome: "",
           followUpDate: "",
           whatDifferent: "",
+          status: "Pending",
         });
       }
       
@@ -196,6 +201,7 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
       expectedOutcome: "",
       followUpDate: "",
       whatDifferent: "",
+      status: "Pending",
     });
     setIsEditing(false);
   };
