@@ -263,6 +263,20 @@ const DecisionList = ({
         return "bg-gray-100 text-gray-800";
     }
   };
+  
+  // Get status badge color
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Successful":
+        return "bg-green-100 text-green-800";
+      case "Failed":
+        return "bg-red-100 text-red-800";
+      case "Pending":
+        return "bg-amber-100 text-amber-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
@@ -488,15 +502,14 @@ const DecisionList = ({
             >
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <span className={`text-xs font-medium px-2.5 py-0.5 rounded mb-2 inline-block ${
-                    decision.status === "Failed"
-                      ? "bg-red-100 text-red-800"
-                      : decision.status === "Successful"
-                        ? "bg-green-100 text-green-800"
-                        : getCategoryColor(decision.category)
-                  }`}>
-                    {decision.status === "Pending" ? decision.category : decision.status}
-                  </span>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    <span className={`text-xs font-medium px-2.5 py-0.5 rounded inline-block ${getCategoryColor(decision.category)}`}>
+                      {decision.category}
+                    </span>
+                    <span className={`text-xs font-medium px-2.5 py-0.5 rounded inline-block ${getStatusColor(decision.status)}`}>
+                      {decision.status}
+                    </span>
+                  </div>
                   <h3 className="font-medium text-lg">{decision.title}</h3>
                 </div>
                 <span className="text-sm text-gray-500">

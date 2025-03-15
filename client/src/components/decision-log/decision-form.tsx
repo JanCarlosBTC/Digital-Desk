@@ -340,22 +340,49 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
           />
 
           {isEditing && (
-            <FormField
-              control={form.control}
-              name="whatDifferent"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>What would you do differently?</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Reflecting on this decision, what would you change?"
-                      rows={2}
-                      {...field} 
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+            <>
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Decision Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select the status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                        <SelectItem value="Successful">Successful</SelectItem>
+                        <SelectItem value="Failed">Failed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Track whether this decision was successful or failed over time.
+                    </p>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="whatDifferent"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>What would you do differently?</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Reflecting on this decision, what would you change?"
+                        rows={2}
+                        {...field} 
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </>
           )}
 
           <div className="flex justify-between space-x-2 pt-4">
