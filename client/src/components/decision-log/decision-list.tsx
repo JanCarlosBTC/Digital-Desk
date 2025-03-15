@@ -332,7 +332,7 @@ const DecisionList = ({
               
               <Button
                 onClick={handleNewDecisionClick}
-                className="bg-emerald-500 text-white hover:bg-emerald-600 transition-colors font-medium h-10"
+                className="bg-emerald-500 text-white hover:bg-emerald-600 transition-colors font-medium h-10 px-4 py-2 flex items-center"
               >
                 <PlusIcon className="mr-1 h-4 w-4" /> New Decision
               </Button>
@@ -344,7 +344,7 @@ const DecisionList = ({
             {/* Category Filter */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-10 px-3 text-sm">
+                <Button variant="outline" className="h-10 px-4 py-2 text-sm flex items-center">
                   <TagIcon className="h-4 w-4 mr-2" />
                   {categoryFilter || "Category"}
                   {categoryFilter && <span className="ml-1 text-xs">×</span>}
@@ -408,7 +408,7 @@ const DecisionList = ({
             {/* Time Filter */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-10 px-3 text-sm">
+                <Button variant="outline" className="h-10 px-4 py-2 text-sm flex items-center">
                   <CalendarIcon className="h-4 w-4 mr-2" />
                   {timeFilter === "last30days" 
                     ? "Last 30 Days" 
@@ -456,7 +456,7 @@ const DecisionList = ({
             
             {/* Sort By */}
             <Select value={sortBy} onValueChange={handleSortByChange}>
-              <SelectTrigger className="h-10 w-[130px] text-sm">
+              <SelectTrigger className="h-10 px-4 py-2 w-[130px] text-sm flex items-center">
                 <SortAscIcon className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
@@ -470,7 +470,7 @@ const DecisionList = ({
             {(categoryFilter || statusFilter || timeFilter || searchQuery) && (
               <Button 
                 variant="ghost" 
-                className="h-10 px-3 text-sm text-gray-500"
+                className="h-10 px-4 py-2 text-sm text-gray-500 flex items-center"
                 onClick={() => {
                   setCategoryFilter(null);
                   setStatusFilter(null);
@@ -604,7 +604,7 @@ const DecisionList = ({
           <Button
             onClick={() => setSelectedDecision(null)}
             variant="outline"
-            className="border-success text-success hover:bg-green-50 font-medium h-10"
+            className="border-success text-success hover:bg-green-50 font-medium h-10 px-4 py-2 flex items-center"
           >
             Log Your First Decision
           </Button>
