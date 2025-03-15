@@ -12,6 +12,18 @@ import { z } from "zod";
 import { Decision } from "@shared/schema";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { TrashIcon } from "lucide-react";
 
 interface DecisionFormProps {
   selectedDecision: Decision | null;
@@ -37,7 +49,8 @@ type FormValues = z.infer<typeof formSchema>;
 const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: DecisionFormProps) => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Added for loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -142,6 +155,33 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
     },
   });
 
+  // Delete decision mutation
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedDecision) return;
+      return apiRequest('DELETE', `/api/decisions/${selectedDecision.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/decisions'] });
+      toast({
+        title: "Decision deleted",
+        description: "The decision has been deleted successfully.",
+        variant: "success",
+      });
+      setIsEditing(false);
+      if (onSuccess) {
+        onSuccess();
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Error deleting decision",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const onSubmit = (data: FormValues) => {
     mutation.mutate(data);
   };
@@ -158,6 +198,10 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
       whatDifferent: "",
     });
     setIsEditing(false);
+  };
+
+  const handleDelete = () => {
+    deleteMutation.mutate();
   };
 
   return (
@@ -308,30 +352,64 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
             />
           )}
 
-          <div className="flex justify-end space-x-2 pt-4">
-            {isEditing && (
-              <Button
-                type="button"
-                variant="outline"
-                className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-medium"
-                onClick={handleCancel}
+          <div className="flex justify-between space-x-2 pt-4">
+            <div>
+              {isEditing && (
+                <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-red-500 text-red-600 hover:bg-red-50 font-medium"
+                    >
+                      <TrashIcon className="mr-1 h-4 w-4" /> Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the decision.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleDelete}
+                        className="bg-red-500 text-white hover:bg-red-600"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
+            <div className="flex justify-end space-x-2">
+              {isEditing && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-medium"
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </Button>
+              )}
+              <Button 
+                type="submit"
+                variant="default"
+                className="bg-emerald-500 text-white hover:bg-emerald-600 font-medium shadow-sm"
+                disabled={mutation.isPending || isSubmitting} //Added isSubmitting to disable button
               >
-                Cancel
+                {mutation.isPending || isSubmitting
+                  ? "Saving..." 
+                  : isEditing 
+                    ? "Update Decision" 
+                    : "Save Decision"
+                }
               </Button>
-            )}
-            <Button 
-              type="submit"
-              variant="default"
-              className="bg-emerald-500 text-white hover:bg-emerald-600 font-medium shadow-sm"
-              disabled={mutation.isPending || isSubmitting} //Added isSubmitting to disable button
-            >
-              {mutation.isPending || isSubmitting
-                ? "Saving..." 
-                : isEditing 
-                  ? "Update Decision" 
-                  : "Save Decision"
-              }
-            </Button>
+            </div>
           </div>
         </form>
       </Form>

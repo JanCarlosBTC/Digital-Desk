@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Decision } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FilterIcon, EyeIcon, CheckCircleIcon, PlusIcon } from "lucide-react";
+import { FilterIcon, EyeIcon, CheckCircleIcon, PlusIcon, EditIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -14,9 +14,16 @@ interface DecisionListProps {
   isLoading: boolean;
   setSelectedDecision: (decision: Decision | null) => void;
   onNewDecisionClick?: () => void;
+  onViewDetailsClick?: (decision: Decision) => void;
 }
 
-const DecisionList = ({ decisions, isLoading, setSelectedDecision, onNewDecisionClick }: DecisionListProps) => {
+const DecisionList = ({ 
+  decisions, 
+  isLoading, 
+  setSelectedDecision, 
+  onNewDecisionClick,
+  onViewDetailsClick 
+}: DecisionListProps) => {
   const { toast } = useToast();
   const [filter, setFilter] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -44,6 +51,21 @@ const DecisionList = ({ decisions, isLoading, setSelectedDecision, onNewDecision
   });
 
   const handleSelectDecision = (decision: Decision) => {
+    setSelectedDecision(decision);
+  };
+
+  const handleViewDetails = (decision: Decision, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onViewDetailsClick) {
+      onViewDetailsClick(decision);
+    } else {
+      // Default behavior: select the decision to view in detail
+      setSelectedDecision(decision);
+    }
+  };
+
+  const handleEditDecision = (decision: Decision, e: React.MouseEvent) => {
+    e.stopPropagation();
     setSelectedDecision(decision);
   };
 
@@ -190,8 +212,17 @@ const DecisionList = ({ decisions, isLoading, setSelectedDecision, onNewDecision
                     <CheckCircleIcon className="mr-1 h-4 w-4" /> Mark as Successful
                   </button>
                 )}
-                <button className="text-gray-600 hover:text-primary font-medium transition-colors flex items-center text-sm">
+                <button 
+                  className="text-gray-600 hover:text-primary font-medium transition-colors flex items-center text-sm mr-3"
+                  onClick={(e) => handleViewDetails(decision, e)}
+                >
                   <EyeIcon className="mr-1 h-4 w-4" /> View Details
+                </button>
+                <button 
+                  className="text-blue-600 hover:text-blue-800 font-medium transition-colors flex items-center text-sm"
+                  onClick={(e) => handleEditDecision(decision, e)}
+                >
+                  <EditIcon className="mr-1 h-4 w-4" /> Edit
                 </button>
               </div>
             </div>
