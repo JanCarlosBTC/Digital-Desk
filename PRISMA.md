@@ -21,7 +21,7 @@ The migration process involves:
 ## Step 1: Install Dependencies
 
 ```bash
-npm install @prisma/client
+npm install @prisma/client postgres
 npm install --save-dev prisma
 ```
 
@@ -59,7 +59,17 @@ If you're using an existing database with data:
 npx prisma db push
 ```
 
-## Step 6: Migrate Data (if using existing database)
+## Step 6: Initialize a New Database (if needed)
+
+If you're starting with a fresh database, you can run the initialization script:
+
+```bash
+npx ts-node scripts/init-prisma-db.ts
+```
+
+This will create a demo user and some initial data.
+
+## Step 7: Migrate Data (if using existing database)
 
 Run the data migration script to transfer data from Drizzle format to Prisma:
 
@@ -67,34 +77,69 @@ Run the data migration script to transfer data from Drizzle format to Prisma:
 npx ts-node scripts/migrate-to-prisma.ts
 ```
 
-## Step 7: Update Application to Use Prisma
+## Step 8: Update Application to Use Prisma
 
 The application is configured to use Prisma when the `DATABASE_URL` environment variable is set. The implementation automatically switches between in-memory storage and Prisma-based storage.
+
+## Known Issues and Troubleshooting
+
+### Type Mismatches
+
+There are some type compatibility issues between the Drizzle models and Prisma models. These have been addressed in the Prisma schema, but you may encounter linter errors in the following areas:
+
+1. **Optional vs. Required Fields**: Prisma has stricter typing for null vs. undefined values. Ensure required fields have default values if needed.
+
+2. **Array Types**: Ensure array fields are properly defined in Prisma schema with the correct element types.
+
+3. **DateTime Handling**: Prisma has specific handling for date fields, which may differ from Drizzle.
+
+4. **JSON Fields**: When working with JSON fields, ensure the expected structure matches the Prisma typing.
+
+If you encounter linter errors, you may need to update your schema or add type assertions where appropriate.
+
+### Database Connection
+
+When setting up your database connection, ensure:
+
+- The PostgreSQL server is running and accessible
+- The database exists - you may need to create it manually
+- The connection string is formatted correctly
+- The user has sufficient permissions 
+
+### Common Commands
+
+```
+# General prisma commands
+npx prisma generate  # Generate client after schema changes
+npx prisma db push   # Update database schema without migrations
+npx prisma studio    # Visual database explorer
+
+# Migration commands
+npx prisma migrate dev    # Create and apply migrations in development
+npx prisma migrate deploy # Apply existing migrations in production
+```
 
 ## Testing the Migration
 
 1. Start the application with the `DATABASE_URL` set:
 
 ```bash
-DATABASE_URL="postgresql://user:password@localhost:5432/digital_desk" npm run dev
+$env:DATABASE_URL="postgresql://user:password@localhost:5432/digital_desk" # PowerShell
+# or 
+export DATABASE_URL="postgresql://user:password@localhost:5432/digital_desk" # Bash/Zsh
+npm run dev
 ```
 
 2. Verify that all functionality works as expected with Prisma
-
-## Troubleshooting
-
-- If you encounter type errors, make sure to run `npx prisma generate` after any schema changes
-- For database connection issues, verify your `DATABASE_URL` is correct and accessible
-- Check Prisma logs by setting `NODE_ENV=development`
 
 ## Reverting to Drizzle
 
 If you need to revert to Drizzle, simply clear the `DATABASE_URL` environment variable:
 
 ```bash
-unset DATABASE_URL  # for Unix/Linux/Mac
+$env:DATABASE_URL="" # PowerShell
 # or
-set DATABASE_URL=   # for Windows
+unset DATABASE_URL  # Unix/Linux/Mac
 ```
 
 Then restart the application. 

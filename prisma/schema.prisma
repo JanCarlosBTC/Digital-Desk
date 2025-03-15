@@ -176,16 +176,16 @@ model Offer {
   id             Int       @id @default(autoincrement())
   userId         Int       @map("user_id")
   title          String
-  company        String
-  contactPerson  String?   @map("contact_person")
-  role           String
-  offerDate      DateTime  @map("offer_date")
-  status         String    @default("Received")
-  price          String?
-  deadline       DateTime?
-  notes          String?
+  description    String
+  status         String    @default("Active")
+  price          String
+  category       String    @default("Service")
+  duration       String?
+  format         String?
+  clientCount    Int?      @default(0) @map("client_count")
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @default(now()) @map("updated_at")
+  archivedAt     DateTime? @map("archived_at")
   
   // Relationship to User
   user           User      @relation(fields: [userId], references: [id])
@@ -211,8 +211,7 @@ model Activity {
   userId     Int      @map("user_id")
   type       String
   entityType String   @map("entity_type")
-  entityId   Int      @map("entity_id")
-  action     String
+  entityName String   @map("entity_name")
   metadata   Json
   createdAt  DateTime @default(now()) @map("created_at")
   
