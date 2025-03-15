@@ -1,6 +1,9 @@
 modules = ["nodejs-20", "bash", "web"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
+enablePackageManagement = true
+enableGlobalPackageManagement = true
+allowFileEdits = true
 
 [nix]
 channel = "stable-24_05"
