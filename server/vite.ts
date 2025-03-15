@@ -6,8 +6,18 @@ import { createServer as createViteServer, createLogger } from "vite";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 import { type Server } from "http";
-import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
+
+// Import vite config
+// The import will need to be handled differently in CommonJS
+let viteConfig: any = {};
+try {
+  // Dynamic import for compatibility
+  const configModule = require("../vite.config");
+  viteConfig = configModule.default || configModule;
+} catch (error) {
+  console.error("Error loading vite config:", error);
+}
 
 const viteLogger = createLogger();
 
