@@ -39,7 +39,7 @@ const DecisionLog = () => {
           <DialogTrigger asChild>
             <Button 
               onClick={handleNewDecisionClick}
-              className="bg-emerald-500 text-white hover:bg-emerald-600 transition-colors font-medium"
+              className="bg-emerald-500 text-white hover:bg-emerald-600 transition-colors font-medium h-10"
             >
               <PlusIcon className="mr-1 h-4 w-4" /> New Decision
             </Button>
@@ -126,7 +126,7 @@ const DecisionLog = () => {
                     setSelectedDecision(viewingDecision);
                     setDialogOpen(true);
                   }}
-                  className="bg-blue-500 text-white hover:bg-blue-600"
+                  className="bg-blue-500 text-white hover:bg-blue-600 h-10"
                 >
                   Edit Decision
                 </Button>
