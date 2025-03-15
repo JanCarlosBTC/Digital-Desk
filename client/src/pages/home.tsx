@@ -169,7 +169,7 @@ const Home = () => {
                   return (
                     <p className="text-gray-700">
                       You deleted the decision <span className="font-medium">{activity.entityName}</span> that had 
-                      status <span className="text-gray-800 font-medium">{metadata.status}</span>
+                      status <span className="text-gray-800 font-medium">{metadata.status || 'Unknown'}</span>
                     </p>
                   );
                 }
