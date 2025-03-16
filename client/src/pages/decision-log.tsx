@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import DecisionList from "@/components/decision-log/decision-list";
 import DecisionForm from "@/components/decision-log/decision-form";
 import { useQuery } from "@tanstack/react-query";
