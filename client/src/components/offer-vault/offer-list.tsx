@@ -309,10 +309,10 @@ const OfferList = () => {
 
       {/* New Offer Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-[850px] max-h-[90vh] overflow-y-auto p-0 gap-0">
+        <DialogContent className="sm:max-w-[850px] max-h-[90vh] overflow-y-auto p-0 gap-0" aria-describedby="new-offer-description">
           <DialogHeader className="px-8 py-6 border-b border-gray-100 bg-gray-50 rounded-t-lg">
             <DialogTitle className="text-2xl font-semibold text-gray-800">Create New Offer</DialogTitle>
-            <p className="text-gray-600 mt-1.5">Add products and services to your portfolio to track sales and manage your catalog.</p>
+            <p id="new-offer-description" className="text-gray-600 mt-1.5">Add products and services to your portfolio to track sales and manage your catalog.</p>
           </DialogHeader>
           
           <div className="px-8 py-6">
@@ -451,10 +451,10 @@ const OfferList = () => {
       
       {/* Edit Offer Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[850px] max-h-[90vh] overflow-y-auto p-0 gap-0">
+        <DialogContent className="sm:max-w-[850px] max-h-[90vh] overflow-y-auto p-0 gap-0" aria-describedby="edit-offer-description">
           <DialogHeader className="px-8 py-6 border-b border-gray-100 bg-gray-50 rounded-t-lg">
             <DialogTitle className="text-2xl font-semibold text-gray-800">Edit Offer</DialogTitle>
-            <p className="text-gray-600 mt-1.5">Update the details of your product or service offering.</p>
+            <p id="edit-offer-description" className="text-gray-600 mt-1.5">Update the details of your product or service offering.</p>
           </DialogHeader>
           
           <div className="px-8 py-6">
