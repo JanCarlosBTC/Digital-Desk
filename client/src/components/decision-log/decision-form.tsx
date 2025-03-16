@@ -436,18 +436,23 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
                         <TrashIcon className="mr-1 h-4 w-4" /> Delete
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
+                    <AlertDialogContent className="p-0 gap-0 overflow-hidden max-w-md">
+                      <AlertDialogHeader className="px-6 py-5 border-b border-gray-200 bg-gradient-to-r from-red-50 to-white">
+                        <AlertDialogTitle className="text-xl font-semibold text-gray-800">Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-gray-600 mt-1.5">
                           This action cannot be undone. This will permanently delete the decision.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel className="h-10 px-4 py-2 flex items-center">Cancel</AlertDialogCancel>
+                      <div className="px-6 py-5 bg-white">
+                        <p className="text-gray-600">
+                          Once deleted, you will not be able to recover any data associated with this decision.
+                        </p>
+                      </div>
+                      <AlertDialogFooter className="flex justify-end space-x-2 px-6 py-4 border-t border-gray-200 bg-gray-50">
+                        <AlertDialogCancel className="font-medium h-10 px-5 py-2 flex items-center">Cancel</AlertDialogCancel>
                         <AlertDialogAction 
                           onClick={handleDelete}
-                          className="bg-red-500 text-white hover:bg-red-600 h-10 px-4 py-2 flex items-center"
+                          className="bg-red-500 text-white hover:bg-red-600 font-medium shadow-sm h-10 px-5 py-2 flex items-center"
                         >
                           Delete
                         </AlertDialogAction>
