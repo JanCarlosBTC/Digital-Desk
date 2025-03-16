@@ -5,7 +5,15 @@ import { useQuery } from "@tanstack/react-query";
 import { Decision } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "lucide-react";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger 
+} from "@/components/ui/dialog";
 
 const DecisionLog = () => {
   const [selectedDecision, setSelectedDecision] = useState<Decision | null>(null);
@@ -44,82 +52,102 @@ const DecisionLog = () => {
               <PlusIcon className="mr-1 h-4 w-4" /> New Decision
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto p-6">
-            <DecisionForm 
-              selectedDecision={selectedDecision} 
-              onSuccess={() => setDialogOpen(false)}
-              isDialog={true}
-            />
+          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="pb-4 border-b">
+              <DialogTitle className="text-2xl font-semibold text-gray-800">
+                {selectedDecision ? "Edit Decision" : "Log a New Decision"}
+              </DialogTitle>
+              <DialogDescription className="text-gray-600">
+                Record important decisions to track outcomes and improve over time.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <DecisionForm 
+                selectedDecision={selectedDecision} 
+                onSuccess={() => setDialogOpen(false)}
+                isDialog={true}
+              />
+            </div>
           </DialogContent>
         </Dialog>
       </div>
 
       {/* Details View Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto p-6">
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
           {viewingDecision && (
-            <div className="p-2">
-              <h2 className="text-xl font-semibold text-gray-800 mb-6">{viewingDecision.title}</h2>
-              
-              <div className="grid grid-cols-1 gap-6 mb-6">
-                <div className="space-y-2">
-                  <h3 className="font-medium text-gray-700">Category</h3>
-                  <p className="text-gray-600">{viewingDecision.category}</p>
-                </div>
-                
-                <div className="space-y-2">
-                  <h3 className="font-medium text-gray-700">Decision Date</h3>
-                  <p className="text-gray-600">{new Date(viewingDecision.decisionDate).toLocaleDateString()}</p>
-                </div>
-                
-                <div className="space-y-2">
-                  <h3 className="font-medium text-gray-700">Why this decision was made</h3>
-                  <p className="text-gray-600 whitespace-pre-line">{viewingDecision.why}</p>
-                </div>
-                
-                {viewingDecision.alternatives && (
-                  <div className="space-y-2">
-                    <h3 className="font-medium text-gray-700">Alternatives Considered</h3>
-                    <p className="text-gray-600 whitespace-pre-line">{viewingDecision.alternatives}</p>
-                  </div>
-                )}
-                
-                {viewingDecision.expectedOutcome && (
-                  <div className="space-y-2">
-                    <h3 className="font-medium text-gray-700">Expected Outcome</h3>
-                    <p className="text-gray-600 whitespace-pre-line">{viewingDecision.expectedOutcome}</p>
-                  </div>
-                )}
-                
-                {viewingDecision.followUpDate && (
-                  <div className="space-y-2">
-                    <h3 className="font-medium text-gray-700">Follow-up Date</h3>
-                    <p className="text-gray-600">{new Date(viewingDecision.followUpDate).toLocaleDateString()}</p>
-                  </div>
-                )}
-                
-                {viewingDecision.whatDifferent && (
-                  <div className="space-y-2">
-                    <h3 className="font-medium text-gray-700">What I'd Do Differently</h3>
-                    <p className="text-gray-600 whitespace-pre-line">{viewingDecision.whatDifferent}</p>
-                  </div>
-                )}
-                
-                <div className="space-y-2">
-                  <h3 className="font-medium text-gray-700">Status</h3>
-                  <p className={`font-medium ${
+            <>
+              <DialogHeader className="pb-4 border-b">
+                <DialogTitle className="text-2xl font-semibold text-gray-800">
+                  {viewingDecision.title}
+                </DialogTitle>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <span className={`text-xs font-medium px-2.5 py-0.5 rounded inline-block ${
+                    viewingDecision.category === "Strategy" ? "bg-blue-100 text-blue-800" :
+                    viewingDecision.category === "Marketing" ? "bg-purple-100 text-purple-800" :
+                    viewingDecision.category === "Operations" ? "bg-amber-100 text-amber-800" :
+                    viewingDecision.category === "Product" ? "bg-emerald-100 text-emerald-800" :
+                    viewingDecision.category === "Hiring" ? "bg-indigo-100 text-indigo-800" :
+                    viewingDecision.category === "Financial" ? "bg-rose-100 text-rose-800" :
+                    "bg-gray-100 text-gray-800"
+                  }`}>
+                    {viewingDecision.category}
+                  </span>
+                  <span className={`text-xs font-medium px-2.5 py-0.5 rounded inline-block ${
                     viewingDecision.status === "Failed" 
-                      ? "text-red-600" 
+                      ? "bg-red-100 text-red-800" 
                       : viewingDecision.status === "Successful" 
-                        ? "text-green-600" 
-                        : "text-blue-600"
+                        ? "bg-green-100 text-green-800" 
+                        : "bg-blue-100 text-blue-800"
                   }`}>
                     {viewingDecision.status}
-                  </p>
+                  </span>
+                </div>
+              </DialogHeader>
+
+              <div className="py-6 px-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                  <div className="md:col-span-2 space-y-2 border-b border-gray-100 pb-4">
+                    <h3 className="font-medium text-gray-700">Why this decision was made</h3>
+                    <p className="text-gray-700 whitespace-pre-line">{viewingDecision.why}</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h3 className="font-medium text-gray-700">Decision Date</h3>
+                    <p className="text-gray-700">{new Date(viewingDecision.decisionDate).toLocaleDateString()}</p>
+                  </div>
+                  
+                  {viewingDecision.followUpDate && (
+                    <div className="space-y-2">
+                      <h3 className="font-medium text-gray-700">Follow-up Date</h3>
+                      <p className="text-gray-700">{new Date(viewingDecision.followUpDate).toLocaleDateString()}</p>
+                    </div>
+                  )}
+                  
+                  {viewingDecision.alternatives && (
+                    <div className="md:col-span-2 space-y-2">
+                      <h3 className="font-medium text-gray-700">Alternatives Considered</h3>
+                      <p className="text-gray-700 whitespace-pre-line">{viewingDecision.alternatives}</p>
+                    </div>
+                  )}
+                  
+                  {viewingDecision.expectedOutcome && (
+                    <div className="md:col-span-2 space-y-2">
+                      <h3 className="font-medium text-gray-700">Expected Outcome</h3>
+                      <p className="text-gray-700 whitespace-pre-line">{viewingDecision.expectedOutcome}</p>
+                    </div>
+                  )}
+                  
+                  {viewingDecision.whatDifferent && (
+                    <div className="md:col-span-2 space-y-2">
+                      <h3 className="font-medium text-gray-700">What I'd Do Differently</h3>
+                      <p className="text-gray-700 whitespace-pre-line">{viewingDecision.whatDifferent}</p>
+                    </div>
+                  )}
                 </div>
               </div>
               
-              <div className="flex justify-end space-x-2 pt-4 border-t border-gray-200">
+              <DialogFooter className="border-t border-gray-100 pt-4">
                 <Button 
                   onClick={() => {
                     setViewDialogOpen(false);
@@ -130,8 +158,8 @@ const DecisionLog = () => {
                 >
                   Edit Decision
                 </Button>
-              </div>
-            </div>
+              </DialogFooter>
+            </>
           )}
         </DialogContent>
       </Dialog>
