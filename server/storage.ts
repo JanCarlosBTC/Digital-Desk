@@ -1,17 +1,17 @@
 import {
-  users, User, InsertUser,
-  brainDumps, BrainDump, InsertBrainDump,
-  problemTrees, ProblemTree, InsertProblemTree,
-  draftedPlans, DraftedPlan, InsertDraftedPlan,
-  clarityLabs, ClarityLab, InsertClarityLab,
-  weeklyReflections, WeeklyReflection, InsertWeeklyReflection,
-  monthlyCheckIns, MonthlyCheckIn, InsertMonthlyCheckIn,
-  priorities, Priority, InsertPriority,
-  decisions, Decision, InsertDecision,
-  offers, Offer, InsertOffer,
-  offerNotes, OfferNote, InsertOfferNote,
-  activities, Activity, InsertActivity
-} from "@shared/schema";
+  User, InsertUser,
+  BrainDump, InsertBrainDump,
+  ProblemTree, InsertProblemTree,
+  DraftedPlan, InsertDraftedPlan,
+  ClarityLab, InsertClarityLab,
+  WeeklyReflection, InsertWeeklyReflection,
+  MonthlyCheckIn, InsertMonthlyCheckIn,
+  Priority, InsertPriority,
+  Decision, InsertDecision,
+  Offer, InsertOffer,
+  OfferNote, InsertOfferNote,
+  Activity, InsertActivity
+} from "@shared/prisma-schema";
 
 export interface IStorage {
   // User methods
@@ -78,7 +78,7 @@ export interface IStorage {
   deleteOffer(id: number): Promise<boolean>;
   
   // Offer Notes methods
-  getOfferNotesByUserId(userId: number): Promise<OfferNote | undefined>;
+  getOfferNotesByUserId(userId: number): Promise<OfferNote[]>;
   createOfferNote(offerNote: InsertOfferNote): Promise<OfferNote>;
   updateOfferNote(id: number, content: string): Promise<OfferNote | undefined>;
   
@@ -100,19 +100,7 @@ export class MemStorage implements IStorage {
   private offers: Map<number, Offer>;
   private offerNotes: Map<number, OfferNote>;
   private activities: Map<number, Activity>;
-
-  private userId = 1;
-  private brainDumpId = 1;
-  private problemTreeId = 1;
-  private draftedPlanId = 1;
-  private clarityLabId = 1;
-  private weeklyReflectionId = 1;
-  private monthlyCheckInId = 1;
-  private priorityId = 1;
-  private decisionId = 1;
-  private offerId = 1;
-  private offerNoteId = 1;
-  private activityId = 1;
+  private nextId: number;
 
   constructor() {
     this.users = new Map();
@@ -127,6 +115,7 @@ export class MemStorage implements IStorage {
     this.offers = new Map();
     this.offerNotes = new Map();
     this.activities = new Map();
+    this.nextId = 1;
 
     // Add a demo user
     this.createUser({
@@ -148,7 +137,7 @@ export class MemStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userId++;
+    const id = this.nextId++;
     const now = new Date();
     const user: User = { ...insertUser, id };
     this.users.set(id, user);
@@ -160,16 +149,22 @@ export class MemStorage implements IStorage {
     return Array.from(this.brainDumps.values()).find(dump => dump.userId === userId);
   }
 
-  async createBrainDump(insertBrainDump: InsertBrainDump): Promise<BrainDump> {
-    const id = this.brainDumpId++;
-    const now = new Date();
-    const brainDump: BrainDump = { 
-      ...insertBrainDump, 
-      id, 
-      createdAt: now, 
-      updatedAt: now 
+  async createBrainDump(data: InsertBrainDump): Promise<BrainDump> {
+    const brainDump: BrainDump = {
+      id: this.nextId++,
+      userId: data.userId,
+      content: data.content ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
-    this.brainDumps.set(id, brainDump);
+    this.brainDumps.set(brainDump.id, brainDump);
+    await this.logActivity({
+      userId: data.userId,
+      type: "create",
+      entityType: "BrainDump",
+      entityName: `Brain Dump ${brainDump.id}`,
+      metadata: {},
+    });
     return brainDump;
   }
 
@@ -179,17 +174,19 @@ export class MemStorage implements IStorage {
     
     const updated: BrainDump = { 
       ...brainDump, 
-      content, 
+      content: content ?? null, 
       updatedAt: new Date() 
     };
     this.brainDumps.set(id, updated);
     
-    // Create activity log
-    await this.createActivity({
+    await this.logActivity({
       userId: brainDump.userId,
       type: "update",
-      entityType: "Brain Dump",
-      entityName: "Brain Dump Entry"
+      entityType: "BrainDump",
+      entityName: `Brain Dump ${id}`,
+      metadata: {
+        content: updated.content,
+      }
     });
     
     return updated;
@@ -205,7 +202,7 @@ export class MemStorage implements IStorage {
   }
 
   async createProblemTree(insertProblemTree: InsertProblemTree): Promise<ProblemTree> {
-    const id = this.problemTreeId++;
+    const id = this.nextId++;
     const now = new Date();
     const problemTree: ProblemTree = { 
       ...insertProblemTree, 
@@ -216,33 +213,36 @@ export class MemStorage implements IStorage {
     this.problemTrees.set(id, problemTree);
     
     // Create activity
-    await this.createActivity({
+    await this.logActivity({
       userId: problemTree.userId,
-      type: "add",
-      entityType: "Problem Tree",
-      entityName: problemTree.title
+      type: "create",
+      entityType: "ProblemTree",
+      entityName: problemTree.title,
+      metadata: {}
     });
     
     return problemTree;
   }
 
-  async updateProblemTree(id: number, problemTree: Partial<InsertProblemTree>): Promise<ProblemTree | undefined> {
+  async updateProblemTree(id: number, data: Partial<InsertProblemTree>): Promise<ProblemTree | undefined> {
     const existing = this.problemTrees.get(id);
     if (!existing) return undefined;
     
     const updated: ProblemTree = { 
       ...existing, 
-      ...problemTree, 
+      ...data, 
       updatedAt: new Date() 
     };
     this.problemTrees.set(id, updated);
     
-    // Create activity
-    await this.createActivity({
+    await this.logActivity({
       userId: existing.userId,
-      type: "edit",
-      entityType: "Problem Tree",
-      entityName: updated.title
+      type: "update",
+      entityType: "ProblemTree",
+      entityName: updated.title,
+      metadata: {
+        mainProblem: updated.mainProblem,
+      }
     });
     
     return updated;
@@ -255,12 +255,12 @@ export class MemStorage implements IStorage {
     const deleted = this.problemTrees.delete(id);
     
     if (deleted) {
-      // Create activity
-      await this.createActivity({
+      await this.logActivity({
         userId: existing.userId,
         type: "delete",
         entityType: "Problem Tree",
-        entityName: existing.title
+        entityName: existing.title,
+        metadata: {}
       });
     }
     
@@ -277,7 +277,7 @@ export class MemStorage implements IStorage {
   }
 
   async createDraftedPlan(insertDraftedPlan: InsertDraftedPlan): Promise<DraftedPlan> {
-    const id = this.draftedPlanId++;
+    const id = this.nextId++;
     const now = new Date();
     const draftedPlan: DraftedPlan = { 
       ...insertDraftedPlan, 
@@ -288,33 +288,36 @@ export class MemStorage implements IStorage {
     this.draftedPlans.set(id, draftedPlan);
     
     // Create activity
-    await this.createActivity({
+    await this.logActivity({
       userId: draftedPlan.userId,
-      type: "add",
-      entityType: "Drafted Plan",
-      entityName: draftedPlan.title
+      type: "create",
+      entityType: "DraftedPlan",
+      entityName: draftedPlan.title,
+      metadata: {}
     });
     
     return draftedPlan;
   }
 
-  async updateDraftedPlan(id: number, draftedPlan: Partial<InsertDraftedPlan>): Promise<DraftedPlan | undefined> {
+  async updateDraftedPlan(id: number, data: Partial<InsertDraftedPlan>): Promise<DraftedPlan | undefined> {
     const existing = this.draftedPlans.get(id);
     if (!existing) return undefined;
     
     const updated: DraftedPlan = { 
       ...existing, 
-      ...draftedPlan, 
+      ...data, 
       updatedAt: new Date() 
     };
     this.draftedPlans.set(id, updated);
     
-    // Create activity
-    await this.createActivity({
+    await this.logActivity({
       userId: existing.userId,
-      type: "edit",
-      entityType: "Drafted Plan",
-      entityName: updated.title
+      type: "update",
+      entityType: "DraftedPlan",
+      entityName: updated.title,
+      metadata: {
+        status: updated.status,
+      }
     });
     
     return updated;
@@ -327,12 +330,12 @@ export class MemStorage implements IStorage {
     const deleted = this.draftedPlans.delete(id);
     
     if (deleted) {
-      // Create activity
-      await this.createActivity({
+      await this.logActivity({
         userId: existing.userId,
         type: "delete",
         entityType: "Drafted Plan",
-        entityName: existing.title
+        entityName: existing.title,
+        metadata: {}
       });
     }
     
@@ -353,44 +356,47 @@ export class MemStorage implements IStorage {
   }
 
   async createClarityLab(insertClarityLab: InsertClarityLab): Promise<ClarityLab> {
-    const id = this.clarityLabId++;
+    const id = this.nextId++;
     const now = new Date();
     const clarityLab: ClarityLab = { 
       ...insertClarityLab, 
       id, 
       createdAt: now, 
-      updatedAt: now
+      updatedAt: now 
     };
     this.clarityLabs.set(id, clarityLab);
     
     // Create activity
-    await this.createActivity({
+    await this.logActivity({
       userId: clarityLab.userId,
-      type: "add",
-      entityType: "Clarity Lab",
-      entityName: clarityLab.title
+      type: "create",
+      entityType: "ClarityLab",
+      entityName: clarityLab.title,
+      metadata: {}
     });
     
     return clarityLab;
   }
 
-  async updateClarityLab(id: number, clarityLab: Partial<InsertClarityLab>): Promise<ClarityLab | undefined> {
+  async updateClarityLab(id: number, data: Partial<InsertClarityLab>): Promise<ClarityLab | undefined> {
     const existing = this.clarityLabs.get(id);
     if (!existing) return undefined;
     
     const updated: ClarityLab = { 
       ...existing, 
-      ...clarityLab, 
+      ...data, 
       updatedAt: new Date() 
     };
     this.clarityLabs.set(id, updated);
     
-    // Create activity if updated
-    await this.createActivity({
+    await this.logActivity({
       userId: existing.userId,
-      type: "edit",
-      entityType: "Clarity Lab",
-      entityName: updated.title
+      type: "update",
+      entityType: "ClarityLab",
+      entityName: updated.title,
+      metadata: {
+        category: updated.category,
+      }
     });
     
     return updated;
@@ -403,12 +409,12 @@ export class MemStorage implements IStorage {
     const deleted = this.clarityLabs.delete(id);
     
     if (deleted) {
-      // Create activity
-      await this.createActivity({
+      await this.logActivity({
         userId: existing.userId,
         type: "delete",
         entityType: "Clarity Lab",
-        entityName: existing.title
+        entityName: existing.title,
+        metadata: {}
       });
     }
     
@@ -426,57 +432,57 @@ export class MemStorage implements IStorage {
     return this.weeklyReflections.get(id);
   }
 
-  async createWeeklyReflection(insertWeeklyReflection: InsertWeeklyReflection): Promise<WeeklyReflection> {
-    const id = this.weeklyReflectionId++;
-    const now = new Date();
-    const weeklyReflection: WeeklyReflection = { 
-      ...insertWeeklyReflection, 
-      id, 
-      createdAt: now, 
-      updatedAt: now 
+  async createWeeklyReflection(data: InsertWeeklyReflection): Promise<WeeklyReflection> {
+    const reflection: WeeklyReflection = {
+      id: this.nextId++,
+      userId: data.userId,
+      weekDate: data.weekDate,
+      wentWell: data.wentWell ?? null,
+      challenges: data.challenges ?? null,
+      learnings: data.learnings ?? null,
+      nextWeekFocus: data.nextWeekFocus ?? null,
+      isDraft: data.isDraft,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
-    this.weeklyReflections.set(id, weeklyReflection);
-    
-    // Create activity if not a draft
-    if (!weeklyReflection.isDraft) {
-      await this.createActivity({
-        userId: weeklyReflection.userId,
-        type: "add",
-        entityType: "Weekly Reflection",
-        entityName: `Week of ${new Date(weeklyReflection.weekDate).toLocaleDateString()}`
-      });
-    }
-    
-    return weeklyReflection;
+    this.weeklyReflections.set(reflection.id, reflection);
+    await this.logActivity({
+      userId: data.userId,
+      type: "create",
+      entityType: "WeeklyReflection",
+      entityName: `Weekly Reflection ${reflection.id}`,
+      metadata: {
+        weekDate: reflection.weekDate,
+        isDraft: reflection.isDraft,
+      },
+    });
+    return reflection;
   }
 
-  async updateWeeklyReflection(id: number, weeklyReflection: Partial<InsertWeeklyReflection>): Promise<WeeklyReflection | undefined> {
+  async updateWeeklyReflection(id: number, data: Partial<InsertWeeklyReflection>): Promise<WeeklyReflection | undefined> {
     const existing = this.weeklyReflections.get(id);
     if (!existing) return undefined;
     
     const updated: WeeklyReflection = { 
       ...existing, 
-      ...weeklyReflection, 
+      ...data, 
+      wentWell: data.wentWell || existing.wentWell,
+      challenges: data.challenges || existing.challenges,
+      learnings: data.learnings || existing.learnings,
+      nextWeekFocus: data.nextWeekFocus || existing.nextWeekFocus,
       updatedAt: new Date() 
     };
     this.weeklyReflections.set(id, updated);
     
-    // Create activity if completing a draft
-    if (existing.isDraft && !updated.isDraft) {
-      await this.createActivity({
-        userId: updated.userId,
-        type: "complete",
-        entityType: "Weekly Reflection",
-        entityName: `Week of ${new Date(updated.weekDate).toLocaleDateString()}`
-      });
-    } else if (!existing.isDraft) {
-      await this.createActivity({
-        userId: updated.userId,
-        type: "edit",
-        entityType: "Weekly Reflection",
-        entityName: `Week of ${new Date(updated.weekDate).toLocaleDateString()}`
-      });
-    }
+    await this.logActivity({
+      userId: existing.userId,
+      type: "update",
+      entityType: "WeeklyReflection",
+      entityName: updated.weekDate.toISOString(),
+      metadata: {
+        isDraft: updated.isDraft,
+      }
+    });
     
     return updated;
   }
@@ -497,54 +503,57 @@ export class MemStorage implements IStorage {
     );
   }
 
-  async createMonthlyCheckIn(insertMonthlyCheckIn: InsertMonthlyCheckIn): Promise<MonthlyCheckIn> {
-    const id = this.monthlyCheckInId++;
-    const now = new Date();
-    const monthlyCheckIn: MonthlyCheckIn = { 
-      ...insertMonthlyCheckIn, 
-      id, 
-      createdAt: now, 
-      updatedAt: now 
+  async createMonthlyCheckIn(data: InsertMonthlyCheckIn): Promise<MonthlyCheckIn> {
+    const checkIn: MonthlyCheckIn = {
+      id: this.nextId++,
+      userId: data.userId,
+      month: data.month,
+      year: data.year,
+      completedOn: data.completedOn ?? null,
+      achievements: data.achievements,
+      challenges: data.challenges,
+      goalProgress: data.goalProgress,
+      nextMonthPriorities: data.nextMonthPriorities,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
-    this.monthlyCheckIns.set(id, monthlyCheckIn);
-    
-    // Create activity if completed
-    if (monthlyCheckIn.completedOn) {
-      const monthNames = ["January", "February", "March", "April", "May", "June", 
-                          "July", "August", "September", "October", "November", "December"];
-      await this.createActivity({
-        userId: monthlyCheckIn.userId,
-        type: "complete",
-        entityType: "Monthly Check-in",
-        entityName: `${monthNames[monthlyCheckIn.month - 1]} ${monthlyCheckIn.year}`
-      });
-    }
-    
-    return monthlyCheckIn;
+    this.monthlyCheckIns.set(checkIn.id, checkIn);
+    await this.logActivity({
+      userId: data.userId,
+      type: "create",
+      entityType: "MonthlyCheckIn",
+      entityName: `${checkIn.month}/${checkIn.year}`,
+      metadata: {
+        month: checkIn.month,
+        year: checkIn.year,
+        completedOn: checkIn.completedOn,
+      },
+    });
+    return checkIn;
   }
 
-  async updateMonthlyCheckIn(id: number, monthlyCheckIn: Partial<InsertMonthlyCheckIn>): Promise<MonthlyCheckIn | undefined> {
+  async updateMonthlyCheckIn(id: number, data: Partial<InsertMonthlyCheckIn>): Promise<MonthlyCheckIn | undefined> {
     const existing = this.monthlyCheckIns.get(id);
     if (!existing) return undefined;
     
     const updated: MonthlyCheckIn = { 
       ...existing, 
-      ...monthlyCheckIn, 
+      ...data, 
+      completedOn: data.completedOn || existing.completedOn,
+      goalProgress: data.goalProgress || existing.goalProgress,
       updatedAt: new Date() 
     };
     this.monthlyCheckIns.set(id, updated);
     
-    // Create activity if now completed
-    if (!existing.completedOn && updated.completedOn) {
-      const monthNames = ["January", "February", "March", "April", "May", "June", 
-                          "July", "August", "September", "October", "November", "December"];
-      await this.createActivity({
-        userId: updated.userId,
-        type: "complete",
-        entityType: "Monthly Check-in",
-        entityName: `${monthNames[updated.month - 1]} ${updated.year}`
-      });
-    }
+    await this.logActivity({
+      userId: existing.userId,
+      type: "update",
+      entityType: "MonthlyCheckIn",
+      entityName: `${updated.month}/${updated.year}`,
+      metadata: {
+        completedOn: updated.completedOn,
+      }
+    });
     
     return updated;
   }
@@ -557,7 +566,7 @@ export class MemStorage implements IStorage {
   }
 
   async createPriority(insertPriority: InsertPriority): Promise<Priority> {
-    const id = this.priorityId++;
+    const id = this.nextId++;
     const now = new Date();
     const priority: Priority = { 
       ...insertPriority, 
@@ -568,26 +577,37 @@ export class MemStorage implements IStorage {
     this.priorities.set(id, priority);
     
     // Create activity
-    await this.createActivity({
+    await this.logActivity({
       userId: priority.userId,
-      type: "add",
+      type: "create",
       entityType: "Priority",
-      entityName: priority.priority
+      entityName: priority.priority,
+      metadata: {}
     });
     
     return priority;
   }
 
-  async updatePriority(id: number, priority: Partial<InsertPriority>): Promise<Priority | undefined> {
+  async updatePriority(id: number, data: Partial<InsertPriority>): Promise<Priority | undefined> {
     const existing = this.priorities.get(id);
     if (!existing) return undefined;
     
     const updated: Priority = { 
       ...existing, 
-      ...priority, 
+      ...data, 
       updatedAt: new Date() 
     };
     this.priorities.set(id, updated);
+    
+    await this.logActivity({
+      userId: existing.userId,
+      type: "update",
+      entityType: "Priority",
+      entityName: updated.priority,
+      metadata: {
+        order: updated.order,
+      }
+    });
     
     return updated;
   }
@@ -599,12 +619,12 @@ export class MemStorage implements IStorage {
     const deleted = this.priorities.delete(id);
     
     if (deleted) {
-      // Create activity
-      await this.createActivity({
+      await this.logActivity({
         userId: existing.userId,
         type: "delete",
         entityType: "Priority",
-        entityName: existing.priority
+        entityName: existing.priority,
+        metadata: {}
       });
     }
     
@@ -623,55 +643,61 @@ export class MemStorage implements IStorage {
   }
 
   async createDecision(insertDecision: InsertDecision): Promise<Decision> {
-    const id = this.decisionId++;
+    const id = this.nextId++;
     const now = new Date();
     const decision: Decision = { 
       ...insertDecision, 
       id, 
+      alternatives: insertDecision.alternatives ?? null,
+      expectedOutcome: insertDecision.expectedOutcome ?? null,
+      followUpDate: insertDecision.followUpDate ?? null,
+      whatDifferent: insertDecision.whatDifferent ?? null,
       createdAt: now, 
       updatedAt: now 
     };
     this.decisions.set(id, decision);
     
     // Create activity
-    await this.createActivity({
+    await this.logActivity({
       userId: decision.userId,
-      type: "add",
-      entityType: "Decision Log",
-      entityName: decision.title
+      type: "create",
+      entityType: "Decision",
+      entityName: decision.title,
+      metadata: {
+        category: decision.category,
+        decisionDate: decision.decisionDate,
+        status: decision.status,
+      },
     });
     
     return decision;
   }
 
-  async updateDecision(id: number, decision: Partial<InsertDecision>): Promise<Decision | undefined> {
+  async updateDecision(id: number, data: Partial<InsertDecision>): Promise<Decision | undefined> {
     const existing = this.decisions.get(id);
     if (!existing) return undefined;
     
     const updated: Decision = { 
       ...existing, 
-      ...decision, 
+      ...data, 
+      alternatives: data.alternatives || existing.alternatives,
+      expectedOutcome: data.expectedOutcome || existing.expectedOutcome,
+      followUpDate: data.followUpDate || existing.followUpDate,
+      whatDifferent: data.whatDifferent || existing.whatDifferent,
       updatedAt: new Date() 
     };
     this.decisions.set(id, updated);
     
-    // Create activity if status changed
-    if (decision.status && existing.status !== decision.status) {
-      await this.createActivity({
-        userId: existing.userId,
-        type: "update",
-        entityType: "Decision Log",
-        entityName: existing.title
-      });
-    } else if (decision.title && existing.title !== decision.title) {
-      // Create activity if title changed (edit)
-      await this.createActivity({
-        userId: existing.userId,
-        type: "edit",
-        entityType: "Decision Log",
-        entityName: decision.title
-      });
-    }
+    await this.logActivity({
+      userId: existing.userId,
+      type: "update",
+      entityType: "Decision",
+      entityName: updated.title,
+      metadata: {
+        status: updated.status,
+        category: updated.category,
+      }
+    });
     
     return updated;
   }
@@ -680,12 +706,12 @@ export class MemStorage implements IStorage {
     const decision = this.decisions.get(id);
     if (!decision) return false;
     
-    // Create activity for deletion
-    await this.createActivity({
+    await this.logActivity({
       userId: decision.userId,
       type: "delete",
-      entityType: "Decision Log",
-      entityName: decision.title
+      entityType: "Decision",
+      entityName: decision.title,
+      metadata: {}
     });
     
     return this.decisions.delete(id);
@@ -709,48 +735,63 @@ export class MemStorage implements IStorage {
     return this.offers.get(id);
   }
 
-  async createOffer(insertOffer: InsertOffer): Promise<Offer> {
-    const id = this.offerId++;
-    const now = new Date();
-    const offer: Offer = { 
-      ...insertOffer, 
-      id, 
-      createdAt: now, 
-      updatedAt: now 
+  async createOffer(data: InsertOffer): Promise<Offer> {
+    const offer: Offer = {
+      id: this.nextId++,
+      userId: data.userId,
+      title: data.title,
+      description: data.description,
+      status: data.status,
+      price: data.price,
+      category: data.category,
+      duration: data.duration ?? null,
+      format: data.format ?? null,
+      clientCount: data.clientCount ?? 0,
+      archivedAt: data.archivedAt ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
-    this.offers.set(id, offer);
-    
-    // Create activity
-    await this.createActivity({
-      userId: offer.userId,
-      type: "add",
+    this.offers.set(offer.id, offer);
+    await this.logActivity({
+      userId: data.userId,
+      type: "create",
       entityType: "Offer",
-      entityName: offer.title
+      entityName: offer.title,
+      metadata: {
+        category: offer.category,
+        price: offer.price,
+        status: offer.status,
+      },
     });
-    
     return offer;
   }
 
-  async updateOffer(id: number, offer: Partial<InsertOffer>): Promise<Offer | undefined> {
+  async updateOffer(id: number, data: Partial<InsertOffer>): Promise<Offer | undefined> {
     const existing = this.offers.get(id);
     if (!existing) return undefined;
     
     const updated: Offer = { 
       ...existing, 
-      ...offer, 
+      ...data, 
+      duration: data.duration || existing.duration,
+      format: data.format || existing.format,
+      clientCount: data.clientCount ?? existing.clientCount,
+      archivedAt: data.archivedAt || existing.archivedAt,
       updatedAt: new Date() 
     };
     this.offers.set(id, updated);
     
-    // Create activity if status changed
-    if (offer.status && existing.status !== offer.status) {
-      await this.createActivity({
-        userId: existing.userId,
-        type: "update",
-        entityType: "Offer",
-        entityName: existing.title
-      });
-    }
+    await this.logActivity({
+      userId: existing.userId,
+      type: "update",
+      entityType: "Offer",
+      entityName: updated.title,
+      metadata: {
+        status: updated.status,
+        price: updated.price,
+        category: updated.category,
+      }
+    });
     
     return updated;
   }
@@ -759,44 +800,72 @@ export class MemStorage implements IStorage {
     const offer = this.offers.get(id);
     if (!offer) return false;
     
-    // Create activity for deletion
-    await this.createActivity({
+    this.offers.delete(id);
+    
+    // Create activity
+    await this.logActivity({
       userId: offer.userId,
       type: "delete",
       entityType: "Offer",
-      entityName: offer.title
+      entityName: offer.title,
+      metadata: {}
     });
     
-    return this.offers.delete(id);
+    return true;
   }
 
   // Offer Notes methods
-  async getOfferNotesByUserId(userId: number): Promise<OfferNote | undefined> {
-    return Array.from(this.offerNotes.values()).find(note => note.userId === userId);
+  async getOfferNotesByUserId(userId: number): Promise<OfferNote[]> {
+    return Array.from(this.offerNotes.values())
+      .filter(note => note.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
   async createOfferNote(insertOfferNote: InsertOfferNote): Promise<OfferNote> {
-    const id = this.offerNoteId++;
+    const id = this.nextId++;
     const now = new Date();
     const offerNote: OfferNote = { 
       ...insertOfferNote, 
-      id, 
+      id,
+      createdAt: now,
       updatedAt: now 
     };
     this.offerNotes.set(id, offerNote);
+    
+    await this.logActivity({
+      userId: offerNote.userId,
+      type: "create",
+      entityType: "OfferNote",
+      entityName: `Note ${offerNote.id}`,
+      metadata: {
+        content: offerNote.content,
+      }
+    });
+    
     return offerNote;
   }
 
   async updateOfferNote(id: number, content: string): Promise<OfferNote | undefined> {
-    const offerNote = this.offerNotes.get(id);
-    if (!offerNote) return undefined;
+    const existing = this.offerNotes.get(id);
+    if (!existing) return undefined;
     
     const updated: OfferNote = { 
-      ...offerNote, 
-      content, 
+      ...existing, 
+      content,
       updatedAt: new Date() 
     };
     this.offerNotes.set(id, updated);
+    
+    await this.logActivity({
+      userId: existing.userId,
+      type: "update",
+      entityType: "OfferNote",
+      entityName: `Note ${updated.id}`,
+      metadata: {
+        content: updated.content,
+      }
+    });
+    
     return updated;
   }
 
@@ -808,15 +877,21 @@ export class MemStorage implements IStorage {
       .slice(0, limit);
   }
 
-  async createActivity(insertActivity: InsertActivity): Promise<Activity> {
-    const id = this.activityId++;
-    const now = new Date();
-    const activity: Activity = { 
-      ...insertActivity, 
-      id, 
-      createdAt: now 
+  async createActivity(activity: InsertActivity): Promise<Activity> {
+    return this.logActivity(activity);
+  }
+
+  async logActivity(data: InsertActivity): Promise<Activity> {
+    const activity: Activity = {
+      id: this.nextId++,
+      userId: data.userId,
+      type: data.type,
+      entityType: data.entityType,
+      entityName: data.entityName,
+      metadata: data.metadata,
+      createdAt: new Date(),
     };
-    this.activities.set(id, activity);
+    this.activities.set(activity.id, activity);
     return activity;
   }
 }
