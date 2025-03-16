@@ -11,7 +11,7 @@ import {
   Offer, InsertOffer,
   OfferNote, InsertOfferNote,
   Activity, InsertActivity
-} from "@shared/prisma-schema";
+} from "@shared/schema";
 
 export interface IStorage {
   // User methods

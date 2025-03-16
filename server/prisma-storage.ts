@@ -318,20 +318,20 @@ export class PrismaStorage implements IStorage {
     const newDecision = await prisma.decision.create({
       data: decision
     });
-    
+
     // Create an activity record for the new decision
     await this.createActivity({
       userId: decision.userId,
       type: "created",
       entityType: "decision",
       entityName: newDecision.title,
-      metadata: {
+      metadata: JSON.stringify({
         category: newDecision.category,
         status: newDecision.status,
         decisionDate: newDecision.decisionDate,
-      }
+      })
     });
-    
+
     return newDecision;
   }
 
@@ -339,7 +339,7 @@ export class PrismaStorage implements IStorage {
     // Get the old decision for comparing changes
     const oldDecision = await this.getDecision(id);
     if (!oldDecision) return undefined;
-    
+
     // Update the decision
     const updatedDecision = await prisma.decision.update({
       where: { id },
@@ -348,7 +348,7 @@ export class PrismaStorage implements IStorage {
         updatedAt: new Date()
       }
     });
-    
+
     // Create activity records for significant changes
     if (decision.status && oldDecision.status !== decision.status) {
       await this.createActivity({
@@ -356,25 +356,25 @@ export class PrismaStorage implements IStorage {
         type: "updated",
         entityType: "decision",
         entityName: updatedDecision.title,
-        metadata: {
+        metadata: JSON.stringify({
           oldStatus: oldDecision.status,
           newStatus: decision.status,
-        }
+        })
       });
     }
-    
+
     if (decision.title && oldDecision.title !== decision.title) {
       await this.createActivity({
         userId: updatedDecision.userId,
         type: "updated",
         entityType: "decision",
         entityName: decision.title,
-        metadata: {
+        metadata: JSON.stringify({
           status: updatedDecision.status,
-        }
+        })
       });
     }
-    
+
     return updatedDecision;
   }
 
@@ -383,24 +383,24 @@ export class PrismaStorage implements IStorage {
       // Get the decision before deleting it
       const decision = await this.getDecision(id);
       if (!decision) return false;
-      
+
       // Delete the decision
       await prisma.decision.delete({
         where: { id }
       });
-      
+
       // Create an activity record for the deletion
       await this.createActivity({
         userId: decision.userId,
         type: "deleted",
         entityType: "decision",
         entityName: decision.title,
-        metadata: {
+        metadata: JSON.stringify({
           category: decision.category,
           status: decision.status,
-        }
+        })
       });
-      
+
       return true;
     } catch (error) {
       return false;
@@ -427,19 +427,19 @@ export class PrismaStorage implements IStorage {
     const newOffer = await prisma.offer.create({
       data: offer
     });
-    
+
     // Create an activity record for the new offer
     await this.createActivity({
       userId: offer.userId,
       type: "created",
       entityType: "offer",
       entityName: `${newOffer.title} - ${newOffer.company}`,
-      metadata: {
+      metadata: JSON.stringify({
         status: newOffer.status,
         price: newOffer.price,
-      }
+      })
     });
-    
+
     return newOffer;
   }
 
@@ -447,7 +447,7 @@ export class PrismaStorage implements IStorage {
     // Get the old offer for comparing changes
     const oldOffer = await this.getOffer(id);
     if (!oldOffer) return undefined;
-    
+
     // Update the offer
     const updatedOffer = await prisma.offer.update({
       where: { id },
@@ -456,7 +456,7 @@ export class PrismaStorage implements IStorage {
         updatedAt: new Date()
       }
     });
-    
+
     // Create activity records for significant changes
     if (offer.status && oldOffer.status !== offer.status) {
       await this.createActivity({
@@ -464,13 +464,13 @@ export class PrismaStorage implements IStorage {
         type: "updated",
         entityType: "offer",
         entityName: `${updatedOffer.title} - ${updatedOffer.company}`,
-        metadata: {
+        metadata: JSON.stringify({
           oldStatus: oldOffer.status,
           newStatus: offer.status,
-        }
+        })
       });
     }
-    
+
     return updatedOffer;
   }
 
@@ -479,23 +479,23 @@ export class PrismaStorage implements IStorage {
       // Get the offer before deleting it
       const offer = await this.getOffer(id);
       if (!offer) return false;
-      
+
       // Delete the offer
       await prisma.offer.delete({
         where: { id }
       });
-      
+
       // Create an activity record for the deletion
       await this.createActivity({
         userId: offer.userId,
         type: "deleted",
         entityType: "offer",
         entityName: `${offer.title} - ${offer.company}`,
-        metadata: {
+        metadata: JSON.stringify({
           status: offer.status,
-        }
+        })
       });
-      
+
       return true;
     } catch (error) {
       return false;
@@ -541,4 +541,4 @@ export class PrismaStorage implements IStorage {
       data: activity
     });
   }
-} 
+}
