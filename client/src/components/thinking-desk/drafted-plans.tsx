@@ -390,6 +390,7 @@ Designer for lead magnets"
                   </Button>
                   <Button 
                     type="submit"
+                    className="bg-primary text-white hover:bg-blue-600"
                     disabled={createMutation.isPending}
                   >
                     {createMutation.isPending ? "Saving..." : "Save Plan"}

@@ -78,9 +78,10 @@ const ClarityLabComponent = () => {
     setIsOpen(true);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | Date) => {
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    const date = dateString instanceof Date ? dateString : new Date(dateString);
+    return date.toLocaleDateString(undefined, options);
   };
 
   const getBadgeColor = (category: string) => {
@@ -103,8 +104,11 @@ const ClarityLabComponent = () => {
         <div>
           <Button
             variant="outline"
-            className="mr-2"
-            onClick={() => setIsOpen(false)}
+            className="mr-2 border-gray-300 hover:bg-gray-100"
+            onClick={() => {
+              // Toggle category filtering UI
+              setActiveCategory(activeCategory ? null : 'Lesson');
+            }}
           >
             <FilterIcon className="mr-2 h-4 w-4" /> Filter
           </Button>
@@ -280,6 +284,7 @@ const ClarityLabComponent = () => {
                 </Button>
                 <Button 
                   type="submit"
+                  className="bg-primary text-white hover:bg-blue-600"
                   disabled={createMutation.isPending}
                 >
                   {createMutation.isPending ? "Saving..." : "Save Entry"}
