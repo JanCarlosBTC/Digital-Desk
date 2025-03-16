@@ -52,6 +52,7 @@ const DecisionLog = () => {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         size="lg"
+        className="bg-background border-2 border-gray-200"
         onSubmit={(e) => {
           e.preventDefault();
           // The form will handle its own submission through DecisionForm
@@ -71,6 +72,7 @@ const DecisionLog = () => {
         onOpenChange={setViewDialogOpen}
         size="lg"
         submitLabel=""
+        className="bg-background border-2 border-gray-200"
         onSubmit={(e) => {
           e.preventDefault();
         }}

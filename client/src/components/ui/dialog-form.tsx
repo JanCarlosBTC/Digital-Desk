@@ -70,7 +70,8 @@ export function DialogForm({
         className={cn(
           'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80',
           sizeClasses[size],
-          className
+          className,
+          'max-h-[90vh] overflow-hidden flex flex-col'
         )}
         // Prevent closing when clicking inside form elements
         onInteractOutside={(e) => {
@@ -85,13 +86,13 @@ export function DialogForm({
           }
         }}
       >
-        <form ref={formRef} onSubmit={handleSubmit}>
+        <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col h-full">
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             {description && <DialogDescription>{description}</DialogDescription>}
           </DialogHeader>
           
-          <div className="dialog-form-content py-4">
+          <div className="dialog-form-content py-4 overflow-y-auto flex-1">
             {children}
           </div>
           
