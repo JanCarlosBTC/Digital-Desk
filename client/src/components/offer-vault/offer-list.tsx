@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -309,10 +309,12 @@ const OfferList = () => {
 
       {/* New Offer Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-[850px] max-h-[90vh] overflow-y-auto p-0 gap-0" aria-describedby="new-offer-description">
+        <DialogContent className="sm:max-w-[850px] max-h-[90vh] overflow-y-auto p-0 gap-0">
           <DialogHeader className="px-8 py-6 border-b border-gray-100 bg-gray-50 rounded-t-lg">
             <DialogTitle className="text-2xl font-semibold text-gray-800">Create New Offer</DialogTitle>
-            <p id="new-offer-description" className="text-gray-600 mt-1.5">Add products and services to your portfolio to track sales and manage your catalog.</p>
+            <DialogDescription className="text-gray-600 mt-1.5">
+              Add products and services to your portfolio to track sales and manage your catalog.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="px-8 py-6">
@@ -451,10 +453,12 @@ const OfferList = () => {
       
       {/* Edit Offer Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[850px] max-h-[90vh] overflow-y-auto p-0 gap-0" aria-describedby="edit-offer-description">
+        <DialogContent className="sm:max-w-[850px] max-h-[90vh] overflow-y-auto p-0 gap-0">
           <DialogHeader className="px-8 py-6 border-b border-gray-100 bg-gray-50 rounded-t-lg">
             <DialogTitle className="text-2xl font-semibold text-gray-800">Edit Offer</DialogTitle>
-            <p id="edit-offer-description" className="text-gray-600 mt-1.5">Update the details of your product or service offering.</p>
+            <DialogDescription className="text-gray-600 mt-1.5">
+              Update the details of your product or service offering.
+            </DialogDescription>
           </DialogHeader>
           
           <div className="px-8 py-6">
