@@ -1,0 +1,698 @@
+
+> rest-express@1.0.0 build
+> npm run build:client && npm run build:server
+
+
+> rest-express@1.0.0 build:client
+> vite build
+
+▲ [WARNING] The CommonJS "module" variable is treated as a global variable in an ECMAScript module and may not work as expected [commonjs-variable-in-esm]
+
+    vite.config.ts:40:2:
+      40 │   module.exports = config;
+         ╵   ~~~~~~
+
+  This file is considered to be an ECMAScript module because
+  of the "export" keyword here:
+
+    vite.config.ts:36:0:
+      36 │ export default config;
+         ╵ ~~~~~~
+
+vite v6.2.2 building for production...
+✓ 2056 modules transformed.
+../dist/public/index.html                   1.94 kB │ gzip:   0.84 kB
+../dist/public/assets/index-ByvMvv54.css   68.40 kB │ gzip:  11.74 kB
+../dist/public/assets/index-C2MxRQ1q.js   581.86 kB │ gzip: 168.10 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 18.94s
+
+> rest-express@1.0.0 build:server
+> tsc -p tsconfig.server.json
+
+server/prisma-storage.ts:36:7 - error TS2322: Type '{ username: string; password: string; name: string; initials: string; plan?: string | null | undefined; }' is not assignable to type '(Without<UserCreateInput, UserUncheckedCreateInput> & UserUncheckedCreateInput) | (Without<...> & UserCreateInput)'.
+  Type '{ username: string; password: string; name: string; initials: string; plan?: string | null | undefined; }' is not assignable to type 'Without<UserUncheckedCreateInput, UserCreateInput> & UserCreateInput'.
+    Type '{ username: string; password: string; name: string; initials: string; plan?: string | null | undefined; }' is not assignable to type 'UserCreateInput'.
+      Types of property 'plan' are incompatible.
+        Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+          Type 'null' is not assignable to type 'string | undefined'.
+
+36       data: user
+         ~~~~
+
+  node_modules/.prisma/client/index.d.ts:2792:5
+    2792     data: XOR<UserCreateInput, UserUncheckedCreateInput>
+             ~~~~
+    The expected type comes from property 'data' which is declared here on type '{ select?: UserSelect<DefaultArgs> | null | undefined; include?: UserInclude<DefaultArgs> | null | undefined; data: (Without<UserCreateInput, UserUncheckedCreateInput> & UserUncheckedCreateInput) | (Without<...> & UserCreateInput); }'
+
+server/prisma-storage.ts:81:7 - error TS2322: Type '{ userId: number; title: string; mainProblem: string; subProblems: { [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]:...' is not assignable to type '(Without<ProblemTreeCreateInput, ProblemTreeUncheckedCreateInput> & ProblemTreeUncheckedCreateInput) | (Without<...> & ProblemTreeCreateInput)'.
+  Type '{ userId: number; title: string; mainProblem: string; subProblems: { [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]:...' is not assignable to type 'Without<ProblemTreeCreateInput, ProblemTreeUncheckedCreateInput> & ProblemTreeUncheckedCreateInput'.
+    Type '{ userId: number; title: string; mainProblem: string; subProblems: { [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]:...' is not assignable to type 'ProblemTreeUncheckedCreateInput'.
+      Types of property 'subProblems' are incompatible.
+        Type '{ [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...; }; }' is not assignable to type 'string[] | ProblemTreeCreatesubProblemsInput | undefined'.
+          Type '{ [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...; }; }' is not assignable to type 'string[]'.
+            The types returned by 'pop()' are incompatible between these types.
+              Type 'unknown' is not assignable to type 'string | undefined'.
+
+81       data: problemTree
+         ~~~~
+
+  node_modules/.prisma/client/index.d.ts:4994:5
+    4994     data: XOR<ProblemTreeCreateInput, ProblemTreeUncheckedCreateInput>
+             ~~~~
+    The expected type comes from property 'data' which is declared here on type '{ select?: ProblemTreeSelect<DefaultArgs> | null | undefined; include?: ProblemTreeInclude<DefaultArgs> | null | undefined; data: (Without<...> & ProblemTreeUncheckedCreateInput) | (Without<...> & ProblemTreeCreateInput); }'
+
+server/prisma-storage.ts:88:7 - error TS2322: Type '{ updatedAt: Date; userId?: number | undefined; title?: string | undefined; mainProblem?: string | undefined; subProblems?: { [x: number]: string; length: number; toString: () => string; ... 38 more ...; readonly [Symbol.unscopables]: { ...; }; } | undefined; rootCauses?: { [x: number]: string; length: number; toStr...' is not assignable to type '(Without<ProblemTreeUpdateInput, ProblemTreeUncheckedUpdateInput> & ProblemTreeUncheckedUpdateInput) | (Without<...> & ProblemTreeUpdateInput)'.
+  Type '{ updatedAt: Date; userId?: number | undefined; title?: string | undefined; mainProblem?: string | undefined; subProblems?: { [x: number]: string; length: number; toString: () => string; ... 38 more ...; readonly [Symbol.unscopables]: { ...; }; } | undefined; rootCauses?: { [x: number]: string; length: number; toStr...' is not assignable to type 'Without<ProblemTreeUncheckedUpdateInput, ProblemTreeUpdateInput> & ProblemTreeUpdateInput'.
+    Type '{ updatedAt: Date; userId?: number | undefined; title?: string | undefined; mainProblem?: string | undefined; subProblems?: { [x: number]: string; length: number; toString: () => string; ... 38 more ...; readonly [Symbol.unscopables]: { ...; }; } | undefined; rootCauses?: { [x: number]: string; length: number; toStr...' is not assignable to type 'Without<ProblemTreeUncheckedUpdateInput, ProblemTreeUpdateInput>'.
+      Types of property 'userId' are incompatible.
+        Type 'number | undefined' is not assignable to type 'undefined'.
+          Type 'number' is not assignable to type 'undefined'.
+
+88       data: {
+         ~~~~
+
+  node_modules/.prisma/client/index.d.ts:5042:5
+    5042     data: XOR<ProblemTreeUpdateInput, ProblemTreeUncheckedUpdateInput>
+             ~~~~
+    The expected type comes from property 'data' which is declared here on type '{ select?: ProblemTreeSelect<DefaultArgs> | null | undefined; include?: ProblemTreeInclude<DefaultArgs> | null | undefined; data: (Without<...> & ProblemTreeUncheckedUpdateInput) | (Without<...> & ProblemTreeUpdateInput); where: ProblemTreeWhereUniqueInput; }'
+
+server/prisma-storage.ts:123:7 - error TS2322: Type '{ userId: number; title: string; description: string; components: { [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]: ...' is not assignable to type '(Without<DraftedPlanCreateInput, DraftedPlanUncheckedCreateInput> & DraftedPlanUncheckedCreateInput) | (Without<...> & DraftedPlanCreateInput)'.
+  Type '{ userId: number; title: string; description: string; components: { [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]: ...' is not assignable to type 'Without<DraftedPlanCreateInput, DraftedPlanUncheckedCreateInput> & DraftedPlanUncheckedCreateInput'.
+    Type '{ userId: number; title: string; description: string; components: { [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]: ...' is not assignable to type 'DraftedPlanUncheckedCreateInput'.
+      Types of property 'components' are incompatible.
+        Type '{ [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...; }; }' is not assignable to type 'string[] | DraftedPlanCreatecomponentsInput | undefined'.
+          Type '{ [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...; }; }' is not assignable to type 'string[]'.
+            The types returned by 'pop()' are incompatible between these types.
+              Type 'unknown' is not assignable to type 'string | undefined'.
+
+123       data: draftedPlan
+          ~~~~
+
+  node_modules/.prisma/client/index.d.ts:6045:5
+    6045     data: XOR<DraftedPlanCreateInput, DraftedPlanUncheckedCreateInput>
+             ~~~~
+    The expected type comes from property 'data' which is declared here on type '{ select?: DraftedPlanSelect<DefaultArgs> | null | undefined; include?: DraftedPlanInclude<DefaultArgs> | null | undefined; data: (Without<...> & DraftedPlanUncheckedCreateInput) | (Without<...> & DraftedPlanCreateInput); }'
+
+server/prisma-storage.ts:130:7 - error TS2322: Type '{ updatedAt: Date; userId?: number | undefined; title?: string | undefined; description?: string | undefined; components?: { [x: number]: string; length: number; toString: () => string; ... 38 more ...; readonly [Symbol.unscopables]: { ...; }; } | undefined; ... 4 more ...; attachments?: number | undefined; }' is not assignable to type '(Without<DraftedPlanUpdateInput, DraftedPlanUncheckedUpdateInput> & DraftedPlanUncheckedUpdateInput) | (Without<...> & DraftedPlanUpdateInput)'.
+  Type '{ updatedAt: Date; userId?: number | undefined; title?: string | undefined; description?: string | undefined; components?: { [x: number]: string; length: number; toString: () => string; ... 38 more ...; readonly [Symbol.unscopables]: { ...; }; } | undefined; ... 4 more ...; attachments?: number | undefined; }' is not assignable to type 'Without<DraftedPlanUncheckedUpdateInput, DraftedPlanUpdateInput> & DraftedPlanUpdateInput'.
+    Type '{ updatedAt: Date; userId?: number | undefined; title?: string | undefined; description?: string | undefined; components?: { [x: number]: string; length: number; toString: () => string; ... 38 more ...; readonly [Symbol.unscopables]: { ...; }; } | undefined; ... 4 more ...; attachments?: number | undefined; }' is not assignable to type 'Without<DraftedPlanUncheckedUpdateInput, DraftedPlanUpdateInput>'.
+      Types of property 'userId' are incompatible.
+        Type 'number | undefined' is not assignable to type 'undefined'.
+          Type 'number' is not assignable to type 'undefined'.
+
+130       data: {
+          ~~~~
+
+  node_modules/.prisma/client/index.d.ts:6093:5
+    6093     data: XOR<DraftedPlanUpdateInput, DraftedPlanUncheckedUpdateInput>
+             ~~~~
+    The expected type comes from property 'data' which is declared here on type '{ select?: DraftedPlanSelect<DefaultArgs> | null | undefined; include?: DraftedPlanInclude<DefaultArgs> | null | undefined; data: (Without<...> & DraftedPlanUncheckedUpdateInput) | (Without<...> & DraftedPlanUpdateInput); where: DraftedPlanWhereUniqueInput; }'
+
+server/prisma-storage.ts:228:5 - error TS2322: Type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; challenges: string[]; month: number; year: number; completedOn: Date | null; achievements: string[]; goalProgress: JsonValue; nextMonthPriorities: string[]; }[]' is not assignable to type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; challenges: string[] | null; month: number; year: number; completedOn: Date | null; achievements: string[] | null; goalProgress: { ...; }[] | null; nextMonthPriorities: string[] | null; }[]'.
+  Type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; challenges: string[]; month: number; year: number; completedOn: Date | null; achievements: string[]; goalProgress: JsonValue; nextMonthPriorities: string[]; }' is not assignable to type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; challenges: string[] | null; month: number; year: number; completedOn: Date | null; achievements: string[] | null; goalProgress: { ...; }[] | null; nextMonthPriorities: string[] | null; }'.
+    Types of property 'goalProgress' are incompatible.
+      Type 'JsonValue' is not assignable to type '{ goal: string; progress: number; }[] | null'.
+        Type 'string' is not assignable to type '{ goal: string; progress: number; }[]'.
+
+228     return await prisma.monthlyCheckIn.findMany({
+        ~~~~~~
+
+server/prisma-storage.ts:245:5 - error TS2322: Type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; challenges: string[]; month: number; year: number; completedOn: Date | null; achievements: string[]; goalProgress: JsonValue; nextMonthPriorities: string[]; } | undefined' is not assignable to type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; challenges: string[] | null; month: number; year: number; completedOn: Date | null; achievements: string[] | null; goalProgress: { ...; }[] | null; nextMonthPriorities: string[] | null; } | undefined'.
+  Type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; challenges: string[]; month: number; year: number; completedOn: Date | null; achievements: string[]; goalProgress: JsonValue; nextMonthPriorities: string[]; }' is not assignable to type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; challenges: string[] | null; month: number; year: number; completedOn: Date | null; achievements: string[] | null; goalProgress: { ...; }[] | null; nextMonthPriorities: string[] | null; }'.
+    Types of property 'goalProgress' are incompatible.
+      Type 'JsonValue' is not assignable to type '{ goal: string; progress: number; }[] | null'.
+        Type 'string' is not assignable to type '{ goal: string; progress: number; }[]'.
+
+245     return monthlyCheckIn || undefined;
+        ~~~~~~
+
+server/prisma-storage.ts:249:5 - error TS2322: Type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; challenges: string[]; month: number; year: number; completedOn: Date | null; achievements: string[]; goalProgress: JsonValue; nextMonthPriorities: string[]; }' is not assignable to type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; challenges: string[] | null; month: number; year: number; completedOn: Date | null; achievements: string[] | null; goalProgress: { ...; }[] | null; nextMonthPriorities: string[] | null; }'.
+  Types of property 'goalProgress' are incompatible.
+    Type 'JsonValue' is not assignable to type '{ goal: string; progress: number; }[] | null'.
+      Type 'string' is not assignable to type '{ goal: string; progress: number; }[]'.
+
+249     return await prisma.monthlyCheckIn.create({
+        ~~~~~~
+
+server/prisma-storage.ts:250:7 - error TS2322: Type '{ userId: number; month: number; year: number; challenges?: { [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...;...' is not assignable to type '(Without<MonthlyCheckInCreateInput, MonthlyCheckInUncheckedCreateInput> & MonthlyCheckInUncheckedCreateInput) | (Without<...> & MonthlyCheckInCreateInput)'.
+  Type '{ userId: number; month: number; year: number; challenges?: { [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...;...' is not assignable to type 'Without<MonthlyCheckInCreateInput, MonthlyCheckInUncheckedCreateInput> & MonthlyCheckInUncheckedCreateInput'.
+    Type '{ userId: number; month: number; year: number; challenges?: { [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...;...' is not assignable to type 'MonthlyCheckInUncheckedCreateInput'.
+      Types of property 'achievements' are incompatible.
+        Type '{ [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...; }; } | null | undefined' is not assignable to type 'string[] | MonthlyCheckInCreateachievementsInput | undefined'.
+          Type 'null' is not assignable to type 'string[] | MonthlyCheckInCreateachievementsInput | undefined'.
+
+250       data: monthlyCheckIn
+          ~~~~
+
+  node_modules/.prisma/client/index.d.ts:9106:5
+    9106     data: XOR<MonthlyCheckInCreateInput, MonthlyCheckInUncheckedCreateInput>
+             ~~~~
+    The expected type comes from property 'data' which is declared here on type '{ select?: MonthlyCheckInSelect<DefaultArgs> | null | undefined; include?: MonthlyCheckInInclude<DefaultArgs> | null | undefined; data: (Without<...> & MonthlyCheckInUncheckedCreateInput) | (Without<...> & MonthlyCheckInCreateInput); }'
+
+server/prisma-storage.ts:257:7 - error TS2322: Type '{ updatedAt: Date; userId?: number | undefined; month?: number | undefined; year?: number | undefined; challenges?: { [x: number]: string; length: number; toString: () => string; toLocaleString: { ...; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...; }; } | null | undefined; completedOn?: Date | undefined; ...' is not assignable to type '(Without<MonthlyCheckInUpdateInput, MonthlyCheckInUncheckedUpdateInput> & MonthlyCheckInUncheckedUpdateInput) | (Without<...> & MonthlyCheckInUpdateInput)'.
+  Type '{ updatedAt: Date; userId?: number | undefined; month?: number | undefined; year?: number | undefined; challenges?: { [x: number]: string; length: number; toString: () => string; toLocaleString: { ...; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...; }; } | null | undefined; completedOn?: Date | undefined; ...' is not assignable to type 'Without<MonthlyCheckInUncheckedUpdateInput, MonthlyCheckInUpdateInput> & MonthlyCheckInUpdateInput'.
+    Type '{ updatedAt: Date; userId?: number | undefined; month?: number | undefined; year?: number | undefined; challenges?: { [x: number]: string; length: number; toString: () => string; toLocaleString: { ...; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...; }; } | null | undefined; completedOn?: Date | undefined; ...' is not assignable to type 'Without<MonthlyCheckInUncheckedUpdateInput, MonthlyCheckInUpdateInput>'.
+      Types of property 'userId' are incompatible.
+        Type 'number | undefined' is not assignable to type 'undefined'.
+          Type 'number' is not assignable to type 'undefined'.
+
+257       data: {
+          ~~~~
+
+  node_modules/.prisma/client/index.d.ts:9154:5
+    9154     data: XOR<MonthlyCheckInUpdateInput, MonthlyCheckInUncheckedUpdateInput>
+             ~~~~
+    The expected type comes from property 'data' which is declared here on type '{ select?: MonthlyCheckInSelect<DefaultArgs> | null | undefined; include?: MonthlyCheckInInclude<DefaultArgs> | null | undefined; data: (Without<...> & MonthlyCheckInUncheckedUpdateInput) | (Without<...> & MonthlyCheckInUpdateInput); where: MonthlyCheckInWhereUniqueInput; }'
+
+server/prisma-storage.ts:262:5 - error TS2322: Type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; challenges: string[]; month: number; year: number; completedOn: Date | null; achievements: string[]; goalProgress: JsonValue; nextMonthPriorities: string[]; }' is not assignable to type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; challenges: string[] | null; month: number; year: number; completedOn: Date | null; achievements: string[] | null; goalProgress: { ...; }[] | null; nextMonthPriorities: string[] | null; }'.
+  Types of property 'goalProgress' are incompatible.
+    Type 'JsonValue' is not assignable to type '{ goal: string; progress: number; }[] | null'.
+      Type 'string' is not assignable to type '{ goal: string; progress: number; }[]'.
+
+262     return updatedMonthlyCheckIn;
+        ~~~~~~
+
+server/prisma-storage.ts:328:7 - error TS2559: Type 'string' has no properties in common with type '{ date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string | undefined; }'.
+
+328       metadata: JSON.stringify({
+          ~~~~~~~~
+
+  shared/schema.ts:336:3
+    336   metadata: z.object({
+          ~~~~~~~~~~~~~~~~~~~~
+    337     oldStatus: z.string().optional(),
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ... 
+    344     price: z.string().optional()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    345   }).optional()
+        ~~~~~~~~~~~~~~~
+    The expected type comes from property 'metadata' which is declared here on type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...'
+
+server/prisma-storage.ts:359:9 - error TS2559: Type 'string' has no properties in common with type '{ date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string | undefined; }'.
+
+359         metadata: JSON.stringify({
+            ~~~~~~~~
+
+  shared/schema.ts:336:3
+    336   metadata: z.object({
+          ~~~~~~~~~~~~~~~~~~~~
+    337     oldStatus: z.string().optional(),
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ... 
+    344     price: z.string().optional()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    345   }).optional()
+        ~~~~~~~~~~~~~~~
+    The expected type comes from property 'metadata' which is declared here on type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...'
+
+server/prisma-storage.ts:372:9 - error TS2559: Type 'string' has no properties in common with type '{ date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string | undefined; }'.
+
+372         metadata: JSON.stringify({
+            ~~~~~~~~
+
+  shared/schema.ts:336:3
+    336   metadata: z.object({
+          ~~~~~~~~~~~~~~~~~~~~
+    337     oldStatus: z.string().optional(),
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ... 
+    344     price: z.string().optional()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    345   }).optional()
+        ~~~~~~~~~~~~~~~
+    The expected type comes from property 'metadata' which is declared here on type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...'
+
+server/prisma-storage.ts:398:9 - error TS2559: Type 'string' has no properties in common with type '{ date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string | undefined; }'.
+
+398         metadata: JSON.stringify({
+            ~~~~~~~~
+
+  shared/schema.ts:336:3
+    336   metadata: z.object({
+          ~~~~~~~~~~~~~~~~~~~~
+    337     oldStatus: z.string().optional(),
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ... 
+    344     price: z.string().optional()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    345   }).optional()
+        ~~~~~~~~~~~~~~~
+    The expected type comes from property 'metadata' which is declared here on type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...'
+
+server/prisma-storage.ts:414:18 - error TS2353: Object literal may only specify known properties, and 'offerDate' does not exist in type 'OfferOrderByWithRelationInput | OfferOrderByWithRelationInput[]'.
+
+414       orderBy: { offerDate: 'desc' }
+                     ~~~~~~~~~
+
+server/prisma-storage.ts:436:51 - error TS2339: Property 'company' does not exist on type '{ id: number; status: string; userId: number; createdAt: Date; updatedAt: Date; title: string; description: string; category: string; price: string; duration: string | null; format: string | null; clientCount: number | null; archivedAt: Date | null; }'.
+
+436       entityName: `${newOffer.title} - ${newOffer.company}`,
+                                                      ~~~~~~~
+
+server/prisma-storage.ts:437:7 - error TS2559: Type 'string' has no properties in common with type '{ date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string | undefined; }'.
+
+437       metadata: JSON.stringify({
+          ~~~~~~~~
+
+  shared/schema.ts:336:3
+    336   metadata: z.object({
+          ~~~~~~~~~~~~~~~~~~~~
+    337     oldStatus: z.string().optional(),
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ... 
+    344     price: z.string().optional()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    345   }).optional()
+        ~~~~~~~~~~~~~~~
+    The expected type comes from property 'metadata' which is declared here on type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...'
+
+server/prisma-storage.ts:466:61 - error TS2339: Property 'company' does not exist on type '{ id: number; status: string; userId: number; createdAt: Date; updatedAt: Date; title: string; description: string; category: string; price: string; duration: string | null; format: string | null; clientCount: number | null; archivedAt: Date | null; }'.
+
+466         entityName: `${updatedOffer.title} - ${updatedOffer.company}`,
+                                                                ~~~~~~~
+
+server/prisma-storage.ts:467:9 - error TS2559: Type 'string' has no properties in common with type '{ date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string | undefined; }'.
+
+467         metadata: JSON.stringify({
+            ~~~~~~~~
+
+  shared/schema.ts:336:3
+    336   metadata: z.object({
+          ~~~~~~~~~~~~~~~~~~~~
+    337     oldStatus: z.string().optional(),
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ... 
+    344     price: z.string().optional()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    345   }).optional()
+        ~~~~~~~~~~~~~~~
+    The expected type comes from property 'metadata' which is declared here on type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...'
+
+server/prisma-storage.ts:493:47 - error TS2339: Property 'company' does not exist on type '{ id: number; status: string; userId: number; createdAt: Date; updatedAt: Date; title: string; description: string; category: string; price: string; duration: string | null; format: string | null; clientCount: number | null; archivedAt: Date | null; }'.
+
+493         entityName: `${offer.title} - ${offer.company}`,
+                                                  ~~~~~~~
+
+server/prisma-storage.ts:494:9 - error TS2559: Type 'string' has no properties in common with type '{ date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string | undefined; }'.
+
+494         metadata: JSON.stringify({
+            ~~~~~~~~
+
+  shared/schema.ts:336:3
+    336   metadata: z.object({
+          ~~~~~~~~~~~~~~~~~~~~
+    337     oldStatus: z.string().optional(),
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ... 
+    344     price: z.string().optional()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    345   }).optional()
+        ~~~~~~~~~~~~~~~
+    The expected type comes from property 'metadata' which is declared here on type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...'
+
+server/prisma-storage.ts:506:9 - error TS2416: Property 'getOfferNotesByUserId' in type 'PrismaStorage' is not assignable to the same property in base type 'IStorage'.
+  Type '(userId: number) => Promise<{ id: number; userId: number; content: string | null; updatedAt: Date; } | undefined>' is not assignable to type '(userId: number) => Promise<{ id: number; userId: number; content: string | null; updatedAt: Date; }[]>'.
+    Type 'Promise<{ id: number; userId: number; content: string | null; updatedAt: Date; } | undefined>' is not assignable to type 'Promise<{ id: number; userId: number; content: string | null; updatedAt: Date; }[]>'.
+      Type '{ id: number; userId: number; content: string | null; updatedAt: Date; } | undefined' is not assignable to type '{ id: number; userId: number; content: string | null; updatedAt: Date; }[]'.
+        Type 'undefined' is not assignable to type '{ id: number; userId: number; content: string | null; updatedAt: Date; }[]'.
+
+506   async getOfferNotesByUserId(userId: number): Promise<OfferNote | undefined> {
+            ~~~~~~~~~~~~~~~~~~~~~
+
+server/prisma-storage.ts:515:7 - error TS2322: Type '{ userId: number; content?: string | null | undefined; }' is not assignable to type '(Without<OfferNoteCreateInput, OfferNoteUncheckedCreateInput> & OfferNoteUncheckedCreateInput) | (Without<...> & OfferNoteCreateInput)'.
+  Type '{ userId: number; content?: string | null | undefined; }' is not assignable to type 'Without<OfferNoteCreateInput, OfferNoteUncheckedCreateInput> & OfferNoteUncheckedCreateInput'.
+    Type '{ userId: number; content?: string | null | undefined; }' is not assignable to type 'OfferNoteUncheckedCreateInput'.
+      Types of property 'content' are incompatible.
+        Type 'string | null | undefined' is not assignable to type 'string'.
+          Type 'undefined' is not assignable to type 'string'.
+
+515       data: offerNote
+          ~~~~
+
+  node_modules/.prisma/client/index.d.ts:13202:5
+    13202     data: XOR<OfferNoteCreateInput, OfferNoteUncheckedCreateInput>
+              ~~~~
+    The expected type comes from property 'data' which is declared here on type '{ select?: OfferNoteSelect<DefaultArgs> | null | undefined; include?: OfferNoteInclude<DefaultArgs> | null | undefined; data: (Without<...> & OfferNoteUncheckedCreateInput) | (Without<...> & OfferNoteCreateInput); }'
+
+server/prisma-storage.ts:541:7 - error TS2322: Type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...' is not assignable to type '(Without<ActivityCreateInput, ActivityUncheckedCreateInput> & ActivityUncheckedCreateInput) | (Without<...> & ActivityCreateInput)'.
+  Type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...' is not assignable to type 'Without<ActivityCreateInput, ActivityUncheckedCreateInput> & ActivityUncheckedCreateInput'.
+    Type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...' is not assignable to type 'ActivityUncheckedCreateInput'.
+      Types of property 'metadata' are incompatible.
+        Type '{ date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string | undefined; } | undefined' is not assignable to type 'JsonNull | InputJsonValue'.
+          Type 'undefined' is not assignable to type 'JsonNull | InputJsonValue'.
+
+541       data: activity
+          ~~~~
+
+  node_modules/.prisma/client/index.d.ts:14193:5
+    14193     data: XOR<ActivityCreateInput, ActivityUncheckedCreateInput>
+              ~~~~
+    The expected type comes from property 'data' which is declared here on type '{ select?: ActivitySelect<DefaultArgs> | null | undefined; include?: ActivityInclude<DefaultArgs> | null | undefined; data: (Without<...> & ActivityUncheckedCreateInput) | (Without<...> & ActivityCreateInput); }'
+
+server/storage.ts:142:11 - error TS2322: Type '{ id: number; username: string; password: string; name: string; initials: string; plan?: string | null | undefined; }' is not assignable to type '{ id: number; username: string; password: string; name: string; plan: string | null; initials: string; }'.
+  Types of property 'plan' are incompatible.
+    Type 'string | null | undefined' is not assignable to type 'string | null'.
+      Type 'undefined' is not assignable to type 'string | null'.
+
+142     const user: User = { ...insertUser, id };
+              ~~~~
+
+server/storage.ts:188:9 - error TS2353: Object literal may only specify known properties, and 'content' does not exist in type '{ date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string | undefined; }'.
+
+188         content: updated.content,
+            ~~~~~~~
+
+  shared/schema.ts:336:3
+    336   metadata: z.object({
+          ~~~~~~~~~~~~~~~~~~~~
+    337     oldStatus: z.string().optional(),
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ... 
+    344     price: z.string().optional()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    345   }).optional()
+        ~~~~~~~~~~~~~~~
+    The expected type comes from property 'metadata' which is declared here on type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...'
+
+server/storage.ts:207:11 - error TS2322: Type '{ id: number; createdAt: Date; updatedAt: Date; userId: number; title: string; mainProblem: string; subProblems: { [x: number]: string; length: number; toString: () => string; toLocaleString: { ...; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...; }; }; rootCauses: { [x: number]: string; length: number; toS...' is not assignable to type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; title: string; mainProblem: string; subProblems: string[]; rootCauses: string[]; potentialSolutions: string[]; nextActions: string[]; }'.
+  The types returned by 'subProblems.pop()' are incompatible between these types.
+    Type 'unknown' is not assignable to type 'string | undefined'.
+
+207     const problemTree: ProblemTree = {
+              ~~~~~~~~~~~
+
+server/storage.ts:231:11 - error TS2322: Type '{ updatedAt: Date; userId: number; title: string; mainProblem: string; subProblems: { [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: Intl.NumberFormatOptions & Intl.DateTimeFormatOptions): string; }; ... 37 more ...; readonly [Symbol....' is not assignable to type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; title: string; mainProblem: string; subProblems: string[]; rootCauses: string[]; potentialSolutions: string[]; nextActions: string[]; }'.
+  The types returned by 'subProblems.pop()' are incompatible between these types.
+    Type 'unknown' is not assignable to type 'string | undefined'.
+
+231     const updated: ProblemTree = {
+              ~~~~~~~
+
+server/storage.ts:244:9 - error TS2353: Object literal may only specify known properties, and 'mainProblem' does not exist in type '{ date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string | undefined; }'.
+
+244         mainProblem: updated.mainProblem,
+            ~~~~~~~~~~~
+
+  shared/schema.ts:336:3
+    336   metadata: z.object({
+          ~~~~~~~~~~~~~~~~~~~~
+    337     oldStatus: z.string().optional(),
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ... 
+    344     price: z.string().optional()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    345   }).optional()
+        ~~~~~~~~~~~~~~~
+    The expected type comes from property 'metadata' which is declared here on type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...'
+
+server/storage.ts:282:11 - error TS2322: Type '{ id: number; createdAt: Date; updatedAt: Date; userId: number; title: string; description: string; components: { [x: number]: string; length: number; toString: () => string; toLocaleString: { ...; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...; }; }; ... 4 more ...; attachments?: number | undefined; }' is not assignable to type '{ id: number; status: string; userId: number; createdAt: Date; updatedAt: Date; title: string; description: string; components: string[]; resourcesNeeded: string[]; expectedOutcomes: string[]; comments: number; attachments: number; }'.
+  Types of property 'status' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+
+282     const draftedPlan: DraftedPlan = {
+              ~~~~~~~~~~~
+
+server/storage.ts:306:11 - error TS2322: Type '{ updatedAt: Date; userId: number; title: string; description: string; components: { [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: Intl.NumberFormatOptions & Intl.DateTimeFormatOptions): string; }; ... 37 more ...; readonly [Symbol.u...' is not assignable to type '{ id: number; status: string; userId: number; createdAt: Date; updatedAt: Date; title: string; description: string; components: string[]; resourcesNeeded: string[]; expectedOutcomes: string[]; comments: number; attachments: number; }'.
+  The types returned by 'components.pop()' are incompatible between these types.
+    Type 'unknown' is not assignable to type 'string | undefined'.
+
+306     const updated: DraftedPlan = {
+              ~~~~~~~
+
+server/storage.ts:444:7 - error TS2322: Type 'boolean | undefined' is not assignable to type 'boolean'.
+  Type 'undefined' is not assignable to type 'boolean'.
+
+444       isDraft: data.isDraft,
+          ~~~~~~~
+
+  node_modules/drizzle-orm/utils.d.ts:11:27
+    11 export type Simplify<T> = {
+                                 ~
+    12     [K in keyof T]: T[K];
+       ~~~~~~~~~~~~~~~~~~~~~~~~~
+    13 } & {};
+       ~
+    The expected type comes from property 'isDraft' which is declared here on type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; weekDate: Date; wentWell: string | null; challenges: string | null; learnings: string | null; nextWeekFocus: string | null; isDraft: boolean; }'
+
+server/storage.ts:455:9 - error TS2353: Object literal may only specify known properties, and 'weekDate' does not exist in type '{ date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string | undefined; }'.
+
+455         weekDate: reflection.weekDate,
+            ~~~~~~~~
+
+  shared/schema.ts:336:3
+    336   metadata: z.object({
+          ~~~~~~~~~~~~~~~~~~~~
+    337     oldStatus: z.string().optional(),
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ... 
+    344     price: z.string().optional()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    345   }).optional()
+        ~~~~~~~~~~~~~~~
+    The expected type comes from property 'metadata' which is declared here on type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...'
+
+server/storage.ts:483:9 - error TS2353: Object literal may only specify known properties, and 'isDraft' does not exist in type '{ date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string | undefined; }'.
+
+483         isDraft: updated.isDraft,
+            ~~~~~~~
+
+  shared/schema.ts:336:3
+    336   metadata: z.object({
+          ~~~~~~~~~~~~~~~~~~~~
+    337     oldStatus: z.string().optional(),
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ... 
+    344     price: z.string().optional()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    345   }).optional()
+        ~~~~~~~~~~~~~~~
+    The expected type comes from property 'metadata' which is declared here on type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...'
+
+server/storage.ts:513:7 - error TS2322: Type '{ [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...; }; } | null | undefined' is not assignable to type 'string[] | null'.
+  Type 'undefined' is not assignable to type 'string[] | null'.
+
+513       achievements: data.achievements,
+          ~~~~~~~~~~~~
+
+  node_modules/drizzle-orm/utils.d.ts:11:27
+    11 export type Simplify<T> = {
+                                 ~
+    12     [K in keyof T]: T[K];
+       ~~~~~~~~~~~~~~~~~~~~~~~~~
+    13 } & {};
+       ~
+    The expected type comes from property 'achievements' which is declared here on type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; challenges: string[] | null; month: number; year: number; completedOn: Date | null; achievements: string[] | null; goalProgress: { ...; }[] | null; nextMonthPriorities: string[] | null; }'
+
+server/storage.ts:514:7 - error TS2322: Type '{ [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...; }; } | null | undefined' is not assignable to type 'string[] | null'.
+  Type 'undefined' is not assignable to type 'string[] | null'.
+
+514       challenges: data.challenges,
+          ~~~~~~~~~~
+
+  node_modules/drizzle-orm/utils.d.ts:11:27
+    11 export type Simplify<T> = {
+                                 ~
+    12     [K in keyof T]: T[K];
+       ~~~~~~~~~~~~~~~~~~~~~~~~~
+    13 } & {};
+       ~
+    The expected type comes from property 'challenges' which is declared here on type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; challenges: string[] | null; month: number; year: number; completedOn: Date | null; achievements: string[] | null; goalProgress: { ...; }[] | null; nextMonthPriorities: string[] | null; }'
+
+server/storage.ts:515:7 - error TS2322: Type '{ [x: number]: { goal: string; progress: number; }; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...; }; } | null | undefined' is not assignable to type '{ goal: string; progress: number; }[] | null'.
+  Type 'undefined' is not assignable to type '{ goal: string; progress: number; }[] | null'.
+
+515       goalProgress: data.goalProgress,
+          ~~~~~~~~~~~~
+
+  node_modules/drizzle-orm/utils.d.ts:11:27
+    11 export type Simplify<T> = {
+                                 ~
+    12     [K in keyof T]: T[K];
+       ~~~~~~~~~~~~~~~~~~~~~~~~~
+    13 } & {};
+       ~
+    The expected type comes from property 'goalProgress' which is declared here on type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; challenges: string[] | null; month: number; year: number; completedOn: Date | null; achievements: string[] | null; goalProgress: { ...; }[] | null; nextMonthPriorities: string[] | null; }'
+
+server/storage.ts:516:7 - error TS2322: Type '{ [x: number]: string; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...; }; } | null | undefined' is not assignable to type 'string[] | null'.
+  Type 'undefined' is not assignable to type 'string[] | null'.
+
+516       nextMonthPriorities: data.nextMonthPriorities,
+          ~~~~~~~~~~~~~~~~~~~
+
+  node_modules/drizzle-orm/utils.d.ts:11:27
+    11 export type Simplify<T> = {
+                                 ~
+    12     [K in keyof T]: T[K];
+       ~~~~~~~~~~~~~~~~~~~~~~~~~
+    13 } & {};
+       ~
+    The expected type comes from property 'nextMonthPriorities' which is declared here on type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; challenges: string[] | null; month: number; year: number; completedOn: Date | null; achievements: string[] | null; goalProgress: { ...; }[] | null; nextMonthPriorities: string[] | null; }'
+
+server/storage.ts:527:9 - error TS2353: Object literal may only specify known properties, and 'month' does not exist in type '{ date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string | undefined; }'.
+
+527         month: checkIn.month,
+            ~~~~~
+
+  shared/schema.ts:336:3
+    336   metadata: z.object({
+          ~~~~~~~~~~~~~~~~~~~~
+    337     oldStatus: z.string().optional(),
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ... 
+    344     price: z.string().optional()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    345   }).optional()
+        ~~~~~~~~~~~~~~~
+    The expected type comes from property 'metadata' which is declared here on type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...'
+
+server/storage.ts:543:7 - error TS2322: Type '{ [x: number]: { goal: string; progress: number; }; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...; }; } | null' is not assignable to type '{ goal: string; progress: number; }[] | null'.
+  Type '{ [x: number]: { goal: string; progress: number; }; length: number; toString: () => string; toLocaleString: { (): string; (locales: string | string[], options?: (NumberFormatOptions & DateTimeFormatOptions) | undefined): string; }; ... 37 more ...; readonly [Symbol.unscopables]: { ...; }; }' is not assignable to type '{ goal: string; progress: number; }[]'.
+    The types returned by 'pop()' are incompatible between these types.
+      Type 'unknown' is not assignable to type '{ goal: string; progress: number; } | undefined'.
+
+543       goalProgress: data.goalProgress || existing.goalProgress,
+          ~~~~~~~~~~~~
+
+  node_modules/drizzle-orm/utils.d.ts:11:27
+    11 export type Simplify<T> = {
+                                 ~
+    12     [K in keyof T]: T[K];
+       ~~~~~~~~~~~~~~~~~~~~~~~~~
+    13 } & {};
+       ~
+    The expected type comes from property 'goalProgress' which is declared here on type '{ id: number; userId: number; createdAt: Date; updatedAt: Date; challenges: string[] | null; month: number; year: number; completedOn: Date | null; achievements: string[] | null; goalProgress: { ...; }[] | null; nextMonthPriorities: string[] | null; }'
+
+server/storage.ts:554:9 - error TS2353: Object literal may only specify known properties, and 'completedOn' does not exist in type '{ date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string | undefined; }'.
+
+554         completedOn: updated.completedOn,
+            ~~~~~~~~~~~
+
+  shared/schema.ts:336:3
+    336   metadata: z.object({
+          ~~~~~~~~~~~~~~~~~~~~
+    337     oldStatus: z.string().optional(),
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ... 
+    344     price: z.string().optional()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    345   }).optional()
+        ~~~~~~~~~~~~~~~
+    The expected type comes from property 'metadata' which is declared here on type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...'
+
+server/storage.ts:608:9 - error TS2353: Object literal may only specify known properties, and 'order' does not exist in type '{ date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string | undefined; }'.
+
+608         order: updated.order,
+            ~~~~~
+
+  shared/schema.ts:336:3
+    336   metadata: z.object({
+          ~~~~~~~~~~~~~~~~~~~~
+    337     oldStatus: z.string().optional(),
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ... 
+    344     price: z.string().optional()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    345   }).optional()
+        ~~~~~~~~~~~~~~~
+    The expected type comes from property 'metadata' which is declared here on type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...'
+
+server/storage.ts:648:11 - error TS2322: Type '{ id: number; alternatives: string | null; expectedOutcome: string | null; followUpDate: Date | null; whatDifferent: string | null; createdAt: Date; updatedAt: Date; ... 5 more ...; status?: string | undefined; }' is not assignable to type '{ id: number; status: string; userId: number; createdAt: Date; updatedAt: Date; title: string; category: string; decisionDate: Date; why: string; alternatives: string | null; expectedOutcome: string | null; followUpDate: Date | null; whatDifferent: string | null; }'.
+  Types of property 'status' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+
+648     const decision: Decision = {
+              ~~~~~~~~
+
+server/storage.ts:744:7 - error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+
+744       status: data.status,
+          ~~~~~~
+
+  node_modules/drizzle-orm/utils.d.ts:11:27
+    11 export type Simplify<T> = {
+                                 ~
+    12     [K in keyof T]: T[K];
+       ~~~~~~~~~~~~~~~~~~~~~~~~~
+    13 } & {};
+       ~
+    The expected type comes from property 'status' which is declared here on type '{ id: number; status: string; userId: number; createdAt: Date; updatedAt: Date; title: string; description: string; category: string; price: string; duration: string | null; format: string | null; clientCount: number | null; archivedAt: Date | null; }'
+
+server/storage.ts:746:7 - error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+
+746       category: data.category,
+          ~~~~~~~~
+
+  node_modules/drizzle-orm/utils.d.ts:11:27
+    11 export type Simplify<T> = {
+                                 ~
+    12     [K in keyof T]: T[K];
+       ~~~~~~~~~~~~~~~~~~~~~~~~~
+    13 } & {};
+       ~
+    The expected type comes from property 'category' which is declared here on type '{ id: number; status: string; userId: number; createdAt: Date; updatedAt: Date; title: string; description: string; category: string; price: string; duration: string | null; format: string | null; clientCount: number | null; archivedAt: Date | null; }'
+
+server/storage.ts:821:25 - error TS2339: Property 'createdAt' does not exist on type '{ id: number; userId: number; content: string | null; updatedAt: Date; }'.
+
+821       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+                            ~~~~~~~~~
+
+server/storage.ts:821:49 - error TS2339: Property 'createdAt' does not exist on type '{ id: number; userId: number; content: string | null; updatedAt: Date; }'.
+
+821       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+                                                    ~~~~~~~~~
+
+server/storage.ts:830:7 - error TS2353: Object literal may only specify known properties, and 'createdAt' does not exist in type '{ id: number; userId: number; content: string | null; updatedAt: Date; }'.
+
+830       createdAt: now,
+          ~~~~~~~~~
+
+server/storage.ts:841:9 - error TS2353: Object literal may only specify known properties, and 'content' does not exist in type '{ date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string | undefined; }'.
+
+841         content: offerNote.content,
+            ~~~~~~~
+
+  shared/schema.ts:336:3
+    336   metadata: z.object({
+          ~~~~~~~~~~~~~~~~~~~~
+    337     oldStatus: z.string().optional(),
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ... 
+    344     price: z.string().optional()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    345   }).optional()
+        ~~~~~~~~~~~~~~~
+    The expected type comes from property 'metadata' which is declared here on type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...'
+
+server/storage.ts:865:9 - error TS2353: Object literal may only specify known properties, and 'content' does not exist in type '{ date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string | undefined; }'.
+
+865         content: updated.content,
+            ~~~~~~~
+
+  shared/schema.ts:336:3
+    336   metadata: z.object({
+          ~~~~~~~~~~~~~~~~~~~~
+    337     oldStatus: z.string().optional(),
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ... 
+    344     price: z.string().optional()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    345   }).optional()
+        ~~~~~~~~~~~~~~~
+    The expected type comes from property 'metadata' which is declared here on type '{ type: string; userId: number; entityType: string; entityName: string; metadata?: { date?: Date | undefined; status?: string | undefined; category?: string | undefined; decisionDate?: Date | undefined; price?: string | undefined; oldStatus?: string | undefined; newStatus?: string | undefined; initialStatus?: string...'
+
+
+Found 51 errors in 2 files.
+
+Errors  Files
+    25  server/prisma-storage.ts:36
+    26  server/storage.ts:142
