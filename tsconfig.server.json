@@ -1,3 +1,4 @@
+
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
@@ -5,10 +6,9 @@
     "outDir": "dist",
     "noEmit": false,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "moduleResolution": "node"
   },
   "include": ["server/**/*", "shared/**/*"],
   "exclude": ["node_modules", "client"]
-} 
+}
