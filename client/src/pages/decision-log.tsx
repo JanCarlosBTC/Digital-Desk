@@ -33,7 +33,7 @@ const DecisionLog = () => {
   return (
     <section className="p-6 max-w-6xl mx-auto">
       {/* Top Action Bar */}
-      <div className="flex justify-between items-center mb-6 bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+      <div className="flex flex-wrap justify-between items-center gap-4 mb-6 bg-white rounded-lg shadow-sm p-4 border border-gray-100">
         <h2 className="text-lg font-medium text-gray-800">Decision Log Dashboard</h2>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -44,7 +44,7 @@ const DecisionLog = () => {
               <PlusIcon className="mr-1 h-4 w-4" /> New Decision
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto p-6">
             <DecisionForm 
               selectedDecision={selectedDecision} 
               onSuccess={() => setDialogOpen(false)}
@@ -56,9 +56,9 @@ const DecisionLog = () => {
 
       {/* Details View Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto p-6">
           {viewingDecision && (
-            <div className="p-4">
+            <div className="p-2">
               <h2 className="text-xl font-semibold text-gray-800 mb-6">{viewingDecision.title}</h2>
               
               <div className="grid grid-cols-1 gap-6 mb-6">
