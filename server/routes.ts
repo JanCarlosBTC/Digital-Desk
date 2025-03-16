@@ -42,16 +42,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Recent activities
-  app.get('/api/activities', cacheMiddleware('activities', 300), async (req: Request, res: Response) => {
-    try {
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
-      const activities = await storage.getRecentActivities(DEMO_USER_ID, limit);
-      res.json(activities);
-    } catch (error) {
-      res.status(500).json({ message: "Error fetching activities" });
-    }
-  });
 
   // Brain Dump endpoints
   app.get('/api/brain-dump', async (req: Request, res: Response) => {

@@ -82,9 +82,7 @@ export interface IStorage {
   createOfferNote(offerNote: InsertOfferNote): Promise<OfferNote>;
   updateOfferNote(id: number, content: string): Promise<OfferNote | undefined>;
   
-  // Activity methods
-  getRecentActivities(userId: number, limit: number): Promise<Activity[]>;
-  createActivity(activity: InsertActivity): Promise<Activity>;
+
 }
 
 export class MemStorage implements IStorage {
@@ -99,7 +97,7 @@ export class MemStorage implements IStorage {
   private decisions: Map<number, Decision>;
   private offers: Map<number, Offer>;
   private offerNotes: Map<number, OfferNote>;
-  private activities: Map<number, Activity>;
+
   private nextId: number;
 
   constructor() {
@@ -114,7 +112,7 @@ export class MemStorage implements IStorage {
     this.decisions = new Map();
     this.offers = new Map();
     this.offerNotes = new Map();
-    this.activities = new Map();
+
     this.nextId = 1;
 
     // Add a demo user
@@ -900,31 +898,7 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
-  // Activity methods
-  async getRecentActivities(userId: number, limit: number): Promise<Activity[]> {
-    return Array.from(this.activities.values())
-      .filter(activity => activity.userId === userId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, limit);
-  }
 
-  async createActivity(activity: InsertActivity): Promise<Activity> {
-    return this.logActivity(activity);
-  }
-
-  async logActivity(data: InsertActivity): Promise<Activity> {
-    const activity: Activity = {
-      id: this.nextId++,
-      userId: data.userId,
-      type: data.type,
-      entityType: data.entityType,
-      entityName: data.entityName,
-      metadata: data.metadata,
-      createdAt: new Date(),
-    };
-    this.activities.set(activity.id, activity);
-    return activity;
-  }
 }
 
 // Create storage instance using memory storage for development
