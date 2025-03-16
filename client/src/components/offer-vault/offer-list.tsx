@@ -336,7 +336,7 @@ const OfferList = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="px-8 py-8 bg-white">
+          <div className="px-8 py-8 bg-white dialog-form-content">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <FormField
@@ -481,7 +481,7 @@ const OfferList = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="px-8 py-8 bg-white">
+          <div className="px-8 py-8 bg-white dialog-form-content">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <FormField
