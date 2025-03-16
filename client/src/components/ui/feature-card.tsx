@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from './card';
 import { Button } from './button';
 import { Badge } from './badge';
@@ -13,68 +13,88 @@ interface StatusBadgeProps {
 
 type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
 
+// Precomputed status mappings for better performance
+const STATUS_VARIANTS: Record<string, BadgeVariant> = {
+  'completed': 'default',
+  'active': 'default',
+  'done': 'default',
+  'pending': 'outline',
+  'in progress': 'outline',
+  'started': 'outline',
+  'cancelled': 'destructive',
+  'archived': 'destructive',
+  'deleted': 'destructive'
+};
+
 /**
  * Status badge with consistent styling based on status types
+ * Memoized for better performance
  */
-export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const getVariant = (): BadgeVariant => {
+export const StatusBadge = memo(({ status, className }: StatusBadgeProps) => {
+  // Use a memoized variant calculation to prevent unnecessary re-renders
+  const variant = useMemo<BadgeVariant>(() => {
     // Normalize status to lowercase for comparison
     const normalizedStatus = status.toLowerCase();
-
-    if (normalizedStatus.includes('completed') || 
-        normalizedStatus.includes('active') || 
-        normalizedStatus.includes('done')) {
-      return 'default';
+    
+    // Check for exact matches first (faster)
+    if (STATUS_VARIANTS[normalizedStatus]) {
+      return STATUS_VARIANTS[normalizedStatus];
     }
     
-    if (normalizedStatus.includes('pending') || 
-        normalizedStatus.includes('in progress') || 
-        normalizedStatus.includes('started')) {
-      return 'outline';
-    }
-    
-    if (normalizedStatus.includes('cancelled') || 
-        normalizedStatus.includes('archived') ||
-        normalizedStatus.includes('deleted')) {
-      return 'destructive';
+    // Fall back to more expensive includes checks
+    for (const [key, value] of Object.entries(STATUS_VARIANTS)) {
+      if (normalizedStatus.includes(key)) {
+        return value;
+      }
     }
     
     return 'secondary';
-  };
+  }, [status]);
 
   return (
     <Badge 
-      variant={getVariant()} 
+      variant={variant} 
       className={cn('capitalize', className)}
     >
       {status}
     </Badge>
   );
+});
+
+StatusBadge.displayName = 'StatusBadge';
+
+// Type definitions with better organization
+export interface MetadataItem {
+  label: string;
+  value: string | number | React.ReactNode;
 }
 
-interface FeatureCardProps {
+export interface ActionItem {
+  label: string;
+  onClick: () => void;
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  icon?: React.ReactNode;
+}
+
+export interface FeatureCardProps {
   title: string;
   description?: string;
   status?: string;
   date?: Date;
-  metadata?: {
-    label: string;
-    value: string | number | React.ReactNode;
-  }[];
-  actions?: {
-    label: string;
-    onClick: () => void;
-    variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-    icon?: React.ReactNode;
-  }[];
+  metadata?: MetadataItem[];
+  actions?: ActionItem[];
   className?: string;
   children?: React.ReactNode;
 }
 
 /**
- * Unified card component for displaying items across different features
+ * Optimized card component for displaying items across different features
+ * Performance improvements:
+ * - Memoized components
+ * - Optimized rendering logic
+ * - Better typings
  */
-export function FeatureCard({
+export const FeatureCard = memo(({
   title,
   description,
   status,
@@ -83,57 +103,77 @@ export function FeatureCard({
   actions,
   className,
   children
-}: FeatureCardProps) {
+}: FeatureCardProps) => {
+  // Format date only when needed
+  const formattedDate = useMemo(() => {
+    if (!date) return null;
+    return date.toLocaleDateString(undefined, { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  }, [date]);
+
+  // Render metadata items
+  const metadataContent = useMemo(() => {
+    if (!metadata?.length) return null;
+    
+    return (
+      <div className="grid grid-cols-2 gap-3 mt-3">
+        {metadata.map((item, index) => (
+          <div key={index} className="space-y-1">
+            <p className="text-xs text-muted-foreground">{item.label}</p>
+            <p className="text-sm font-medium">{item.value}</p>
+          </div>
+        ))}
+      </div>
+    );
+  }, [metadata]);
+
+  // Render action buttons
+  const actionButtons = useMemo(() => {
+    if (!actions?.length) return null;
+    
+    return (
+      <CardFooter className="flex justify-end gap-2 pt-0">
+        {actions.map((action, index) => (
+          <Button
+            key={index}
+            variant={action.variant || 'ghost'}
+            size="sm"
+            onClick={action.onClick}
+          >
+            {action.icon}
+            {action.label}
+          </Button>
+        ))}
+      </CardFooter>
+    );
+  }, [actions]);
+
   return (
     <Card className={cn('overflow-hidden', className)}>
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
         <div className="space-y-1">
           <h3 className="font-semibold leading-none tracking-tight">{title}</h3>
-          {date && (
-            <p className="text-sm text-muted-foreground">
-              {date.toLocaleDateString(undefined, { 
-                year: 'numeric', 
-                month: 'short', 
-                day: 'numeric' 
-              })}
-            </p>
+          {formattedDate && (
+            <p className="text-sm text-muted-foreground">{formattedDate}</p>
           )}
         </div>
         {status && <StatusBadge status={status} />}
       </CardHeader>
       
       <CardContent>
-        {description && <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>}
-        
-        {metadata && metadata.length > 0 && (
-          <div className="grid grid-cols-2 gap-3 mt-3">
-            {metadata.map((item, index) => (
-              <div key={index} className="space-y-1">
-                <p className="text-xs text-muted-foreground">{item.label}</p>
-                <p className="text-sm font-medium">{item.value}</p>
-              </div>
-            ))}
-          </div>
+        {description && (
+          <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
         )}
-        
+        {metadataContent}
         {children}
       </CardContent>
       
-      {actions && actions.length > 0 && (
-        <CardFooter className="flex justify-end gap-2 pt-0">
-          {actions.map((action, index) => (
-            <Button
-              key={index}
-              variant={action.variant || 'ghost'}
-              size="sm"
-              onClick={action.onClick}
-            >
-              {action.icon}
-              {action.label}
-            </Button>
-          ))}
-        </CardFooter>
-      )}
+      {actionButtons}
     </Card>
   );
-}
+});
+
+FeatureCard.displayName = 'FeatureCard';

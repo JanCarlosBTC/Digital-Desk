@@ -1,168 +1,232 @@
 import { Redis } from 'ioredis';
 import { log } from '../vite.js';
 
-// Initialize Redis client
-let redisClient: Redis | null = null;
-let isRedisAvailable = false;
-let connectionAttempted = false;
-
-// Only initialize Redis if REDIS_URL is explicitly set
-if (process.env.REDIS_URL) {
-  try {
-    connectionAttempted = true;
-    redisClient = new Redis(process.env.REDIS_URL, {
-      maxRetriesPerRequest: 3, // Reduce retry attempts to avoid flooding logs
-      retryStrategy: (times) => {
-        if (times > 3) {
-          // After 3 attempts, give up for this instance
-          isRedisAvailable = false;
-          return null; // Stop retrying
-        }
-        return Math.min(times * 100, 1000); // Backoff strategy
-      }
-    });
-    
-    redisClient.on('connect', () => {
-      isRedisAvailable = true;
-      log('Redis client connected', 'cache');
-    });
-    
-    redisClient.on('error', (err: Error) => {
-      // Log only the first few errors to avoid flooding logs
-      if (isRedisAvailable || !connectionAttempted) {
-        log(`Redis connection error: ${err}`, 'cache');
-        isRedisAvailable = false;
-      }
-    });
-  } catch (error) {
-    log(`Error initializing Redis: ${error}`, 'cache');
-    isRedisAvailable = false;
-  }
-} else {
-  log('No REDIS_URL found, caching disabled', 'cache');
-  isRedisAvailable = false;
-}
-
 /**
  * Default cache TTL in seconds (1 hour)
  */
 const DEFAULT_TTL = 3600;
 
 /**
- * Sets a key-value pair in the cache with an optional TTL
- * 
- * @param key Cache key
- * @param value Value to store (will be serialized to JSON)
- * @param ttl Optional TTL in seconds
- * @returns Promise that resolves to true if successful, false otherwise
+ * Optimized Redis cache manager with proper connection handling
+ * and reconnection logic.
  */
-export async function setCache(key: string, value: any, ttl: number = DEFAULT_TTL): Promise<boolean> {
-  if (!redisClient) {
-    return false;
-  }
-  
-  try {
-    const serializedValue = JSON.stringify(value);
-    await redisClient.set(key, serializedValue, 'EX', ttl);
-    return true;
-  } catch (error) {
-    log(`Error setting cache: ${error}`, 'cache');
-    return false;
-  }
-}
+class CacheManager {
+  private client: Redis | null = null;
+  private available: boolean = false;
+  private connectionAttempted: boolean = false;
+  private reconnectTimer: NodeJS.Timeout | null = null;
+  private errorCount: number = 0;
 
-/**
- * Gets a value from the cache
- * 
- * @param key Cache key
- * @returns Promise that resolves to the cached value or null if not found
- */
-export async function getCache<T>(key: string): Promise<T | null> {
-  if (!redisClient) {
-    return null;
+  constructor() {
+    this.initialize();
   }
-  
-  try {
-    const value = await redisClient.get(key);
-    if (!value) {
+
+  private initialize(): void {
+    // Only initialize Redis if REDIS_URL is explicitly set
+    if (!process.env.REDIS_URL) {
+      log('No REDIS_URL found, caching disabled', 'cache');
+      return;
+    }
+
+    try {
+      this.connectionAttempted = true;
+      this.client = new Redis(process.env.REDIS_URL, {
+        // Optimized connection settings
+        connectTimeout: 5000, 
+        maxRetriesPerRequest: 2,
+        enableOfflineQueue: false,
+        enableReadyCheck: true,
+        // More efficient retry strategy
+        retryStrategy: (times) => {
+          if (times > 3) {
+            // After 3 attempts, try again in 30 seconds
+            this.scheduleReconnect();
+            return null; // Stop immediate retrying
+          }
+          return Math.min(times * 200, 2000); // Backoff strategy
+        }
+      });
+
+      // Set up event handlers
+      this.setupEventHandlers();
+    } catch (error) {
+      log(`Error initializing Redis: ${error}`, 'cache');
+      this.available = false;
+      this.scheduleReconnect();
+    }
+  }
+
+  private setupEventHandlers(): void {
+    if (!this.client) return;
+
+    this.client.on('connect', () => {
+      this.available = true;
+      this.errorCount = 0;
+      log('Redis client connected', 'cache');
+    });
+
+    this.client.on('ready', () => {
+      this.available = true;
+      if (this.reconnectTimer) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = null;
+      }
+    });
+
+    this.client.on('error', (err: Error) => {
+      this.errorCount++;
+      // Log errors sparingly to avoid flooding logs
+      if (this.errorCount <= 3 || this.errorCount % 10 === 0) {
+        log(`Redis connection error (${this.errorCount}): ${err}`, 'cache');
+      }
+      this.available = false;
+    });
+
+    this.client.on('end', () => {
+      this.available = false;
+      this.scheduleReconnect();
+    });
+  }
+
+  private scheduleReconnect(): void {
+    if (this.reconnectTimer) return;
+
+    this.reconnectTimer = setTimeout(() => {
+      log('Attempting to reconnect to Redis...', 'cache');
+      this.reconnectTimer = null;
+      if (this.client) {
+        this.client.quit().catch(() => {});
+        this.client = null;
+      }
+      this.initialize();
+    }, 30000); // Try again in 30 seconds
+  }
+
+  /**
+   * Check if Redis is available
+   */
+  public isAvailable(): boolean {
+    return this.available && this.client !== null;
+  }
+
+  /**
+   * Sets a key-value pair in the cache
+   */
+  public async set(key: string, value: any, ttl: number = DEFAULT_TTL): Promise<boolean> {
+    if (!this.isAvailable() || !this.client) {
+      return false;
+    }
+    
+    try {
+      const serializedValue = JSON.stringify(value);
+      await this.client.set(key, serializedValue, 'EX', ttl);
+      return true;
+    } catch (error) {
+      log(`Error setting cache: ${error}`, 'cache');
+      return false;
+    }
+  }
+
+  /**
+   * Gets a value from the cache
+   */
+  public async get<T>(key: string): Promise<T | null> {
+    if (!this.isAvailable() || !this.client) {
       return null;
     }
     
-    return JSON.parse(value) as T;
-  } catch (error) {
-    log(`Error getting from cache: ${error}`, 'cache');
-    return null;
-  }
-}
-
-/**
- * Invalidates a specific cache key
- * 
- * @param key Cache key to invalidate
- * @returns Promise that resolves to true if successful, false otherwise
- */
-export async function invalidateCache(key: string): Promise<boolean> {
-  if (!redisClient) {
-    return false;
-  }
-  
-  try {
-    await redisClient.del(key);
-    return true;
-  } catch (error) {
-    log(`Error invalidating cache: ${error}`, 'cache');
-    return false;
-  }
-}
-
-/**
- * Invalidates multiple cache keys based on a pattern
- * 
- * @param pattern Pattern to match (e.g., "user:*")
- * @returns Promise that resolves to true if successful, false otherwise
- */
-export async function invalidateCachePattern(pattern: string): Promise<boolean> {
-  if (!redisClient) {
-    return false;
-  }
-  
-  try {
-    const keys = await redisClient.keys(pattern);
-    if (keys.length > 0) {
-      await redisClient.del(...keys);
+    try {
+      const value = await this.client.get(key);
+      if (!value) {
+        return null;
+      }
+      
+      return JSON.parse(value) as T;
+    } catch (error) {
+      log(`Error getting from cache: ${error}`, 'cache');
+      return null;
     }
-    return true;
-  } catch (error) {
-    log(`Error invalidating cache pattern: ${error}`, 'cache');
-    return false;
+  }
+
+  /**
+   * Invalidates a specific cache key
+   */
+  public async invalidate(key: string): Promise<boolean> {
+    if (!this.isAvailable() || !this.client) {
+      return false;
+    }
+    
+    try {
+      await this.client.del(key);
+      return true;
+    } catch (error) {
+      log(`Error invalidating cache: ${error}`, 'cache');
+      return false;
+    }
+  }
+
+  /**
+   * Invalidates multiple cache keys based on a pattern
+   */
+  public async invalidatePattern(pattern: string): Promise<boolean> {
+    if (!this.isAvailable() || !this.client) {
+      return false;
+    }
+    
+    try {
+      const keys = await this.client.keys(pattern);
+      if (keys.length > 0) {
+        await this.client.del(...keys);
+      }
+      return true;
+    } catch (error) {
+      log(`Error invalidating cache pattern: ${error}`, 'cache');
+      return false;
+    }
+  }
+
+  /**
+   * Checks if a key exists in the cache
+   */
+  public async has(key: string): Promise<boolean> {
+    if (!this.isAvailable() || !this.client) {
+      return false;
+    }
+    
+    try {
+      return await this.client.exists(key) === 1;
+    } catch (error) {
+      log(`Error checking cache existence: ${error}`, 'cache');
+      return false;
+    }
+  }
+
+  /**
+   * Gracefully closes the Redis connection
+   */
+  public async quit(): Promise<void> {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    
+    if (this.client) {
+      try {
+        await this.client.quit();
+      } catch (e) {
+        // Ignore errors on quit
+      }
+      this.client = null;
+      this.available = false;
+    }
   }
 }
 
-/**
- * Checks if a key exists in the cache
- * 
- * @param key Cache key
- * @returns Promise that resolves to true if key exists, false otherwise
- */
-export async function hasCache(key: string): Promise<boolean> {
-  if (!redisClient) {
-    return false;
-  }
-  
-  try {
-    return await redisClient.exists(key) === 1;
-  } catch (error) {
-    log(`Error checking cache existence: ${error}`, 'cache');
-    return false;
-  }
-}
+// Create singleton instance
+const cacheManager = new CacheManager();
 
 /**
  * Creates a cache key for a specific resource
- * 
- * @param resourceType Type of resource (e.g., "user", "decision")
- * @param identifier Resource identifier or query parameters
- * @returns Cache key
  */
 export function createCacheKey(resourceType: string, identifier: string | number | Record<string, any>): string {
   if (typeof identifier === 'object') {
@@ -173,16 +237,47 @@ export function createCacheKey(resourceType: string, identifier: string | number
 }
 
 /**
+ * Sets a key-value pair in the cache with an optional TTL
+ */
+export async function setCache(key: string, value: any, ttl: number = DEFAULT_TTL): Promise<boolean> {
+  return await cacheManager.set(key, value, ttl);
+}
+
+/**
+ * Gets a value from the cache
+ */
+export async function getCache<T>(key: string): Promise<T | null> {
+  return await cacheManager.get<T>(key);
+}
+
+/**
+ * Invalidates a specific cache key
+ */
+export async function invalidateCache(key: string): Promise<boolean> {
+  return await cacheManager.invalidate(key);
+}
+
+/**
+ * Invalidates multiple cache keys based on a pattern
+ */
+export async function invalidateCachePattern(pattern: string): Promise<boolean> {
+  return await cacheManager.invalidatePattern(pattern);
+}
+
+/**
+ * Checks if a key exists in the cache
+ */
+export async function hasCache(key: string): Promise<boolean> {
+  return await cacheManager.has(key);
+}
+
+/**
  * Middleware that caches responses for GET requests
- * 
- * @param resourceType Type of resource to cache (e.g., "users", "decisions")
- * @param ttl Optional TTL in seconds
- * @returns Express middleware function
  */
 export function cacheMiddleware(resourceType: string, ttl: number = DEFAULT_TTL) {
   return async (req: any, res: any, next: any) => {
     // Only cache GET requests
-    if (req.method !== 'GET' || !isRedisAvailable) {
+    if (req.method !== 'GET' || !cacheManager.isAvailable()) {
       return next();
     }
     
@@ -207,9 +302,8 @@ export function cacheMiddleware(resourceType: string, ttl: number = DEFAULT_TTL)
       // Override json method to cache response
       res.json = function(data: any) {
         // Only attempt to cache if Redis is available
-        if (isRedisAvailable) {
+        if (cacheManager.isAvailable()) {
           setCache(cacheKey, data, ttl).catch((err) => {
-            // Only log the first few errors to reduce noise
             log(`Error caching response: ${err}`, 'cache');
           });
         }
@@ -230,10 +324,7 @@ export function cacheMiddleware(resourceType: string, ttl: number = DEFAULT_TTL)
  * Gracefully closes the Redis connection
  */
 export async function closeCacheConnection(): Promise<void> {
-  if (redisClient) {
-    await redisClient.quit();
-    redisClient = null;
-  }
+  await cacheManager.quit();
 }
 
 export default {
