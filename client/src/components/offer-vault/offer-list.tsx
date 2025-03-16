@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,25 @@ const OfferList = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [sortBy, setSortBy] = useState<string>("status");
+  
+  // Add global styling for form labels and inputs
+  useEffect(() => {
+    // Apply consistent styling to all form labels in this component
+    const formLabels = document.querySelectorAll('.dialog-form-content .form-label');
+    formLabels.forEach(label => {
+      label.classList.add('text-gray-700', 'font-medium');
+    });
+    
+    // Apply styling to all inputs in the form
+    const formInputs = document.querySelectorAll('.dialog-form-content input, .dialog-form-content textarea');
+    formInputs.forEach(input => {
+      input.classList.add('border-gray-300', 'focus:border-amber-400', 'focus:ring-amber-400');
+    });
+    
+    return () => {
+      // Clean up is not necessary as classes will be removed when component unmounts
+    };
+  }, [isOpen, isEditOpen]); // Re-apply when dialogs open
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
