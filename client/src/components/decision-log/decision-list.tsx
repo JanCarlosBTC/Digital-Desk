@@ -318,7 +318,7 @@ const DecisionList = ({
               </TabsTrigger>
             </TabsList>
             
-            <div className="flex gap-2 items-center">
+            <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
                 <Input
                   type="text"
@@ -332,7 +332,7 @@ const DecisionList = ({
               
               <Button
                 onClick={handleNewDecisionClick}
-                className="bg-emerald-500 text-white hover:bg-emerald-600 transition-colors font-medium h-10 px-4 py-2 flex items-center"
+                className="bg-emerald-500 text-white hover:bg-emerald-600 transition-colors font-medium h-10 px-4 py-2 flex-shrink-0 flex items-center whitespace-nowrap"
               >
                 <PlusIcon className="mr-1 h-4 w-4" /> New Decision
               </Button>
