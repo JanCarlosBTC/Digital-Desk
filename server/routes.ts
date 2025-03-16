@@ -1,11 +1,11 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage } from "./storage.js";
 import { 
   insertBrainDumpSchema, insertProblemTreeSchema, insertDraftedPlanSchema, 
   insertClarityLabSchema, insertWeeklyReflectionSchema, insertMonthlyCheckInSchema, 
   insertPrioritySchema, insertDecisionSchema, insertOfferSchema, insertOfferNoteSchema 
-} from "@shared/schema";
+} from "../shared/schema.js";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 
@@ -749,17 +749,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Offer Notes endpoints
   app.get('/api/offer-notes', async (req: Request, res: Response) => {
     try {
-      let offerNote = await storage.getOfferNotesByUserId(DEMO_USER_ID);
+      let offerNotes = await storage.getOfferNotesByUserId(DEMO_USER_ID);
       
-      // If no notes exist, create empty notes
-      if (!offerNote) {
-        offerNote = await storage.createOfferNote({
+      // If no notes exist or the array is empty, create empty notes
+      if (!offerNotes || offerNotes.length === 0) {
+        const newNote = await storage.createOfferNote({
           userId: DEMO_USER_ID,
           content: ""
         });
+        offerNotes = [newNote];
       }
       
-      res.json(offerNote);
+      res.json(offerNotes);
     } catch (error) {
       res.status(500).json({ message: "Error fetching offer notes" });
     }

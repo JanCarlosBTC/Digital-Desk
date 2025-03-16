@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import React, { ReactNode } from "react";
 import Sidebar from "@/components/ui/sidebar";
 import MobileNavigation from "@/components/layout/mobile-navigation";
 

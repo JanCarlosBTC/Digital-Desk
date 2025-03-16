@@ -11,7 +11,7 @@ import {
   Offer, InsertOffer,
   OfferNote, InsertOfferNote,
   Activity, InsertActivity
-} from "@shared/schema";
+} from "../shared/schema.js";
 
 export interface IStorage {
   // User methods
@@ -927,6 +927,12 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = process.env.DATABASE_URL
-  ? new (require('./prisma-storage').PrismaStorage)()
-  : new MemStorage();
+// Create storage instance using memory storage for development
+// This avoids any issues with missing system libraries
+let storageImpl: IStorage = new MemStorage();
+
+// Export the storage interface
+export const storage: IStorage = storageImpl;
+
+// We're temporarily using MemStorage until system dependencies are resolved
+console.log('Using in-memory storage for development');

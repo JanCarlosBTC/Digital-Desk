@@ -1,5 +1,5 @@
-import { IStorage } from './storage';
-import prisma from './prisma';
+import { IStorage } from './storage.js';
+import prisma from './prisma.js';
 import {
   User, InsertUser,
   BrainDump, InsertBrainDump,
@@ -13,7 +13,7 @@ import {
   Offer, InsertOffer,
   OfferNote, InsertOfferNote,
   Activity, InsertActivity,
-} from "@shared/schema";
+} from "../shared/schema.js";
 
 export class PrismaStorage implements IStorage {
   // User methods
@@ -357,24 +357,91 @@ export class PrismaStorage implements IStorage {
 
   // Monthly Check-in methods
   async getMonthlyCheckIns(userId: number): Promise<MonthlyCheckIn[]> {
-    return await prisma.monthlyCheckIn.findMany({
+    // First get all check-ins from the database
+    const checkIns = await prisma.monthlyCheckIn.findMany({
       where: { userId },
       orderBy: [
         { year: 'desc' },
         { month: 'desc' }
       ]
     });
+    
+    // Create a new array with properly typed objects
+    const result: MonthlyCheckIn[] = [];
+    
+    // Process each check-in to ensure correct typing
+    for (const checkIn of checkIns) {
+      const typedCheckIn: MonthlyCheckIn = {
+        id: checkIn.id,
+        userId: checkIn.userId,
+        month: checkIn.month,
+        year: checkIn.year,
+        completedOn: checkIn.completedOn,
+        achievements: Array.isArray(checkIn.achievements) ? checkIn.achievements : [],
+        challenges: Array.isArray(checkIn.challenges) ? checkIn.challenges : [],
+        nextMonthPriorities: Array.isArray(checkIn.nextMonthPriorities) ? checkIn.nextMonthPriorities : [],
+        // Ensure goalProgress is properly typed
+        goalProgress: this.transformGoalProgress(checkIn.goalProgress),
+        createdAt: checkIn.createdAt,
+        updatedAt: checkIn.updatedAt
+      };
+      
+      result.push(typedCheckIn);
+    }
+    
+    return result;
   }
 
   async getMonthlyCheckInByMonthYear(userId: number, month: number, year: number): Promise<MonthlyCheckIn | undefined> {
-    const monthlyCheckIn = await prisma.monthlyCheckIn.findFirst({
+    const checkIn = await prisma.monthlyCheckIn.findFirst({
       where: { 
         userId,
         month,
         year
       }
     });
-    return monthlyCheckIn || undefined;
+    
+    if (!checkIn) return undefined;
+    
+    // Create a properly typed object
+    const typedCheckIn: MonthlyCheckIn = {
+      id: checkIn.id,
+      userId: checkIn.userId,
+      month: checkIn.month,
+      year: checkIn.year,
+      completedOn: checkIn.completedOn,
+      achievements: Array.isArray(checkIn.achievements) ? checkIn.achievements : [],
+      challenges: Array.isArray(checkIn.challenges) ? checkIn.challenges : [],
+      nextMonthPriorities: Array.isArray(checkIn.nextMonthPriorities) ? checkIn.nextMonthPriorities : [],
+      // Ensure goalProgress is properly typed
+      goalProgress: this.transformGoalProgress(checkIn.goalProgress),
+      createdAt: checkIn.createdAt,
+      updatedAt: checkIn.updatedAt
+    };
+    
+    return typedCheckIn;
+  }
+  
+  // Helper method for transforming goalProgress to the correct type
+  private transformGoalProgress(goalProgress: any): { goal: string, progress: number }[] {
+    if (!goalProgress) return [];
+    
+    // If it's already an array, map through it
+    if (Array.isArray(goalProgress)) {
+      return goalProgress.map((item: any) => {
+        if (typeof item === 'object' && item !== null && 'goal' in item && 'progress' in item) {
+          return {
+            goal: String(item.goal),
+            progress: Number(item.progress)
+          };
+        }
+        // Default empty item if structure is incorrect
+        return { goal: '', progress: 0 };
+      });
+    }
+    
+    // If it's not an array, return an empty array
+    return [];
   }
 
   async createMonthlyCheckIn(monthlyCheckIn: InsertMonthlyCheckIn): Promise<MonthlyCheckIn> {
@@ -391,13 +458,21 @@ export class PrismaStorage implements IStorage {
       ? [...monthlyCheckIn.nextMonthPriorities]
       : [];
     
-    // Handle JSON data with careful validation
-    let goalProgressData: any[] = [];
+    // Handle the goalProgress array with proper typing
+    const goalProgressArray: { goal: string, progress: number }[] = [];
     if (Array.isArray(monthlyCheckIn.goalProgress)) {
-      goalProgressData = [...monthlyCheckIn.goalProgress];
+      monthlyCheckIn.goalProgress.forEach((item: any) => {
+        if (typeof item === 'object' && item !== null && 'goal' in item && 'progress' in item) {
+          goalProgressArray.push({
+            goal: String(item.goal),
+            progress: Number(item.progress)
+          });
+        }
+      });
     }
 
-    return await prisma.monthlyCheckIn.create({
+    // Create in database
+    const createdCheckIn = await prisma.monthlyCheckIn.create({
       data: {
         userId: monthlyCheckIn.userId,
         month: monthlyCheckIn.month,
@@ -406,9 +481,15 @@ export class PrismaStorage implements IStorage {
         achievements: achievementsArray,
         nextMonthPriorities: nextMonthPrioritiesArray,
         completedOn: monthlyCheckIn.completedOn || null,
-        goalProgress: goalProgressData
+        goalProgress: goalProgressArray as any // Use type assertion to bypass type checking
       }
     });
+    
+    // Return with properly typed goalProgress
+    return {
+      ...createdCheckIn,
+      goalProgress: this.transformGoalProgress(createdCheckIn.goalProgress)
+    } as MonthlyCheckIn;
   }
 
   async updateMonthlyCheckIn(id: number, monthlyCheckIn: Partial<InsertMonthlyCheckIn>): Promise<MonthlyCheckIn | undefined> {
@@ -429,25 +510,53 @@ export class PrismaStorage implements IStorage {
     
     // Handle arrays with care
     if (monthlyCheckIn.challenges !== undefined) {
-      updateData.challenges = Array.isArray(monthlyCheckIn.challenges) ? monthlyCheckIn.challenges : [];
+      const challengesArray = Array.isArray(monthlyCheckIn.challenges) 
+        ? [...monthlyCheckIn.challenges]
+        : [];
+      updateData.challenges = challengesArray;
     }
+    
     if (monthlyCheckIn.achievements !== undefined) {
-      updateData.achievements = Array.isArray(monthlyCheckIn.achievements) ? monthlyCheckIn.achievements : [];
+      const achievementsArray = Array.isArray(monthlyCheckIn.achievements) 
+        ? [...monthlyCheckIn.achievements]
+        : [];
+      updateData.achievements = achievementsArray;
     }
+    
     if (monthlyCheckIn.nextMonthPriorities !== undefined) {
-      updateData.nextMonthPriorities = Array.isArray(monthlyCheckIn.nextMonthPriorities) ? monthlyCheckIn.nextMonthPriorities : [];
+      const nextMonthPrioritiesArray = Array.isArray(monthlyCheckIn.nextMonthPriorities) 
+        ? [...monthlyCheckIn.nextMonthPriorities]
+        : [];
+      updateData.nextMonthPriorities = nextMonthPrioritiesArray;
     }
+    
+    // Handle goalProgress with proper typing
     if (monthlyCheckIn.goalProgress !== undefined) {
-      updateData.goalProgress = monthlyCheckIn.goalProgress || [];
+      const goalProgressArray: { goal: string, progress: number }[] = [];
+      if (Array.isArray(monthlyCheckIn.goalProgress)) {
+        monthlyCheckIn.goalProgress.forEach((item: any) => {
+          if (typeof item === 'object' && item !== null && 'goal' in item && 'progress' in item) {
+            goalProgressArray.push({
+              goal: String(item.goal),
+              progress: Number(item.progress)
+            });
+          }
+        });
+      }
+      updateData.goalProgress = goalProgressArray as any; // Use type assertion to bypass type checking
     }
 
     // Update the monthly check-in
-    const updatedMonthlyCheckIn = await prisma.monthlyCheckIn.update({
+    const updatedCheckIn = await prisma.monthlyCheckIn.update({
       where: { id },
       data: updateData
     });
     
-    return updatedMonthlyCheckIn;
+    // Return with properly typed goalProgress
+    return {
+      ...updatedCheckIn,
+      goalProgress: this.transformGoalProgress(updatedCheckIn.goalProgress)
+    } as MonthlyCheckIn;
   }
 
   // Priorities methods
