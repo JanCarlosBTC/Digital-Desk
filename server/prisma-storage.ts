@@ -11,8 +11,7 @@ import {
   Priority, InsertPriority,
   Decision, InsertDecision,
   Offer, InsertOffer,
-  OfferNote, InsertOfferNote,
-  Activity, InsertActivity,
+  OfferNote, InsertOfferNote
 } from "../shared/schema.js";
 
 export class PrismaStorage implements IStorage {

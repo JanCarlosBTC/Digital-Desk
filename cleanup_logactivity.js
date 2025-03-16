@@ -1,20 +1,29 @@
-const fs = require('fs');
-const path = require('path');
+// This is a systematic cleanup script for removing activity logging code
+// Created by hand for the specific patterns used in storage.ts
 
-const filePath = path.join(process.cwd(), 'server/storage.ts');
+const fs = require('fs');
+
+// Read the content of storage.ts
+const filePath = 'server/storage.ts';
 let content = fs.readFileSync(filePath, 'utf8');
 
-// Replace the temporary logActivity method
-content = content.replace(/\s*\/\/\s*Temporary method to avoid compile errors during activity removal([\s\S]*?)private async logActivity\(data: any\): Promise<void> {[\s\S]*?return;[\s\S]*?}/m, '');
+// Define the patterns that need to be removed
+const patterns = [
+  // Pattern 1: Simple logActivity call blocks with comment
+  /\s+\/\/\s*(?:Create|Track) activity\s*\n\s+await this\.logActivity\(\{[\s\S]*?\}\);\s*\n/g,
+  
+  // Pattern 2: Simple logActivity call blocks without comment
+  /\s+await this\.logActivity\(\{[\s\S]*?\}\);\s*\n/g,
+  
+  // Pattern 3: if (deleted) { await this.logActivity... } blocks
+  /\s+if\s*\(deleted\)\s*\{\s*\n\s+await this\.logActivity\(\{[\s\S]*?\}\);\s*\n\s+\}\s*\n/g
+];
 
-// Regular expression to match all logActivity blocks
-const logActivityPattern = /\s*\/\/\s*(?:Create activity|Track activity)?\s*await this\.logActivity\(\{\s*userId:.*?\s*type:.*?\s*entityType:.*?\s*entityName:.*?\s*metadata:[\s\S]*?\}\);/g;
+// Remove each pattern from the content
+patterns.forEach(pattern => {
+  content = content.replace(pattern, '\n');
+});
 
-// Remove all occurrences
-content = content.replace(logActivityPattern, '');
-
-// Replace if (deleted) { await this.logActivity... } blocks with just return deleted;
-content = content.replace(/\s*if\s*\(deleted\)\s*\{\s*await this\.logActivity\(\{[\s\S]*?\}\);\s*\}\s*\s*return deleted;/g, '    return deleted;');
-
+// Write the cleaned content back to the file
 fs.writeFileSync(filePath, content, 'utf8');
-console.log('LogActivity calls removed successfully');
+console.log('All logActivity calls have been removed from storage.ts');

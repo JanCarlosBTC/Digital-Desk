@@ -98,6 +98,12 @@ export class MemStorage implements IStorage {
   private offerNotes: Map<number, OfferNote>;
 
   private nextId: number;
+  
+  // Temporary method to avoid compile errors during activity removal
+  private async logActivity(data: any): Promise<void> {
+    // No-op method that will be removed after all activity references are removed
+    return;
+  }
 
 
   constructor() {

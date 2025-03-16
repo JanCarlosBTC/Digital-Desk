@@ -1,15 +1,15 @@
 #!/bin/bash
 
-# Remove the temporary logActivity method
-sed -i '/\/\/.*Temporary method to avoid compile errors during activity removal/,/^  }/d' server/storage.ts
+# Create a temporary file
+cp server/storage.ts server/storage.ts.bak
 
-# Define a pattern for all logActivity blocks
-PATTERN='[[:space:]]*// *\(Create activity\|Track activity\)* *\?[[:space:]]*await this\.logActivity({[^}]*});'
+# Pattern 1: Remove simple logActivity calls
+grep -v "await this.logActivity" server/storage.ts.bak > server/storage.ts
 
-# Remove all occurrences of the pattern
-sed -i -E ":a;N;$!ba;s/${PATTERN}//g" server/storage.ts
+# Pattern 2: Remove commented activity creation sections
+sed -i '/\/\/ Create activity/d' server/storage.ts
 
-# Handle if (deleted) { await this.logActivity... } blocks
-sed -i -E 's/[[:space:]]*if[[:space:]]*\(deleted\)[[:space:]]*{[[:space:]]*await this\.logActivity\({[^}]*}\);[[:space:]]*}//' server/storage.ts
+# Clean up temporary file
+rm server/storage.ts.bak
 
-echo "LogActivity calls removed successfully"
+echo "logActivity calls removed"
