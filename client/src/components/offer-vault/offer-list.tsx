@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { DialogForm } from "@/components/ui/dialog-form";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +15,7 @@ import { Offer } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlusIcon, ArrowUpDown, EditIcon, HistoryIcon } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FeatureCard } from "@/components/ui/feature-card";
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -218,9 +220,19 @@ const OfferList = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+    <FeatureCard
+      title="Your Offers"
+      className="p-6"
+      actions={[
+        {
+          label: "New Offer",
+          onClick: handleNewOffer,
+          icon: <PlusIcon className="h-4 w-4" />
+        }
+      ]}
+    >
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">Your Offers</h2>
+        <div className="flex-1"></div>
         <div>
           <Select 
             defaultValue="status" 
@@ -238,13 +250,6 @@ const OfferList = () => {
               <SelectItem value="clients">Most Clients</SelectItem>
             </SelectContent>
           </Select>
-          <Button
-            onClick={handleNewOffer}
-            variant="default"
-            className="bg-yellow-400 text-white hover:bg-yellow-500 transition-colors font-medium shadow-sm"
-          >
-            <PlusIcon className="mr-2 h-4 w-4" /> New Offer
-          </Button>
         </div>
       </div>
       
@@ -327,295 +332,249 @@ const OfferList = () => {
       )}
 
       {/* New Offer Dialog */}
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-[850px] max-h-[90vh] overflow-y-auto p-0 gap-0">
-          <DialogHeader className="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-amber-50 to-white rounded-t-lg">
-            <DialogTitle className="text-2xl font-semibold text-gray-800">Create New Offer</DialogTitle>
-            <DialogDescription className="text-gray-600 mt-2">
-              Add products and services to your portfolio to track sales and manage your catalog.
-            </DialogDescription>
-          </DialogHeader>
+      <DialogForm
+        title="Create New Offer"
+        description="Add products and services to your portfolio to track sales and manage your catalog."
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        onSubmit={form.handleSubmit(onSubmit)}
+        submitLabel="Save Offer"
+        isSubmitting={createMutation.isPending}
+        size="lg"
+      >
+        <div className="space-y-8">
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Offer Title</FormLabel>
+                <FormControl>
+                  <Input placeholder="E.g., Executive Coaching Package" {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
           
-          <div className="px-8 py-8 bg-white dialog-form-content">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Offer Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="E.g., Executive Coaching Package" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Describe your offer and its value proposition" 
-                          rows={3} 
-                          {...field} 
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Active">Active</SelectItem>
-                            <SelectItem value="Coming Soon">Coming Soon</SelectItem>
-                            <SelectItem value="Archived">Archived</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="Describe your offer and its value proposition" 
+                    rows={3} 
+                    {...field} 
                   />
-                  
-                  <FormField
-                    control={form.control}
-                    name="price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Price</FormLabel>
-                        <FormControl>
-                          <Input placeholder="E.g., $2,500 / month" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="duration"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Duration (optional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="E.g., 6-month commitment" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="format"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Format (optional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="E.g., In-person or virtual" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <FormField
-                  control={form.control}
-                  name="clientCount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Current Client Count</FormLabel>
-                      <FormControl>
-                        <Input type="number" min="0" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <DialogFooter className="flex justify-end space-x-2 pt-6 mt-2 border-t border-gray-200">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsOpen(false)}
-                    className="px-5"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit"
-                    variant="default"
-                    className="bg-yellow-400 text-white hover:bg-yellow-500 font-medium shadow-sm px-5"
-                    disabled={createMutation.isPending}
-                  >
-                    {createMutation.isPending ? "Saving..." : "Save Offer"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Coming Soon">Coming Soon</SelectItem>
+                      <SelectItem value="Archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Price</FormLabel>
+                  <FormControl>
+                    <Input placeholder="E.g., $2,500 / month" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
           </div>
-        </DialogContent>
-      </Dialog>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="duration"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Duration (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="E.g., 6-month commitment" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="format"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Format (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="E.g., In-person or virtual" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <FormField
+            control={form.control}
+            name="clientCount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Current Client Count</FormLabel>
+                <FormControl>
+                  <Input type="number" min="0" {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+      </DialogForm>
       
       {/* Edit Offer Dialog */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[850px] max-h-[90vh] overflow-y-auto p-0 gap-0">
-          <DialogHeader className="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-amber-50 to-white rounded-t-lg">
-            <DialogTitle className="text-2xl font-semibold text-gray-800">Edit Offer</DialogTitle>
-            <DialogDescription className="text-gray-600 mt-2">
-              Update the details of your product or service offering.
-            </DialogDescription>
-          </DialogHeader>
+      <DialogForm
+        title="Edit Offer"
+        description="Update the details of your product or service offering."
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        onSubmit={form.handleSubmit(onSubmit)}
+        submitLabel="Update Offer"
+        isSubmitting={updateMutation.isPending}
+        size="lg"
+      >
+        <div className="space-y-8">
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Offer Title</FormLabel>
+                <FormControl>
+                  <Input placeholder="E.g., Executive Coaching Package" {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
           
-          <div className="px-8 py-8 bg-white dialog-form-content">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Offer Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="E.g., Executive Coaching Package" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Describe your offer and its value proposition" 
-                          rows={3} 
-                          {...field} 
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Active">Active</SelectItem>
-                            <SelectItem value="Coming Soon">Coming Soon</SelectItem>
-                            <SelectItem value="Archived">Archived</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="Describe your offer and its value proposition" 
+                    rows={3} 
+                    {...field} 
                   />
-                  
-                  <FormField
-                    control={form.control}
-                    name="price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Price</FormLabel>
-                        <FormControl>
-                          <Input placeholder="E.g., $2,500 / month" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="duration"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Duration (optional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="E.g., 6-month commitment" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="format"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Format (optional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="E.g., In-person or virtual" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <FormField
-                  control={form.control}
-                  name="clientCount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Current Client Count</FormLabel>
-                      <FormControl>
-                        <Input type="number" min="0" {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <DialogFooter className="flex justify-end space-x-2 pt-6 mt-2 border-t border-gray-200">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsEditOpen(false)}
-                    className="px-5"
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit"
-                    variant="default"
-                    className="bg-yellow-400 text-white hover:bg-yellow-500 font-medium shadow-sm px-5"
-                    disabled={updateMutation.isPending}
-                  >
-                    {updateMutation.isPending ? "Updating..." : "Update Offer"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Coming Soon">Coming Soon</SelectItem>
+                      <SelectItem value="Archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Price</FormLabel>
+                  <FormControl>
+                    <Input placeholder="E.g., $2,500 / month" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
           </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="duration"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Duration (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="E.g., 6-month commitment" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="format"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Format (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="E.g., In-person or virtual" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+          
+          <FormField
+            control={form.control}
+            name="clientCount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Current Client Count</FormLabel>
+                <FormControl>
+                  <Input type="number" min="0" {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        </div>
+      </DialogForm>
+    </FeatureCard>
   );
 };
 
