@@ -292,6 +292,7 @@ export const offerNotes = pgTable("offer_notes", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   content: text("content"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
@@ -310,6 +311,13 @@ export type ActivityMetadata = {
   decisionDate?: Date;
   date?: Date;
   price?: string;
+  completedOn?: Date;
+  content?: string;
+  order?: number;
+  weekDate?: Date;
+  isDraft?: boolean;
+  month?: number;
+  year?: number;
 };
 
 // Activities schema
@@ -341,7 +349,14 @@ export const insertActivitySchema = baseActivitySchema.extend({
     category: z.string().optional(),
     decisionDate: z.date().optional(),
     date: z.date().optional(),
-    price: z.string().optional()
+    price: z.string().optional(),
+    completedOn: z.date().optional(),
+    content: z.string().optional(),
+    order: z.number().optional(),
+    weekDate: z.date().optional(),
+    isDraft: z.boolean().optional(),
+    month: z.number().optional(),
+    year: z.number().optional()
   }).optional()
 });
 

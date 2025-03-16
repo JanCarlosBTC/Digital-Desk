@@ -33,7 +33,13 @@ export class PrismaStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     return await prisma.user.create({
-      data: user
+      data: {
+        username: user.username,
+        password: user.password,
+        name: user.name,
+        initials: user.initials,
+        plan: user.plan || undefined // Ensure plan is never null
+      }
     });
   }
 
@@ -77,19 +83,84 @@ export class PrismaStorage implements IStorage {
   }
 
   async createProblemTree(problemTree: InsertProblemTree): Promise<ProblemTree> {
+    // Ensure arrays are properly handled with explicit casting
+    const subProblemsArray = Array.isArray(problemTree.subProblems) 
+      ? [...problemTree.subProblems]
+      : [];
+    
+    const rootCausesArray = Array.isArray(problemTree.rootCauses) 
+      ? [...problemTree.rootCauses]
+      : [];
+    
+    const potentialSolutionsArray = Array.isArray(problemTree.potentialSolutions) 
+      ? [...problemTree.potentialSolutions]
+      : [];
+    
+    const nextActionsArray = Array.isArray(problemTree.nextActions) 
+      ? [...problemTree.nextActions]
+      : [];
+
     return await prisma.problemTree.create({
-      data: problemTree
+      data: {
+        userId: problemTree.userId,
+        title: problemTree.title,
+        mainProblem: problemTree.mainProblem,
+        subProblems: subProblemsArray,
+        rootCauses: rootCausesArray,
+        potentialSolutions: potentialSolutionsArray,
+        nextActions: nextActionsArray
+      }
     });
   }
 
   async updateProblemTree(id: number, problemTree: Partial<InsertProblemTree>): Promise<ProblemTree | undefined> {
+    // Get existing problem tree
+    const existingTree = await this.getProblemTree(id);
+    if (!existingTree) return undefined;
+
+    const updateData: any = {
+      updatedAt: new Date()
+    };
+
+    // Carefully update each field, ensuring arrays are properly handled
+    if (problemTree.title !== undefined) updateData.title = problemTree.title;
+    if (problemTree.mainProblem !== undefined) updateData.mainProblem = problemTree.mainProblem;
+    
+    // Handle arrays with care - using explicit array creation to ensure proper type handling
+    if (problemTree.subProblems !== undefined) {
+      const subProblemsArray = Array.isArray(problemTree.subProblems) 
+        ? [...problemTree.subProblems]
+        : [];
+      updateData.subProblems = subProblemsArray;
+    }
+    
+    if (problemTree.rootCauses !== undefined) {
+      const rootCausesArray = Array.isArray(problemTree.rootCauses) 
+        ? [...problemTree.rootCauses]
+        : [];
+      updateData.rootCauses = rootCausesArray;
+    }
+    
+    if (problemTree.potentialSolutions !== undefined) {
+      const potentialSolutionsArray = Array.isArray(problemTree.potentialSolutions) 
+        ? [...problemTree.potentialSolutions]
+        : [];
+      updateData.potentialSolutions = potentialSolutionsArray;
+    }
+    
+    if (problemTree.nextActions !== undefined) {
+      const nextActionsArray = Array.isArray(problemTree.nextActions) 
+        ? [...problemTree.nextActions]
+        : [];
+      updateData.nextActions = nextActionsArray;
+    }
+
+    // Update the problem tree
     const updatedProblemTree = await prisma.problemTree.update({
       where: { id },
-      data: { 
-        ...problemTree,
-        updatedAt: new Date()
-      }
+      data: updateData
     });
+    
     return updatedProblemTree;
   }
 
@@ -119,19 +190,80 @@ export class PrismaStorage implements IStorage {
   }
 
   async createDraftedPlan(draftedPlan: InsertDraftedPlan): Promise<DraftedPlan> {
+    // Ensure arrays are properly handled with explicit casting
+    const componentsArray = Array.isArray(draftedPlan.components) 
+      ? [...draftedPlan.components]
+      : [];
+    
+    const resourcesNeededArray = Array.isArray(draftedPlan.resourcesNeeded) 
+      ? [...draftedPlan.resourcesNeeded]
+      : [];
+    
+    const expectedOutcomesArray = Array.isArray(draftedPlan.expectedOutcomes) 
+      ? [...draftedPlan.expectedOutcomes]
+      : [];
+
     return await prisma.draftedPlan.create({
-      data: draftedPlan
+      data: {
+        userId: draftedPlan.userId,
+        title: draftedPlan.title,
+        description: draftedPlan.description,
+        status: draftedPlan.status,
+        components: componentsArray,
+        resourcesNeeded: resourcesNeededArray,
+        expectedOutcomes: expectedOutcomesArray,
+        comments: draftedPlan.comments || 0,
+        attachments: draftedPlan.attachments || 0
+      }
     });
   }
 
   async updateDraftedPlan(id: number, draftedPlan: Partial<InsertDraftedPlan>): Promise<DraftedPlan | undefined> {
+    // Get existing drafted plan
+    const existingPlan = await this.getDraftedPlan(id);
+    if (!existingPlan) return undefined;
+
+    const updateData: any = {
+      updatedAt: new Date()
+    };
+
+    // Carefully update each field, ensuring arrays are properly handled
+    if (draftedPlan.title !== undefined) updateData.title = draftedPlan.title;
+    if (draftedPlan.description !== undefined) updateData.description = draftedPlan.description;
+    if (draftedPlan.status !== undefined) updateData.status = draftedPlan.status;
+    
+    // Handle arrays with care - using explicit array creation to ensure proper type handling
+    if (draftedPlan.components !== undefined) {
+      const componentsArray = Array.isArray(draftedPlan.components) 
+        ? [...draftedPlan.components]
+        : [];
+      updateData.components = componentsArray;
+    }
+    
+    if (draftedPlan.resourcesNeeded !== undefined) {
+      const resourcesNeededArray = Array.isArray(draftedPlan.resourcesNeeded) 
+        ? [...draftedPlan.resourcesNeeded]
+        : [];
+      updateData.resourcesNeeded = resourcesNeededArray;
+    }
+    
+    if (draftedPlan.expectedOutcomes !== undefined) {
+      const expectedOutcomesArray = Array.isArray(draftedPlan.expectedOutcomes) 
+        ? [...draftedPlan.expectedOutcomes]
+        : [];
+      updateData.expectedOutcomes = expectedOutcomesArray;
+    }
+
+    // Handle numeric values
+    if (draftedPlan.comments !== undefined) updateData.comments = draftedPlan.comments;
+    if (draftedPlan.attachments !== undefined) updateData.attachments = draftedPlan.attachments;
+
+    // Update the drafted plan
     const updatedDraftedPlan = await prisma.draftedPlan.update({
       where: { id },
-      data: { 
-        ...draftedPlan,
-        updatedAt: new Date()
-      }
+      data: updateData
     });
+    
     return updatedDraftedPlan;
   }
 
@@ -246,19 +378,75 @@ export class PrismaStorage implements IStorage {
   }
 
   async createMonthlyCheckIn(monthlyCheckIn: InsertMonthlyCheckIn): Promise<MonthlyCheckIn> {
+    // Ensure arrays are properly handled with explicit casting
+    const challengesArray = Array.isArray(monthlyCheckIn.challenges) 
+      ? [...monthlyCheckIn.challenges]
+      : [];
+    
+    const achievementsArray = Array.isArray(monthlyCheckIn.achievements) 
+      ? [...monthlyCheckIn.achievements]
+      : [];
+    
+    const nextMonthPrioritiesArray = Array.isArray(monthlyCheckIn.nextMonthPriorities) 
+      ? [...monthlyCheckIn.nextMonthPriorities]
+      : [];
+    
+    // Handle JSON data with careful validation
+    let goalProgressData: any[] = [];
+    if (Array.isArray(monthlyCheckIn.goalProgress)) {
+      goalProgressData = [...monthlyCheckIn.goalProgress];
+    }
+
     return await prisma.monthlyCheckIn.create({
-      data: monthlyCheckIn
+      data: {
+        userId: monthlyCheckIn.userId,
+        month: monthlyCheckIn.month,
+        year: monthlyCheckIn.year,
+        challenges: challengesArray,
+        achievements: achievementsArray,
+        nextMonthPriorities: nextMonthPrioritiesArray,
+        completedOn: monthlyCheckIn.completedOn || null,
+        goalProgress: goalProgressData
+      }
     });
   }
 
   async updateMonthlyCheckIn(id: number, monthlyCheckIn: Partial<InsertMonthlyCheckIn>): Promise<MonthlyCheckIn | undefined> {
+    // Get existing monthly check-in
+    const existingCheckIn = await prisma.monthlyCheckIn.findUnique({
+      where: { id }
+    });
+    if (!existingCheckIn) return undefined;
+
+    const updateData: any = {
+      updatedAt: new Date()
+    };
+
+    // Carefully update each field, ensuring arrays are properly handled
+    if (monthlyCheckIn.month !== undefined) updateData.month = monthlyCheckIn.month;
+    if (monthlyCheckIn.year !== undefined) updateData.year = monthlyCheckIn.year;
+    if (monthlyCheckIn.completedOn !== undefined) updateData.completedOn = monthlyCheckIn.completedOn;
+    
+    // Handle arrays with care
+    if (monthlyCheckIn.challenges !== undefined) {
+      updateData.challenges = Array.isArray(monthlyCheckIn.challenges) ? monthlyCheckIn.challenges : [];
+    }
+    if (monthlyCheckIn.achievements !== undefined) {
+      updateData.achievements = Array.isArray(monthlyCheckIn.achievements) ? monthlyCheckIn.achievements : [];
+    }
+    if (monthlyCheckIn.nextMonthPriorities !== undefined) {
+      updateData.nextMonthPriorities = Array.isArray(monthlyCheckIn.nextMonthPriorities) ? monthlyCheckIn.nextMonthPriorities : [];
+    }
+    if (monthlyCheckIn.goalProgress !== undefined) {
+      updateData.goalProgress = monthlyCheckIn.goalProgress || [];
+    }
+
+    // Update the monthly check-in
     const updatedMonthlyCheckIn = await prisma.monthlyCheckIn.update({
       where: { id },
-      data: { 
-        ...monthlyCheckIn,
-        updatedAt: new Date()
-      }
+      data: updateData
     });
+    
     return updatedMonthlyCheckIn;
   }
 
@@ -411,7 +599,7 @@ export class PrismaStorage implements IStorage {
   async getOffers(userId: number): Promise<Offer[]> {
     return await prisma.offer.findMany({
       where: { userId },
-      orderBy: { offerDate: 'desc' }
+      orderBy: { createdAt: 'desc' }
     });
   }
 
@@ -433,7 +621,7 @@ export class PrismaStorage implements IStorage {
       userId: offer.userId,
       type: "created",
       entityType: "offer",
-      entityName: `${newOffer.title} - ${newOffer.company}`,
+      entityName: newOffer.title,
       metadata: JSON.parse(JSON.stringify({
         status: newOffer.status,
         price: newOffer.price,
@@ -463,7 +651,7 @@ export class PrismaStorage implements IStorage {
         userId: updatedOffer.userId,
         type: "updated",
         entityType: "offer",
-        entityName: `${updatedOffer.title} - ${updatedOffer.company}`,
+        entityName: updatedOffer.title,
         metadata: JSON.parse(JSON.stringify({
           oldStatus: oldOffer.status,
           newStatus: offer.status,
@@ -490,7 +678,7 @@ export class PrismaStorage implements IStorage {
         userId: offer.userId,
         type: "deleted",
         entityType: "offer",
-        entityName: `${offer.title} - ${offer.company}`,
+        entityName: offer.title,
         metadata: JSON.parse(JSON.stringify({
           status: offer.status,
         }))
@@ -503,16 +691,19 @@ export class PrismaStorage implements IStorage {
   }
 
   // Offer Notes methods
-  async getOfferNotesByUserId(userId: number): Promise<OfferNote | undefined> {
-    const offerNote = await prisma.offerNote.findFirst({
+  async getOfferNotesByUserId(userId: number): Promise<OfferNote[]> {
+    const offerNotes = await prisma.offerNote.findMany({
       where: { userId }
     });
-    return offerNote || undefined;
+    return offerNotes;
   }
 
   async createOfferNote(offerNote: InsertOfferNote): Promise<OfferNote> {
     return await prisma.offerNote.create({
-      data: offerNote
+      data: {
+        userId: offerNote.userId,
+        content: offerNote.content || ""  // Ensure content is never undefined
+      }
     });
   }
 
@@ -538,7 +729,13 @@ export class PrismaStorage implements IStorage {
 
   async createActivity(activity: InsertActivity): Promise<Activity> {
     return await prisma.activity.create({
-      data: activity
+      data: {
+        userId: activity.userId,
+        type: activity.type,
+        entityType: activity.entityType,
+        entityName: activity.entityName,
+        metadata: activity.metadata ? JSON.parse(JSON.stringify(activity.metadata)) : {} // Ensure metadata is never undefined
+      }
     });
   }
 }

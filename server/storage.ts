@@ -139,7 +139,12 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.nextId++;
     const now = new Date();
-    const user: User = { ...insertUser, id };
+    // Ensure plan is explicitly null if not defined
+    const user: User = { 
+      ...insertUser, 
+      id,
+      plan: insertUser.plan || null 
+    };
     this.users.set(id, user);
     return user;
   }
@@ -185,7 +190,7 @@ export class MemStorage implements IStorage {
       entityType: "BrainDump",
       entityName: `Brain Dump ${id}`,
       metadata: {
-        content: updated.content,
+        content: updated.content ? updated.content : undefined,
       }
     });
     
@@ -207,6 +212,10 @@ export class MemStorage implements IStorage {
     const problemTree: ProblemTree = { 
       ...insertProblemTree, 
       id, 
+      subProblems: Array.isArray(insertProblemTree.subProblems) ? insertProblemTree.subProblems as string[] : [],
+      rootCauses: Array.isArray(insertProblemTree.rootCauses) ? insertProblemTree.rootCauses as string[] : [],
+      potentialSolutions: Array.isArray(insertProblemTree.potentialSolutions) ? insertProblemTree.potentialSolutions as string[] : [],
+      nextActions: Array.isArray(insertProblemTree.nextActions) ? insertProblemTree.nextActions as string[] : [],
       createdAt: now, 
       updatedAt: now 
     };
@@ -231,6 +240,10 @@ export class MemStorage implements IStorage {
     const updated: ProblemTree = { 
       ...existing, 
       ...data, 
+      subProblems: Array.isArray(data.subProblems) ? data.subProblems as string[] : existing.subProblems,
+      rootCauses: Array.isArray(data.rootCauses) ? data.rootCauses as string[] : existing.rootCauses,
+      potentialSolutions: Array.isArray(data.potentialSolutions) ? data.potentialSolutions as string[] : existing.potentialSolutions,
+      nextActions: Array.isArray(data.nextActions) ? data.nextActions as string[] : existing.nextActions,
       updatedAt: new Date() 
     };
     this.problemTrees.set(id, updated);
@@ -241,7 +254,8 @@ export class MemStorage implements IStorage {
       entityType: "ProblemTree",
       entityName: updated.title,
       metadata: {
-        mainProblem: updated.mainProblem,
+        // Use safe property access
+        content: updated.mainProblem || undefined,
       }
     });
     
@@ -282,6 +296,12 @@ export class MemStorage implements IStorage {
     const draftedPlan: DraftedPlan = { 
       ...insertDraftedPlan, 
       id, 
+      status: insertDraftedPlan.status || "draft", // Ensure status has a value
+      components: Array.isArray(insertDraftedPlan.components) ? insertDraftedPlan.components as string[] : [],
+      resourcesNeeded: Array.isArray(insertDraftedPlan.resourcesNeeded) ? insertDraftedPlan.resourcesNeeded as string[] : [],
+      expectedOutcomes: Array.isArray(insertDraftedPlan.expectedOutcomes) ? insertDraftedPlan.expectedOutcomes as string[] : [],
+      comments: insertDraftedPlan.comments || 0,
+      attachments: insertDraftedPlan.attachments || 0,
       createdAt: now, 
       updatedAt: now 
     };
@@ -306,6 +326,12 @@ export class MemStorage implements IStorage {
     const updated: DraftedPlan = { 
       ...existing, 
       ...data, 
+      status: data.status || existing.status,
+      components: Array.isArray(data.components) ? data.components as string[] : existing.components,
+      resourcesNeeded: Array.isArray(data.resourcesNeeded) ? data.resourcesNeeded as string[] : existing.resourcesNeeded,
+      expectedOutcomes: Array.isArray(data.expectedOutcomes) ? data.expectedOutcomes as string[] : existing.expectedOutcomes,
+      comments: data.comments ?? existing.comments,
+      attachments: data.attachments ?? existing.attachments,
       updatedAt: new Date() 
     };
     this.draftedPlans.set(id, updated);
@@ -441,7 +467,7 @@ export class MemStorage implements IStorage {
       challenges: data.challenges ?? null,
       learnings: data.learnings ?? null,
       nextWeekFocus: data.nextWeekFocus ?? null,
-      isDraft: data.isDraft,
+      isDraft: data.isDraft ?? false,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -510,10 +536,10 @@ export class MemStorage implements IStorage {
       month: data.month,
       year: data.year,
       completedOn: data.completedOn ?? null,
-      achievements: data.achievements,
-      challenges: data.challenges,
-      goalProgress: data.goalProgress,
-      nextMonthPriorities: data.nextMonthPriorities,
+      achievements: Array.isArray(data.achievements) ? data.achievements as string[] : [],
+      challenges: Array.isArray(data.challenges) ? data.challenges as string[] : [],
+      goalProgress: Array.isArray(data.goalProgress) ? data.goalProgress as {goal: string, progress: number}[] : [],
+      nextMonthPriorities: Array.isArray(data.nextMonthPriorities) ? data.nextMonthPriorities as string[] : [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -526,7 +552,7 @@ export class MemStorage implements IStorage {
       metadata: {
         month: checkIn.month,
         year: checkIn.year,
-        completedOn: checkIn.completedOn,
+        completedOn: checkIn.completedOn instanceof Date ? checkIn.completedOn : undefined,
       },
     });
     return checkIn;
@@ -539,8 +565,11 @@ export class MemStorage implements IStorage {
     const updated: MonthlyCheckIn = { 
       ...existing, 
       ...data, 
-      completedOn: data.completedOn || existing.completedOn,
-      goalProgress: data.goalProgress || existing.goalProgress,
+      completedOn: data.completedOn !== undefined ? data.completedOn : existing.completedOn,
+      goalProgress: Array.isArray(data.goalProgress) ? data.goalProgress as {goal: string, progress: number}[] : existing.goalProgress,
+      challenges: Array.isArray(data.challenges) ? data.challenges as string[] : existing.challenges,
+      achievements: Array.isArray(data.achievements) ? data.achievements as string[] : existing.achievements,
+      nextMonthPriorities: Array.isArray(data.nextMonthPriorities) ? data.nextMonthPriorities as string[] : existing.nextMonthPriorities,
       updatedAt: new Date() 
     };
     this.monthlyCheckIns.set(id, updated);
@@ -551,7 +580,7 @@ export class MemStorage implements IStorage {
       entityType: "MonthlyCheckIn",
       entityName: `${updated.month}/${updated.year}`,
       metadata: {
-        completedOn: updated.completedOn,
+        completedOn: updated.completedOn instanceof Date ? updated.completedOn : undefined,
       }
     });
     
@@ -648,6 +677,7 @@ export class MemStorage implements IStorage {
     const decision: Decision = { 
       ...insertDecision, 
       id, 
+      status: insertDecision.status ?? "Pending",
       alternatives: insertDecision.alternatives ?? null,
       expectedOutcome: insertDecision.expectedOutcome ?? null,
       followUpDate: insertDecision.followUpDate ?? null,
@@ -741,9 +771,9 @@ export class MemStorage implements IStorage {
       userId: data.userId,
       title: data.title,
       description: data.description,
-      status: data.status,
-      price: data.price,
-      category: data.category,
+      status: data.status || "Active",
+      price: data.price || "0",
+      category: data.category || "Service",
       duration: data.duration ?? null,
       format: data.format ?? null,
       clientCount: data.clientCount ?? 0,
@@ -825,8 +855,9 @@ export class MemStorage implements IStorage {
     const id = this.nextId++;
     const now = new Date();
     const offerNote: OfferNote = { 
-      ...insertOfferNote, 
       id,
+      userId: insertOfferNote.userId,
+      content: insertOfferNote.content ?? null,
       createdAt: now,
       updatedAt: now 
     };
@@ -838,7 +869,7 @@ export class MemStorage implements IStorage {
       entityType: "OfferNote",
       entityName: `Note ${offerNote.id}`,
       metadata: {
-        content: offerNote.content,
+        content: typeof offerNote.content === 'string' ? offerNote.content : undefined,
       }
     });
     
@@ -862,7 +893,7 @@ export class MemStorage implements IStorage {
       entityType: "OfferNote",
       entityName: `Note ${updated.id}`,
       metadata: {
-        content: updated.content,
+        content: typeof updated.content === 'string' ? updated.content : undefined,
       }
     });
     
