@@ -52,6 +52,10 @@ const DecisionLog = () => {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         size="lg"
+        onSubmit={(e) => {
+          e.preventDefault();
+          // The form will handle its own submission through DecisionForm
+        }}
       >
         <DecisionForm 
           selectedDecision={selectedDecision} 
@@ -67,6 +71,9 @@ const DecisionLog = () => {
         onOpenChange={setViewDialogOpen}
         size="lg"
         submitLabel=""
+        onSubmit={(e) => {
+          e.preventDefault();
+        }}
         footerContent={
           viewingDecision && (
             <Button 
