@@ -76,22 +76,20 @@ export function cacheMiddleware(resourceType: string, ttl = DEFAULT_TTL) {
  */
 export function clearCacheMiddleware(resourceType: string) {
   return (req: Request, res: Response, next: NextFunction) => {
-    // Store original end method
-    const originalEnd = res.end;
+    // Store original send method
+    const originalSend = res.send;
     
-    // Create a type-safe wrapper that handles all overloads of res.end
-    res.end = function(this: Response, ...args: any[]) {
+    // Override send method
+    res.send = function(body) {
       // Only clear cache if the operation was successful (2xx status)
       if (res.statusCode >= 200 && res.statusCode < 300) {
         // Clear cache pattern for this resource type
-        import('../utils/cacheUtils.js').then(({ invalidateCachePattern }) => {
-          invalidateCachePattern(`${resourceType}:*`)
-            .catch(err => log(`Error clearing cache: ${err}`, 'cache'));
-        });
+        invalidateCachePattern(`${resourceType}:*`)
+          .catch(err => log(`Error clearing cache: ${err}`, 'cache'));
       }
       
-      // Restore original behavior with all arguments
-      return originalEnd.apply(this, args);
+      // Call original send method
+      return originalSend.call(this, body);
     };
     
     next();
