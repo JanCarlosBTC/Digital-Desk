@@ -225,113 +225,99 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Basic Information Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-              <div className="md:col-span-2">
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Basic Information</h3>
+              <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                  <div className="md:col-span-2">
+                    <FormField
+                      control={form.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium">Decision Title</FormLabel>
+                          <FormControl>
+                            <Input className="bg-white" placeholder="What did you decide?" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-medium">Category</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="h-10 px-4 py-2 flex items-center bg-white">
+                              <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Strategy">Strategy</SelectItem>
+                            <SelectItem value="Marketing">Marketing</SelectItem>
+                            <SelectItem value="Operations">Operations</SelectItem>
+                            <SelectItem value="Product">Product</SelectItem>
+                            <SelectItem value="Hiring">Hiring</SelectItem>
+                            <SelectItem value="Financial">Financial</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="decisionDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-medium">Decision Date</FormLabel>
+                        <FormControl>
+                          <Input className="bg-white" type="date" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Reasoning Section */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Context & Reasoning</h3>
+              <div className="bg-gray-50 rounded-lg p-5 border border-gray-100 space-y-5">
                 <FormField
                   control={form.control}
-                  name="title"
+                  name="why"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Decision Title</FormLabel>
+                      <FormLabel className="font-medium">Why did you make this decision?</FormLabel>
                       <FormControl>
-                        <Input placeholder="What did you decide?" {...field} />
+                        <Textarea 
+                          placeholder="Explain your reasoning..."
+                          className="min-h-24 bg-white"
+                          {...field} 
+                        />
                       </FormControl>
                     </FormItem>
                   )}
                 />
-              </div>
 
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-10 px-4 py-2 flex items-center">
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Strategy">Strategy</SelectItem>
-                        <SelectItem value="Marketing">Marketing</SelectItem>
-                        <SelectItem value="Operations">Operations</SelectItem>
-                        <SelectItem value="Product">Product</SelectItem>
-                        <SelectItem value="Hiring">Hiring</SelectItem>
-                        <SelectItem value="Financial">Financial</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="decisionDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Decision Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Reasoning Section */}
-            <div className="space-y-5">
-              <FormField
-                control={form.control}
-                name="why"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Why did you make this decision?</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Explain your reasoning..."
-                        className="min-h-24"
-                        {...field} 
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="alternatives"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Alternatives Considered</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="What other options did you consider?"
-                        className="min-h-20"
-                        {...field} 
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Outcome Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-              <div className="md:col-span-2">
                 <FormField
                   control={form.control}
-                  name="expectedOutcome"
+                  name="alternatives"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Expected Outcome</FormLabel>
+                      <FormLabel className="font-medium">Alternatives Considered</FormLabel>
                       <FormControl>
                         <Textarea 
-                          placeholder="What result do you anticipate?"
-                          className="min-h-20"
+                          placeholder="What other options did you consider?"
+                          className="min-h-20 bg-white"
                           {...field} 
                         />
                       </FormControl>
@@ -339,70 +325,100 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
                   )}
                 />
               </div>
+            </div>
 
-              <FormField
-                control={form.control}
-                name="followUpDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Follow-up Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <p className="text-xs text-gray-500 mt-1">
-                      When will you review the results of this decision?
-                    </p>
-                  </FormItem>
-                )}
-              />
+            {/* Outcome Section */}
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Outcomes & Follow-up</h3>
+              <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                  <div className="md:col-span-2">
+                    <FormField
+                      control={form.control}
+                      name="expectedOutcome"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium">Expected Outcome</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="What result do you anticipate?"
+                              className="min-h-20 bg-white"
+                              {...field} 
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-              {isEditing && (
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Decision Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormField
+                    control={form.control}
+                    name="followUpDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-medium">Follow-up Date</FormLabel>
                         <FormControl>
-                          <SelectTrigger className="h-10 px-4 py-2 flex items-center">
-                            <SelectValue placeholder="Select the status" />
-                          </SelectTrigger>
+                          <Input className="bg-white" type="date" {...field} />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Pending">Pending</SelectItem>
-                          <SelectItem value="Successful">Successful</SelectItem>
-                          <SelectItem value="Failed">Failed</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Track whether this decision was successful or failed over time.
-                      </p>
-                    </FormItem>
+                        <p className="text-xs text-gray-500 mt-1">
+                          When will you review the results of this decision?
+                        </p>
+                      </FormItem>
+                    )}
+                  />
+
+                  {isEditing && (
+                    <FormField
+                      control={form.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium">Decision Status</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-10 px-4 py-2 flex items-center bg-white">
+                                <SelectValue placeholder="Select the status" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Pending">Pending</SelectItem>
+                              <SelectItem value="Successful">Successful</SelectItem>
+                              <SelectItem value="Failed">Failed</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Track whether this decision was successful or failed over time.
+                          </p>
+                        </FormItem>
+                      )}
+                    />
                   )}
-                />
-              )}
+                </div>
+              </div>
             </div>
 
             {/* Reflection Section - Only for editing */}
             {isEditing && (
-              <div className="space-y-5">
-                <FormField
-                  control={form.control}
-                  name="whatDifferent"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>What would you do differently?</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Reflecting on this decision, what would you change?"
-                          className="min-h-20"
-                          {...field} 
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Reflection</h3>
+                <div className="bg-gray-50 rounded-lg p-5 border border-gray-100 space-y-5">
+                  <FormField
+                    control={form.control}
+                    name="whatDifferent"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-medium">What would you do differently?</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Reflecting on this decision, what would you change?"
+                            className="min-h-20 bg-white"
+                            {...field} 
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
             )}
 

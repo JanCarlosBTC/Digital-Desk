@@ -52,16 +52,16 @@ const DecisionLog = () => {
               <PlusIcon className="mr-1 h-4 w-4" /> New Decision
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader className="pb-4 border-b">
+          <DialogContent className="sm:max-w-[850px] max-h-[90vh] overflow-y-auto p-0 gap-0">
+            <DialogHeader className="px-8 py-6 border-b border-gray-100 bg-gray-50 rounded-t-lg">
               <DialogTitle className="text-2xl font-semibold text-gray-800">
                 {selectedDecision ? "Edit Decision" : "Log a New Decision"}
               </DialogTitle>
-              <DialogDescription className="text-gray-600">
+              <DialogDescription className="text-gray-600 mt-1.5">
                 Record important decisions to track outcomes and improve over time.
               </DialogDescription>
             </DialogHeader>
-            <div className="py-4">
+            <div className="px-8 py-6">
               <DecisionForm 
                 selectedDecision={selectedDecision} 
                 onSuccess={() => setDialogOpen(false)}
@@ -74,10 +74,10 @@ const DecisionLog = () => {
 
       {/* Details View Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[850px] max-h-[90vh] overflow-y-auto p-0 gap-0">
           {viewingDecision && (
             <>
-              <DialogHeader className="pb-4 border-b">
+              <DialogHeader className="px-8 py-6 border-b border-gray-100 bg-gray-50 rounded-t-lg">
                 <DialogTitle className="text-2xl font-semibold text-gray-800">
                   {viewingDecision.title}
                 </DialogTitle>
@@ -105,56 +105,62 @@ const DecisionLog = () => {
                 </div>
               </DialogHeader>
 
-              <div className="py-6 px-1">
+              <div className="px-8 py-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                  <div className="md:col-span-2 space-y-2 border-b border-gray-100 pb-4">
-                    <h3 className="font-medium text-gray-700">Why this decision was made</h3>
+                  <div className="md:col-span-2 space-y-3 border-b border-gray-100 pb-5 mb-2">
+                    <h3 className="font-semibold text-gray-700 text-base">Why this decision was made</h3>
                     <p className="text-gray-700 whitespace-pre-line">{viewingDecision.why}</p>
                   </div>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-2 p-3 bg-gray-50 rounded-md">
                     <h3 className="font-medium text-gray-700">Decision Date</h3>
                     <p className="text-gray-700">{new Date(viewingDecision.decisionDate).toLocaleDateString()}</p>
                   </div>
                   
                   {viewingDecision.followUpDate && (
-                    <div className="space-y-2">
+                    <div className="space-y-2 p-3 bg-gray-50 rounded-md">
                       <h3 className="font-medium text-gray-700">Follow-up Date</h3>
                       <p className="text-gray-700">{new Date(viewingDecision.followUpDate).toLocaleDateString()}</p>
                     </div>
                   )}
                   
                   {viewingDecision.alternatives && (
-                    <div className="md:col-span-2 space-y-2">
-                      <h3 className="font-medium text-gray-700">Alternatives Considered</h3>
-                      <p className="text-gray-700 whitespace-pre-line">{viewingDecision.alternatives}</p>
+                    <div className="md:col-span-2 space-y-3 mt-2">
+                      <h3 className="font-semibold text-gray-700 text-base">Alternatives Considered</h3>
+                      <div className="bg-gray-50 p-4 rounded-md">
+                        <p className="text-gray-700 whitespace-pre-line">{viewingDecision.alternatives}</p>
+                      </div>
                     </div>
                   )}
                   
                   {viewingDecision.expectedOutcome && (
-                    <div className="md:col-span-2 space-y-2">
-                      <h3 className="font-medium text-gray-700">Expected Outcome</h3>
-                      <p className="text-gray-700 whitespace-pre-line">{viewingDecision.expectedOutcome}</p>
+                    <div className="md:col-span-2 space-y-3 mt-2">
+                      <h3 className="font-semibold text-gray-700 text-base">Expected Outcome</h3>
+                      <div className="bg-gray-50 p-4 rounded-md">
+                        <p className="text-gray-700 whitespace-pre-line">{viewingDecision.expectedOutcome}</p>
+                      </div>
                     </div>
                   )}
                   
                   {viewingDecision.whatDifferent && (
-                    <div className="md:col-span-2 space-y-2">
-                      <h3 className="font-medium text-gray-700">What I'd Do Differently</h3>
-                      <p className="text-gray-700 whitespace-pre-line">{viewingDecision.whatDifferent}</p>
+                    <div className="md:col-span-2 space-y-3 mt-2">
+                      <h3 className="font-semibold text-gray-700 text-base">What I'd Do Differently</h3>
+                      <div className="bg-gray-50 p-4 rounded-md">
+                        <p className="text-gray-700 whitespace-pre-line">{viewingDecision.whatDifferent}</p>
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
               
-              <DialogFooter className="border-t border-gray-100 pt-4">
+              <DialogFooter className="px-8 py-4 border-t border-gray-100 bg-gray-50">
                 <Button 
                   onClick={() => {
                     setViewDialogOpen(false);
                     setSelectedDecision(viewingDecision);
                     setDialogOpen(true);
                   }}
-                  className="bg-blue-500 text-white hover:bg-blue-600 h-10 px-4 py-2 flex items-center"
+                  className="bg-blue-500 text-white hover:bg-blue-600 h-10 px-5 py-2 flex items-center"
                 >
                   Edit Decision
                 </Button>
