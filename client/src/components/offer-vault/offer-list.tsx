@@ -310,14 +310,14 @@ const OfferList = () => {
       {/* New Offer Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-[850px] max-h-[90vh] overflow-y-auto p-0 gap-0">
-          <DialogHeader className="px-8 py-6 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+          <DialogHeader className="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-amber-50 to-white rounded-t-lg">
             <DialogTitle className="text-2xl font-semibold text-gray-800">Create New Offer</DialogTitle>
-            <DialogDescription className="text-gray-600 mt-1.5">
+            <DialogDescription className="text-gray-600 mt-2">
               Add products and services to your portfolio to track sales and manage your catalog.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="px-8 py-6">
+          <div className="px-8 py-8 bg-white">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <FormField
@@ -428,18 +428,19 @@ const OfferList = () => {
                   )}
                 />
                 
-                <DialogFooter className="flex justify-end space-x-2 pt-4 border-t border-gray-100">
+                <DialogFooter className="flex justify-end space-x-2 pt-6 mt-2 border-t border-gray-200">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setIsOpen(false)}
+                    className="px-5"
                   >
                     Cancel
                   </Button>
                   <Button 
                     type="submit"
                     variant="default"
-                    className="bg-yellow-400 text-white hover:bg-yellow-500 font-medium shadow-sm"
+                    className="bg-yellow-400 text-white hover:bg-yellow-500 font-medium shadow-sm px-5"
                     disabled={createMutation.isPending}
                   >
                     {createMutation.isPending ? "Saving..." : "Save Offer"}
@@ -454,14 +455,14 @@ const OfferList = () => {
       {/* Edit Offer Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-[850px] max-h-[90vh] overflow-y-auto p-0 gap-0">
-          <DialogHeader className="px-8 py-6 border-b border-gray-100 bg-gray-50 rounded-t-lg">
+          <DialogHeader className="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-amber-50 to-white rounded-t-lg">
             <DialogTitle className="text-2xl font-semibold text-gray-800">Edit Offer</DialogTitle>
-            <DialogDescription className="text-gray-600 mt-1.5">
+            <DialogDescription className="text-gray-600 mt-2">
               Update the details of your product or service offering.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="px-8 py-6">
+          <div className="px-8 py-8 bg-white">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <FormField
@@ -572,18 +573,19 @@ const OfferList = () => {
                   )}
                 />
                 
-                <DialogFooter className="flex justify-end space-x-2 pt-4 border-t border-gray-100">
+                <DialogFooter className="flex justify-end space-x-2 pt-6 mt-2 border-t border-gray-200">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setIsEditOpen(false)}
+                    className="px-5"
                   >
                     Cancel
                   </Button>
                   <Button 
                     type="submit"
                     variant="default"
-                    className="bg-yellow-400 text-white hover:bg-yellow-500 font-medium shadow-sm"
+                    className="bg-yellow-400 text-white hover:bg-yellow-500 font-medium shadow-sm px-5"
                     disabled={updateMutation.isPending}
                   >
                     {updateMutation.isPending ? "Updating..." : "Update Offer"}
