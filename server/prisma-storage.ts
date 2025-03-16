@@ -826,24 +826,4 @@ export class PrismaStorage implements IStorage {
     return updatedOfferNote;
   }
 
-  // Activity methods
-  async getRecentActivities(userId: number, limit: number): Promise<Activity[]> {
-    return await prisma.activity.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: limit
-    });
-  }
-
-  async createActivity(activity: InsertActivity): Promise<Activity> {
-    return await prisma.activity.create({
-      data: {
-        userId: activity.userId,
-        type: activity.type,
-        entityType: activity.entityType,
-        entityName: activity.entityName,
-        metadata: activity.metadata ? JSON.parse(JSON.stringify(activity.metadata)) : {} // Ensure metadata is never undefined
-      }
-    });
-  }
 }
