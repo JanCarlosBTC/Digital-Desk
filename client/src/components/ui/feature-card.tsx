@@ -3,30 +3,34 @@ import { Card, CardContent, CardFooter, CardHeader } from './card';
 import { Button } from './button';
 import { Badge } from './badge';
 import { cn } from '@/lib/utils';
+import { VariantProps } from "class-variance-authority";
+import { badgeVariants } from './badge';
 
 interface StatusBadgeProps {
   status: string;
   className?: string;
 }
 
+type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
+
 /**
  * Status badge with consistent styling based on status types
  */
 export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const getVariant = () => {
+  const getVariant = (): BadgeVariant => {
     // Normalize status to lowercase for comparison
     const normalizedStatus = status.toLowerCase();
 
     if (normalizedStatus.includes('completed') || 
         normalizedStatus.includes('active') || 
         normalizedStatus.includes('done')) {
-      return 'success';
+      return 'default';
     }
     
     if (normalizedStatus.includes('pending') || 
         normalizedStatus.includes('in progress') || 
         normalizedStatus.includes('started')) {
-      return 'warning';
+      return 'outline';
     }
     
     if (normalizedStatus.includes('cancelled') || 
