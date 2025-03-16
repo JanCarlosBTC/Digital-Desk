@@ -301,64 +301,7 @@ export const insertOfferNoteSchema = createInsertSchema(offerNotes).pick({
   content: true,
 });
 
-// Activity metadata types
-export type ActivityMetadata = {
-  oldStatus?: string;
-  newStatus?: string;
-  initialStatus?: string;
-  status?: string;
-  category?: string;
-  decisionDate?: Date;
-  date?: Date;
-  price?: string;
-  completedOn?: Date;
-  content?: string;
-  order?: number;
-  weekDate?: Date;
-  isDraft?: boolean;
-  month?: number;
-  year?: number;
-};
 
-// Activities schema
-export const activities = pgTable("activities", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  type: text("type").notNull(),
-  entityType: text("entity_type").notNull(),
-  entityName: text("entity_name").notNull(),
-  metadata: json("metadata").default({}),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-// Create base schema then extend with typed metadata
-const baseActivitySchema = createInsertSchema(activities).pick({
-  userId: true,
-  type: true,
-  entityType: true,
-  entityName: true,
-});
-
-// Add metadata field with proper typing
-export const insertActivitySchema = baseActivitySchema.extend({
-  metadata: z.object({
-    oldStatus: z.string().optional(),
-    newStatus: z.string().optional(), 
-    initialStatus: z.string().optional(),
-    status: z.string().optional(), 
-    category: z.string().optional(),
-    decisionDate: z.date().optional(),
-    date: z.date().optional(),
-    price: z.string().optional(),
-    completedOn: z.date().optional(),
-    content: z.string().optional(),
-    order: z.number().optional(),
-    weekDate: z.date().optional(),
-    isDraft: z.boolean().optional(),
-    month: z.number().optional(),
-    year: z.number().optional()
-  }).optional()
-});
 
 // Export types
 export type User = typeof users.$inferSelect;
@@ -393,6 +336,3 @@ export type InsertOffer = z.infer<typeof insertOfferSchema>;
 
 export type OfferNote = typeof offerNotes.$inferSelect;
 export type InsertOfferNote = z.infer<typeof insertOfferNoteSchema>;
-
-export type Activity = typeof activities.$inferSelect;
-export type InsertActivity = z.infer<typeof insertActivitySchema>;
