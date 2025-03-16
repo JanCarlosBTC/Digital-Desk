@@ -86,7 +86,7 @@ export function DialogForm({
       <DialogContent 
         className={cn(
           sizeClasses[size],
-          'bg-white border-2',
+          'bg-white border border-gray-200 shadow-lg rounded-lg',
           className
         )}
         // Prevent closing when clicking inside form elements
@@ -103,22 +103,28 @@ export function DialogForm({
           className="flex flex-col h-full"
           onClick={(e) => e.stopPropagation()}
         >
-          <DialogHeader className="pb-2 sticky top-0 bg-white z-10">
-            <DialogTitle className="text-xl">{title}</DialogTitle>
+          <DialogHeader className="pb-3 sticky top-0 bg-white z-10 border-b mb-2">
+            <DialogTitle className="text-xl font-bold">{title}</DialogTitle>
             {description && (
-              <DialogDescription className="text-sm mt-1">{description}</DialogDescription>
+              <DialogDescription className="text-sm mt-2 text-gray-600">{description}</DialogDescription>
             )}
           </DialogHeader>
           
           <div 
             ref={contentRef}
-            className="py-4 overflow-y-auto flex-1 max-h-[50vh] md:max-h-[60vh]"
+            className="py-4 overflow-y-auto flex-1 max-h-[50vh] md:max-h-[60vh] px-1"
             onClick={(e) => e.stopPropagation()}
+            style={{ 
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#d1d5db transparent'
+            }}
           >
-            {children}
+            <div className="space-y-4">
+              {children}
+            </div>
           </div>
           
-          <DialogFooter className="pt-4 sticky bottom-0 bg-white z-10 border-t mt-2">
+          <DialogFooter className="pt-4 sticky bottom-0 bg-white z-10 border-t mt-2 shadow-sm">
             {footerContent && (
               <div className="w-full mb-4">
                 {footerContent}
@@ -129,7 +135,9 @@ export function DialogForm({
               <Button
                 type="button"
                 variant="outline"
+                className="min-w-[80px]"
                 onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
               >
                 {cancelLabel}
               </Button>
@@ -137,6 +145,7 @@ export function DialogForm({
               {onSubmit && (
                 <Button 
                   type="submit"
+                  className="min-w-[80px]"
                   disabled={isSubmitting || isDisabled}
                 >
                   {isSubmitting ? 'Saving...' : submitLabel}
