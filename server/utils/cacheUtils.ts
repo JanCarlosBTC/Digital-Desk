@@ -3,21 +3,44 @@ import { log } from '../vite.js';
 
 // Initialize Redis client
 let redisClient: Redis | null = null;
+let isRedisAvailable = false;
+let connectionAttempted = false;
 
-try {
-  // Use environment variables for Redis connection or default to localhost
-  const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-  redisClient = new Redis(redisUrl);
-  
-  redisClient.on('connect', () => {
-    log('Redis client connected', 'cache');
-  });
-  
-  redisClient.on('error', (err: Error) => {
-    log(`Redis connection error: ${err}`, 'cache');
-  });
-} catch (error) {
-  log(`Error initializing Redis: ${error}`, 'cache');
+// Only initialize Redis if REDIS_URL is explicitly set
+if (process.env.REDIS_URL) {
+  try {
+    connectionAttempted = true;
+    redisClient = new Redis(process.env.REDIS_URL, {
+      maxRetriesPerRequest: 3, // Reduce retry attempts to avoid flooding logs
+      retryStrategy: (times) => {
+        if (times > 3) {
+          // After 3 attempts, give up for this instance
+          isRedisAvailable = false;
+          return null; // Stop retrying
+        }
+        return Math.min(times * 100, 1000); // Backoff strategy
+      }
+    });
+    
+    redisClient.on('connect', () => {
+      isRedisAvailable = true;
+      log('Redis client connected', 'cache');
+    });
+    
+    redisClient.on('error', (err: Error) => {
+      // Log only the first few errors to avoid flooding logs
+      if (isRedisAvailable || !connectionAttempted) {
+        log(`Redis connection error: ${err}`, 'cache');
+        isRedisAvailable = false;
+      }
+    });
+  } catch (error) {
+    log(`Error initializing Redis: ${error}`, 'cache');
+    isRedisAvailable = false;
+  }
+} else {
+  log('No REDIS_URL found, caching disabled', 'cache');
+  isRedisAvailable = false;
 }
 
 /**
@@ -159,7 +182,7 @@ export function createCacheKey(resourceType: string, identifier: string | number
 export function cacheMiddleware(resourceType: string, ttl: number = DEFAULT_TTL) {
   return async (req: any, res: any, next: any) => {
     // Only cache GET requests
-    if (req.method !== 'GET') {
+    if (req.method !== 'GET' || !isRedisAvailable) {
       return next();
     }
     
@@ -183,10 +206,13 @@ export function cacheMiddleware(resourceType: string, ttl: number = DEFAULT_TTL)
       
       // Override json method to cache response
       res.json = function(data: any) {
-        // Cache response
-        setCache(cacheKey, data, ttl).catch((err) => {
-          log(`Error caching response: ${err}`, 'cache');
-        });
+        // Only attempt to cache if Redis is available
+        if (isRedisAvailable) {
+          setCache(cacheKey, data, ttl).catch((err) => {
+            // Only log the first few errors to reduce noise
+            log(`Error caching response: ${err}`, 'cache');
+          });
+        }
         
         // Call original json method
         return originalJson.call(this, data);
@@ -195,7 +221,6 @@ export function cacheMiddleware(resourceType: string, ttl: number = DEFAULT_TTL)
       next();
     } catch (error) {
       // In case of error, continue without caching
-      log(`Cache middleware error: ${error}`, 'cache');
       next();
     }
   };

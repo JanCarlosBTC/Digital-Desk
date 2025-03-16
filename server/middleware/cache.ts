@@ -2,6 +2,16 @@ import { Request, Response, NextFunction } from 'express';
 import { getCache, setCache, invalidateCachePattern, createCacheKey } from '../utils/cacheUtils.js';
 import { log } from '../vite.js';
 
+// Track if Redis is available
+let isRedisAvailable = false;
+
+// Update Redis availability status
+try {
+  isRedisAvailable = process.env.REDIS_URL !== undefined;
+} catch (e) {
+  isRedisAvailable = false;
+}
+
 /**
  * Default cache TTL in seconds (1 hour)
  */
@@ -17,8 +27,8 @@ const DEFAULT_TTL = 3600;
  */
 export function cacheMiddleware(resourceType: string, ttl = DEFAULT_TTL) {
   return async (req: Request, res: Response, next: NextFunction) => {
-    // Only cache GET requests
-    if (req.method !== 'GET') {
+    // Skip caching if Redis is not available or for non-GET requests
+    if (!isRedisAvailable || req.method !== 'GET') {
       return next();
     }
     
@@ -50,9 +60,11 @@ export function cacheMiddleware(resourceType: string, ttl = DEFAULT_TTL) {
       
       // Override json method to intercept response
       res.json = function(body: any) {
-        // Set response in cache
-        setCache(cacheKey, body, ttl)
-          .catch(err => log(`Error setting cache: ${err}`, 'cache'));
+        // Only attempt to cache if Redis is available
+        if (isRedisAvailable) {
+          setCache(cacheKey, body, ttl)
+            .catch(err => log(`Error setting cache: ${err}`, 'cache'));
+        }
         
         // Restore original behavior
         return originalJson.call(this, body);
@@ -76,6 +88,11 @@ export function cacheMiddleware(resourceType: string, ttl = DEFAULT_TTL) {
  */
 export function clearCacheMiddleware(resourceType: string) {
   return (req: Request, res: Response, next: NextFunction) => {
+    // Skip if Redis is not available
+    if (!isRedisAvailable) {
+      return next();
+    }
+    
     // Store original send method
     const originalSend = res.send;
     
