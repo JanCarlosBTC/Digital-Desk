@@ -99,7 +99,10 @@ const PrioritiesTracker = () => {
             order: index + 1 
           });
         } else {
-          return createMutation.mutationFn(priority);
+          return apiRequest('POST', '/api/priorities', { 
+            priority, 
+            order: index + 1 
+          });
         }
       });
 
