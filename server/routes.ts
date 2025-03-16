@@ -8,6 +8,7 @@ import {
 } from "../shared/schema.js";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
 
 // For simplicity, we're using a fixed user ID for now
 const DEMO_USER_ID = 1;
@@ -42,7 +43,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Recent activities
-  app.get('/api/activities', async (req: Request, res: Response) => {
+  app.get('/api/activities', cacheMiddleware('activities', 300), async (req: Request, res: Response) => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
       const activities = await storage.getRecentActivities(DEMO_USER_ID, limit);
@@ -88,7 +89,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Problem Tree endpoints
-  app.get('/api/problem-trees', async (req: Request, res: Response) => {
+  app.get('/api/problem-trees', cacheMiddleware('problem-trees', 300), async (req: Request, res: Response) => {
     try {
       const problemTrees = await storage.getProblemTrees(DEMO_USER_ID);
       res.json(problemTrees);
@@ -487,7 +488,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Decision Log endpoints
-  app.get('/api/decisions', async (req: Request, res: Response) => {
+  app.get('/api/decisions', cacheMiddleware('decisions', 300), async (req: Request, res: Response) => {
     try {
       const decisions = await storage.getDecisions(DEMO_USER_ID);
       res.json(decisions);
@@ -511,7 +512,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/decisions', async (req: Request, res: Response) => {
+  app.post('/api/decisions', clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
     try {
       const data = {
         ...req.body,
@@ -541,7 +542,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/decisions/:id', async (req: Request, res: Response) => {
+  app.put('/api/decisions/:id', clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
@@ -580,7 +581,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/decisions/:id', async (req: Request, res: Response) => {
+  app.delete('/api/decisions/:id', clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const parsedId = parseInt(id);
