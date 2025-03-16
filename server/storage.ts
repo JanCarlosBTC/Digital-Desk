@@ -9,8 +9,7 @@ import {
   Priority, InsertPriority,
   Decision, InsertDecision,
   Offer, InsertOffer,
-  OfferNote, InsertOfferNote,
-  Activity, InsertActivity
+  OfferNote, InsertOfferNote
 } from "../shared/schema.js";
 
 export interface IStorage {
@@ -100,11 +99,6 @@ export class MemStorage implements IStorage {
 
   private nextId: number;
 
-  // Temporary method to avoid compile errors during activity removal
-  private async logActivity(data: any): Promise<void> {
-    // No-op method that will be removed after all activity references are removed
-    return;
-  }
 
   constructor() {
     this.users = new Map();
@@ -167,13 +161,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date(),
     };
     this.brainDumps.set(brainDump.id, brainDump);
-    await this.logActivity({
-      userId: data.userId,
-      type: "create",
-      entityType: "BrainDump",
-      entityName: `Brain Dump ${brainDump.id}`,
-      metadata: {},
-    });
+
     return brainDump;
   }
 
