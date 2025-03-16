@@ -325,11 +325,11 @@ export class PrismaStorage implements IStorage {
       type: "created",
       entityType: "decision",
       entityName: newDecision.title,
-      metadata: {
+      metadata: JSON.parse(JSON.stringify({
         category: newDecision.category,
         status: newDecision.status,
         decisionDate: newDecision.decisionDate,
-      }
+      }))
     });
 
     return newDecision;
@@ -356,10 +356,10 @@ export class PrismaStorage implements IStorage {
         type: "updated",
         entityType: "decision",
         entityName: updatedDecision.title,
-        metadata: {
+        metadata: JSON.parse(JSON.stringify({
           oldStatus: oldDecision.status,
           newStatus: decision.status,
-        }
+        }))
       });
     }
 
@@ -369,9 +369,9 @@ export class PrismaStorage implements IStorage {
         type: "updated",
         entityType: "decision",
         entityName: decision.title,
-        metadata: {
+        metadata: JSON.parse(JSON.stringify({
           status: updatedDecision.status,
-        }
+        }))
       });
     }
 
@@ -395,10 +395,10 @@ export class PrismaStorage implements IStorage {
         type: "deleted",
         entityType: "decision",
         entityName: decision.title,
-        metadata: {
+        metadata: JSON.parse(JSON.stringify({
           category: decision.category,
           status: decision.status,
-        }
+        }))
       });
 
       return true;
@@ -434,10 +434,10 @@ export class PrismaStorage implements IStorage {
       type: "created",
       entityType: "offer",
       entityName: `${newOffer.title} - ${newOffer.company}`,
-      metadata: {
+      metadata: JSON.parse(JSON.stringify({
         status: newOffer.status,
         price: newOffer.price,
-      }
+      }))
     });
 
     return newOffer;
@@ -464,10 +464,10 @@ export class PrismaStorage implements IStorage {
         type: "updated",
         entityType: "offer",
         entityName: `${updatedOffer.title} - ${updatedOffer.company}`,
-        metadata: {
+        metadata: JSON.parse(JSON.stringify({
           oldStatus: oldOffer.status,
           newStatus: offer.status,
-        }
+        }))
       });
     }
 
@@ -491,9 +491,9 @@ export class PrismaStorage implements IStorage {
         type: "deleted",
         entityType: "offer",
         entityName: `${offer.title} - ${offer.company}`,
-        metadata: {
+        metadata: JSON.parse(JSON.stringify({
           status: offer.status,
-        }
+        }))
       });
 
       return true;
