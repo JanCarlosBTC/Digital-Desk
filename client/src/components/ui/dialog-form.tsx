@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -53,6 +53,17 @@ export function DialogForm({
     full: 'max-w-screen-md'
   };
 
+  // Create a ref for the form to prevent default submission behavior
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Handle form submission to prevent default browser behavior
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (onSubmit) {
+      onSubmit(e);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
@@ -61,8 +72,20 @@ export function DialogForm({
           sizeClasses[size],
           className
         )}
+        // Prevent closing when clicking inside form elements
+        onInteractOutside={(e) => {
+          if (formRef.current?.contains(e.target as Node)) {
+            e.preventDefault();
+          }
+        }}
+        // Stop propagation of keyboard events (Enter key especially)
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && e.target instanceof HTMLInputElement && e.target.type !== 'textarea') {
+            e.stopPropagation();
+          }
+        }}
       >
-        <form onSubmit={onSubmit}>
+        <form ref={formRef} onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             {description && <DialogDescription>{description}</DialogDescription>}

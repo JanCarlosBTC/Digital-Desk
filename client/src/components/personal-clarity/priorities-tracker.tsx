@@ -247,13 +247,23 @@ const PrioritiesTracker = () => {
 
       {/* Edit Priorities Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent 
+          className="max-w-md"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
+              e.stopPropagation();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Edit Top Priorities</DialogTitle>
           </DialogHeader>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              form.handleSubmit(onSubmit)(e);
+            }} className="space-y-4">
               <FormField
                 control={form.control}
                 name="priority1"
