@@ -1,3 +1,4 @@
+import React from "react";
 import OfferList from "@/components/offer-vault/offer-list";
 import OfferMetrics from "@/components/offer-vault/offer-metrics";
 import { useQuery, useMutation } from "@tanstack/react-query";

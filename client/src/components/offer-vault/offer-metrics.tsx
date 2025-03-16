@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Offer } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
