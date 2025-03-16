@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -55,6 +55,7 @@ export function DialogForm({
 
   // Create a ref for the form to prevent default submission behavior
   const formRef = useRef<HTMLFormElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // Handle form submission to prevent default browser behavior
   const handleSubmit = (e: React.FormEvent) => {
@@ -64,14 +65,29 @@ export function DialogForm({
     }
   };
 
+  // Prevent Enter key from submitting form unless in a multiline textarea
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && 
+        !(e.target instanceof HTMLTextAreaElement) &&
+        e.target instanceof HTMLInputElement) {
+      e.stopPropagation();
+    }
+  };
+
+  // Reset scroll position when opening or after state changes
+  useEffect(() => {
+    if (open && contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
+  }, [open]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className={cn(
-          'bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80',
           sizeClasses[size],
-          className,
-          'max-h-[90vh] overflow-hidden flex flex-col'
+          'bg-white border-2',
+          className
         )}
         // Prevent closing when clicking inside form elements
         onInteractOutside={(e) => {
@@ -79,27 +95,37 @@ export function DialogForm({
             e.preventDefault();
           }
         }}
-        // Stop propagation of keyboard events (Enter key especially)
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && e.target instanceof HTMLInputElement && e.target.type !== 'textarea') {
-            e.stopPropagation();
-          }
-        }}
+        onKeyDown={handleKeyDown}
       >
-        <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col h-full">
-          <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-            {description && <DialogDescription>{description}</DialogDescription>}
+        <form 
+          ref={formRef} 
+          onSubmit={handleSubmit} 
+          className="flex flex-col h-full"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <DialogHeader className="pb-2 sticky top-0 bg-white z-10">
+            <DialogTitle className="text-xl">{title}</DialogTitle>
+            {description && (
+              <DialogDescription className="text-sm mt-1">{description}</DialogDescription>
+            )}
           </DialogHeader>
           
-          <div className="dialog-form-content py-4 overflow-y-auto flex-1">
+          <div 
+            ref={contentRef}
+            className="py-4 overflow-y-auto flex-1 max-h-[50vh] md:max-h-[60vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
             {children}
           </div>
           
-          <DialogFooter className="gap-2 sm:gap-0">
-            {footerContent}
+          <DialogFooter className="pt-4 sticky bottom-0 bg-white z-10 border-t mt-2">
+            {footerContent && (
+              <div className="w-full mb-4">
+                {footerContent}
+              </div>
+            )}
             
-            <div className="flex gap-2 items-center justify-end">
+            <div className="flex gap-2 items-center justify-end w-full">
               <Button
                 type="button"
                 variant="outline"

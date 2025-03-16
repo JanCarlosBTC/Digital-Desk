@@ -344,7 +344,6 @@ const OfferList = () => {
         submitLabel="Save Offer"
         isSubmitting={createMutation.isPending}
         size="lg"
-        className="bg-background border-2 border-gray-200"
       >
         <Form {...form}>
           <div className="space-y-8">
@@ -472,7 +471,6 @@ const OfferList = () => {
         submitLabel="Update Offer"
         isSubmitting={updateMutation.isPending}
         size="lg"
-        className="bg-background border-2 border-gray-200"
       >
         <Form {...form}>
           <div className="space-y-8">
