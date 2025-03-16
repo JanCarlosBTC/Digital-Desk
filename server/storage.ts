@@ -100,6 +100,12 @@ export class MemStorage implements IStorage {
 
   private nextId: number;
 
+  // Temporary method to avoid compile errors during activity removal
+  private async logActivity(data: any): Promise<void> {
+    // No-op method that will be removed after all activity references are removed
+    return;
+  }
+
   constructor() {
     this.users = new Map();
     this.brainDumps = new Map();

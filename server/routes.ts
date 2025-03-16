@@ -512,19 +512,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertDecisionSchema.parse(data);
       const decision = await storage.createDecision(validatedData);
       
-      // Track decision creation as an activity
-      await storage.createActivity({
-        userId: DEMO_USER_ID,
-        type: "add",
-        entityType: "Decision",
-        entityName: decision.title,
-        metadata: {
-          category: decision.category || "",
-          initialStatus: decision.status || "",
-          decisionDate: decision.decisionDate,
-          date: new Date()
-        }
-      });
+
       
       res.status(201).json(decision);
     } catch (error) {
@@ -549,21 +537,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Decision not found after update" });
       }
       
-      // Track decision status change as an activity
-      if (existingDecision.status !== updatedDecision.status) {
-        await storage.createActivity({
-          userId: DEMO_USER_ID,
-          type: "status_change",
-          entityType: "Decision",
-          entityName: updatedDecision.title,
-          metadata: {
-            oldStatus: existingDecision.status,
-            newStatus: updatedDecision.status,
-            category: updatedDecision.category,
-            date: new Date()
-          }
-        });
-      }
+
       
       res.json(updatedDecision);
     } catch (error) {
@@ -576,7 +550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const parsedId = parseInt(id);
       
-      // Get the decision before deleting to use its title in the activity log
+      // Get the decision before deleting for validation
       const decision = await storage.getDecision(parsedId);
       if (!decision) {
         return res.status(404).json({ message: "Decision not found" });
@@ -587,18 +561,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Decision not found after delete attempt" });
       }
       
-      // Track decision deletion as an activity
-      await storage.createActivity({
-        userId: DEMO_USER_ID,
-        type: "delete",
-        entityType: "Decision",
-        entityName: decision.title,
-        metadata: {
-          category: decision.category,
-          status: decision.status,
-          date: new Date()
-        }
-      });
+
       
       res.status(204).end();
     } catch (error) {
@@ -641,19 +604,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertOfferSchema.parse(data);
       const offer = await storage.createOffer(validatedData);
       
-      // Track offer creation as an activity
-      await storage.createActivity({
-        userId: DEMO_USER_ID,
-        type: "add",
-        entityType: "Offer",
-        entityName: offer.title,
-        metadata: {
-          category: offer.category,
-          initialStatus: offer.status,
-          price: offer.price.toString(),
-          date: new Date()
-        }
-      });
+
       
       res.status(201).json(offer);
     } catch (error) {
@@ -678,22 +629,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Offer not found after update" });
       }
       
-      // Track offer status change as an activity
-      if (existingOffer.status !== updatedOffer.status) {
-        await storage.createActivity({
-          userId: DEMO_USER_ID,
-          type: "status_change",
-          entityType: "Offer",
-          entityName: updatedOffer.title,
-          metadata: {
-            oldStatus: existingOffer.status,
-            newStatus: updatedOffer.status,
-            category: updatedOffer.category,
-            price: updatedOffer.price.toString(),
-            date: new Date()
-          }
-        });
-      }
+
       
       res.json(updatedOffer);
     } catch (error) {
@@ -706,7 +642,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const parsedId = parseInt(id);
       
-      // Get the offer before deleting to use its title in the activity log
+      // Get the offer before deleting for validation
       const offer = await storage.getOffer(parsedId);
       if (!offer) {
         return res.status(404).json({ message: "Offer not found" });
@@ -717,19 +653,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Offer not found after delete attempt" });
       }
       
-      // Track offer deletion as an activity
-      await storage.createActivity({
-        userId: DEMO_USER_ID,
-        type: "delete",
-        entityType: "Offer",
-        entityName: offer.title,
-        metadata: {
-          category: offer.category,
-          status: offer.status,
-          price: offer.price.toString(),
-          date: new Date()
-        }
-      });
+
       
       res.status(204).end();
     } catch (error) {
