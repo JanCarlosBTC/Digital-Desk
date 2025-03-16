@@ -1,0 +1,352 @@
+1:56:32 PM - Starting compilation in watch mode...
+[1] 
+[0] ▲ [WARNING] The CommonJS "module" variable is treated as a global variable in an ECMAScript module and may not work as expected [commonjs-variable-in-esm]
+[0] 
+[0]     vite.config.ts:40:2:
+[0]       40 │   module.exports = config;
+[0]          ╵   ~~~~~~
+[0] 
+[0]   This file is considered to be an ECMAScript module because of the "export" keyword here:
+[0] 
+[0]     vite.config.ts:36:0:
+[0]       36 │ export default config;
+[0]          ╵ ~~~~~~
+[0] 
+[0] The CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.
+[0] failed to load config from /home/runner/workspace/vite.config.ts
+[0] error when starting dev server:
+[0] Error [ERR_REQUIRE_ESM]: require() of ES Module /home/runner/workspace/node_modules/@replit/vite-plugin-shadcn-theme-json/dist/index.js from /home/runner/workspace/vite.config.ts not supported.
+[0] index.js is treated as an ES module file as it is a .js file whose nearest parent package.json contains "type": "module" which declares all .js files in that package scope as ES modules.
+[0] Instead either rename index.js to end in .cjs, change the requiring code to use dynamic import() which is available in all CommonJS modules, or change "type": "module" to "type": "commonjs" in /home/runner/workspace/node_modules/@replit/vite-plugin-shadcn-theme-json/package.json to treat all .js files as CommonJS (using .mjs for all ES modules instead).
+[0] 
+[0]     at _require.extensions.<computed> [as .js] (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-B0fRCRkQ.js:54654:9)
+[0]     at Object.<anonymous> (/home/runner/workspace/vite.config.ts:38:52)
+[0]     at _require.extensions.<computed> [as .js] (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-B0fRCRkQ.js:54652:16)
+[2] [nodemon] 3.1.9
+[0] npm run dev:client exited with code 1
+[2] [nodemon] to restart at any time, enter `rs`
+[2] [nodemon] watching path(s): dist/server/**/*
+[2] [nodemon] watching extensions: js,mjs,cjs,json
+[2] [nodemon] starting `node dist/server/index.js`
+[2] node:internal/modules/cjs/loader:1228
+[2]   throw err;
+[2]   ^
+[2] 
+[2] Error: Cannot find module '@shared/schema'
+[2] Require stack:
+[2] - /home/runner/workspace/dist/server/routes.js
+[2] - /home/runner/workspace/dist/server/index.js
+[2]     at Module._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+[2]     at Module._load (node:internal/modules/cjs/loader:1051:27)
+[2]     at Module.require (node:internal/modules/cjs/loader:1311:19)
+[2]     at require (node:internal/modules/helpers:179:18)
+[2]     at Object.<anonymous> (/home/runner/workspace/dist/server/routes.js:64:16)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1469:14)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+[2]     at Module.load (node:internal/modules/cjs/loader:1288:32)
+[2]     at Module._load (node:internal/modules/cjs/loader:1104:12)
+[2]     at Module.require (node:internal/modules/cjs/loader:1311:19) {
+[2]   code: 'MODULE_NOT_FOUND',
+[2]   requireStack: [
+[2]     '/home/runner/workspace/dist/server/routes.js',
+[2]     '/home/runner/workspace/dist/server/index.js'
+[2]   ]
+[2] }
+[2] 
+[2] Node.js v20.18.1
+[2] [nodemon] app crashed - waiting for file changes before starting...
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] /home/runner/workspace/dist/server/storage.js:1029
+[2] export { MemStorage };
+[2] ^^^^^^
+[2] 
+[2] SyntaxError: Unexpected token 'export'
+[2]     at wrapSafe (node:internal/modules/cjs/loader:1378:20)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1428:41)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+[2]     at Module.load (node:internal/modules/cjs/loader:1288:32)
+[2]     at Module._load (node:internal/modules/cjs/loader:1104:12)
+[2]     at Module.require (node:internal/modules/cjs/loader:1311:19)
+[2]     at require (node:internal/modules/helpers:179:18)
+[2]     at Object.<anonymous> (/home/runner/workspace/dist/server/routes.js:63:17)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1469:14)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+[2] 
+[2] Node.js v20.18.1
+[2] [nodemon] app crashed - waiting for file changes before starting...
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] /home/runner/workspace/dist/server/storage.js:1029
+[2] export { MemStorage };
+[2] ^^^^^^
+[2] 
+[2] SyntaxError: Unexpected token 'export'
+[2]     at wrapSafe (node:internal/modules/cjs/loader:1378:20)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1428:41)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+[2]     at Module.load (node:internal/modules/cjs/loader:1288:32)
+[2]     at Module._load (node:internal/modules/cjs/loader:1104:12)
+[2]     at Module.require (node:internal/modules/cjs/loader:1311:19)
+[2]     at require (node:internal/modules/helpers:179:18)
+[2]     at Object.<anonymous> (/home/runner/workspace/dist/server/routes.js:63:17)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1469:14)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+[2] 
+[2] Node.js v20.18.1
+[2] [nodemon] app crashed - waiting for file changes before starting...
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] restarting due to changes...
+[2] (node:1632) Warning: To load an ES module, set "type": "module" in the package.json or use the .mjs extension.
+[2] (Use `node --trace-warnings ...` to show where the warning was created)
+[2] /home/runner/workspace/dist/server/index.js:46
+[2] import express from "express";
+[2] ^^^^^^
+[2] 
+[2] SyntaxError: Cannot use import statement outside a module
+[2]     at wrapSafe (node:internal/modules/cjs/loader:1378:20)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1428:41)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+[2]     at Module.load (node:internal/modules/cjs/loader:1288:32)
+[2]     at Module._load (node:internal/modules/cjs/loader:1104:12)
+[2]     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:173:12)
+[2]     at node:internal/main/run_main_module:28:49
+[2] 
+[2] Node.js v20.18.1
+[2] [nodemon] starting `node dist/server/index.js`
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] (node:1756) Warning: To load an ES module, set "type": "module" in the package.json or use the .mjs extension.
+[2] (Use `node --trace-warnings ...` to show where the warning was created)
+[2] /home/runner/workspace/dist/server/index.js:46
+[2] import express from "express";
+[2] ^^^^^^
+[2] 
+[2] SyntaxError: Cannot use import statement outside a module
+[2]     at wrapSafe (node:internal/modules/cjs/loader:1378:20)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1428:41)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+[2]     at Module.load (node:internal/modules/cjs/loader:1288:32)
+[2]     at Module._load (node:internal/modules/cjs/loader:1104:12)
+[2]     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:173:12)
+[2]     at node:internal/main/run_main_module:28:49
+[2] 
+[2] Node.js v20.18.1
+[2] [nodemon] app crashed - waiting for file changes before starting...
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] (node:1769) Warning: To load an ES module, set "type": "module" in the package.json or use the .mjs extension.
+[2] (Use `node --trace-warnings ...` to show where the warning was created)
+[2] /home/runner/workspace/dist/server/index.js:46
+[2] import express from "express";
+[2] ^^^^^^
+[2] 
+[2] SyntaxError: Cannot use import statement outside a module
+[2]     at wrapSafe (node:internal/modules/cjs/loader:1378:20)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1428:41)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+[2]     at Module.load (node:internal/modules/cjs/loader:1288:32)
+[2]     at Module._load (node:internal/modules/cjs/loader:1104:12)
+[2]     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:173:12)
+[2]     at node:internal/main/run_main_module:28:49
+[2] 
+[2] Node.js v20.18.1
+[2] [nodemon] app crashed - waiting for file changes before starting...
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] (node:1817) Warning: To load an ES module, set "type": "module" in the package.json or use the .mjs extension.
+[2] (Use `node --trace-warnings ...` to show where the warning was created)
+[2] /home/runner/workspace/dist/server/index.js:46
+[2] import express from "express";
+[2] ^^^^^^
+[2] 
+[2] SyntaxError: Cannot use import statement outside a module
+[2]     at wrapSafe (node:internal/modules/cjs/loader:1378:20)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1428:41)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+[2]     at Module.load (node:internal/modules/cjs/loader:1288:32)
+[2]     at Module._load (node:internal/modules/cjs/loader:1104:12)
+[2]     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:173:12)
+[2]     at node:internal/main/run_main_module:28:49
+[2] 
+[2] Node.js v20.18.1
+[2] [nodemon] app crashed - waiting for file changes before starting...
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] (node:1843) Warning: To load an ES module, set "type": "module" in the package.json or use the .mjs extension.
+[2] (Use `node --trace-warnings ...` to show where the warning was created)
+[2] /home/runner/workspace/dist/server/index.js:46
+[2] import express from "express";
+[2] ^^^^^^
+[2] 
+[2] SyntaxError: Cannot use import statement outside a module
+[2]     at wrapSafe (node:internal/modules/cjs/loader:1378:20)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1428:41)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+[2]     at Module.load (node:internal/modules/cjs/loader:1288:32)
+[2]     at Module._load (node:internal/modules/cjs/loader:1104:12)
+[2]     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:173:12)
+[2]     at node:internal/main/run_main_module:28:49
+[2] 
+[2] Node.js v20.18.1
+[2] [nodemon] app crashed - waiting for file changes before starting...
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] restarting due to changes...
+[2] (node:1935) Warning: To load an ES module, set "type": "module" in the package.json or use the .mjs extension.
+[2] (Use `node --trace-warnings ...` to show where the warning was created)
+[2] /home/runner/workspace/dist/server/index.js:46
+[2] import express from "express";
+[2] ^^^^^^
+[2] 
+[2] SyntaxError: Cannot use import statement outside a module
+[2]     at wrapSafe (node:internal/modules/cjs/loader:1378:20)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1428:41)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+[2]     at Module.load (node:internal/modules/cjs/loader:1288:32)
+[2]     at Module._load (node:internal/modules/cjs/loader:1104:12)
+[2]     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:173:12)
+[2]     at node:internal/main/run_main_module:28:49
+[2] 
+[2] Node.js v20.18.1
+[2] [nodemon] starting `node dist/server/index.js`
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] (node:2042) Warning: To load an ES module, set "type": "module" in the package.json or use the .mjs extension.
+[2] (Use `node --trace-warnings ...` to show where the warning was created)
+[2] /home/runner/workspace/dist/server/index.js:46
+[2] import express from "express";
+[2] ^^^^^^
+[2] 
+[2] SyntaxError: Cannot use import statement outside a module
+[2]     at wrapSafe (node:internal/modules/cjs/loader:1378:20)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1428:41)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+[2]     at Module.load (node:internal/modules/cjs/loader:1288:32)
+[2]     at Module._load (node:internal/modules/cjs/loader:1104:12)
+[2]     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:173:12)
+[2]     at node:internal/main/run_main_module:28:49
+[2] 
+[2] Node.js v20.18.1
+[2] [nodemon] app crashed - waiting for file changes before starting...
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] (node:2100) Warning: To load an ES module, set "type": "module" in the package.json or use the .mjs extension.
+[2] (Use `node --trace-warnings ...` to show where the warning was created)
+[2] /home/runner/workspace/dist/server/index.js:46
+[2] import express from "express";
+[2] ^^^^^^
+[2] 
+[2] SyntaxError: Cannot use import statement outside a module
+[2]     at wrapSafe (node:internal/modules/cjs/loader:1378:20)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1428:41)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+[2]     at Module.load (node:internal/modules/cjs/loader:1288:32)
+[2]     at Module._load (node:internal/modules/cjs/loader:1104:12)
+[2]     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:173:12)
+[2]     at node:internal/main/run_main_module:28:49
+[2] 
+[2] Node.js v20.18.1
+[2] [nodemon] app crashed - waiting for file changes before starting...
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] (node:2122) Warning: To load an ES module, set "type": "module" in the package.json or use the .mjs extension.
+[2] (Use `node --trace-warnings ...` to show where the warning was created)
+[2] /home/runner/workspace/dist/server/index.js:46
+[2] import express from "express";
+[2] ^^^^^^
+[2] 
+[2] SyntaxError: Cannot use import statement outside a module
+[2]     at wrapSafe (node:internal/modules/cjs/loader:1378:20)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1428:41)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+[2]     at Module.load (node:internal/modules/cjs/loader:1288:32)
+[2]     at Module._load (node:internal/modules/cjs/loader:1104:12)
+[2]     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:173:12)
+[2]     at node:internal/main/run_main_module:28:49
+[2] 
+[2] Node.js v20.18.1
+[2] [nodemon] app crashed - waiting for file changes before starting...
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] (node:2189) Warning: To load an ES module, set "type": "module" in the package.json or use the .mjs extension.
+[2] (Use `node --trace-warnings ...` to show where the warning was created)
+[2] /home/runner/workspace/dist/server/index.js:46
+[2] import express from "express";
+[2] ^^^^^^
+[2] 
+[2] SyntaxError: Cannot use import statement outside a module
+[2]     at wrapSafe (node:internal/modules/cjs/loader:1378:20)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1428:41)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+[2]     at Module.load (node:internal/modules/cjs/loader:1288:32)
+[2]     at Module._load (node:internal/modules/cjs/loader:1104:12)
+[2]     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:173:12)
+[2]     at node:internal/main/run_main_module:28:49
+[2] 
+[2] Node.js v20.18.1
+[2] [nodemon] app crashed - waiting for file changes before starting...
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] (node:2221) Warning: To load an ES module, set "type": "module" in the package.json or use the .mjs extension.
+[2] (Use `node --trace-warnings ...` to show where the warning was created)
+[2] /home/runner/workspace/dist/server/index.js:46
+[2] import express from "express";
+[2] ^^^^^^
+[2] 
+[2] SyntaxError: Cannot use import statement outside a module
+[2]     at wrapSafe (node:internal/modules/cjs/loader:1378:20)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1428:41)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+[2]     at Module.load (node:internal/modules/cjs/loader:1288:32)
+[2]     at Module._load (node:internal/modules/cjs/loader:1104:12)
+[2]     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:173:12)
+[2]     at node:internal/main/run_main_module:28:49
+[2] 
+[2] Node.js v20.18.1
+[2] [nodemon] app crashed - waiting for file changes before starting...
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[2] [nodemon] restarting due to changes...
+[2] [nodemon] starting `node dist/server/index.js`
+[1] tsconfig.server.json(4,3): error TS5096: Option 'allowImportingTsExtensions' can only be used when either 'noEmit' or 'emitDeclarationOnly' is set.
+[1] 
+[1] 1:56:51 PM - Found 1 error. Watching for file changes.
+[2] (node:2265) Warning: To load an ES module, set "type": "module" in the package.json or use the .mjs extension.
+[2] (Use `node --trace-warnings ...` to show where the warning was created)
+[2] /home/runner/workspace/dist/server/index.js:46
+[2] import express from "express";
+[2] ^^^^^^
+[2] 
+[2] SyntaxError: Cannot use import statement outside a module
+[2]     at wrapSafe (node:internal/modules/cjs/loader:1378:20)
+[2]     at Module._compile (node:internal/modules/cjs/loader:1428:41)
+[2]     at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+[2]     at Module.load (node:internal/modules/cjs/loader:1288:32)
+[2]     at Module._load (node:internal/modules/cjs/loader:1104:12)
+[2]     at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:173:12)
+[2]     at node:internal/main/run_main_module:28:49
+[2] 
+[2] Node.js v20.18.1
+[2] [nodemon] app crashed - waiting for file changes before starting...
