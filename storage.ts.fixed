@@ -206,14 +206,6 @@ export class MemStorage implements IStorage {
     };
     this.problemTrees.set(id, problemTree);
     
-    // Create activity
-    await this.logActivity({
-      userId: problemTree.userId,
-      type: "create",
-      entityType: "ProblemTree",
-      entityName: problemTree.title,
-      metadata: {}
-    });
     
     return problemTree;
   }
@@ -233,7 +225,6 @@ export class MemStorage implements IStorage {
     };
     this.problemTrees.set(id, updated);
     
-    await this.logActivity({
       userId: existing.userId,
       type: "update",
       entityType: "ProblemTree",
@@ -254,7 +245,6 @@ export class MemStorage implements IStorage {
     const deleted = this.problemTrees.delete(id);
     
     if (deleted) {
-      await this.logActivity({
         userId: existing.userId,
         type: "delete",
         entityType: "Problem Tree",
@@ -292,14 +282,6 @@ export class MemStorage implements IStorage {
     };
     this.draftedPlans.set(id, draftedPlan);
     
-    // Create activity
-    await this.logActivity({
-      userId: draftedPlan.userId,
-      type: "create",
-      entityType: "DraftedPlan",
-      entityName: draftedPlan.title,
-      metadata: {}
-    });
     
     return draftedPlan;
   }
@@ -321,7 +303,6 @@ export class MemStorage implements IStorage {
     };
     this.draftedPlans.set(id, updated);
     
-    await this.logActivity({
       userId: existing.userId,
       type: "update",
       entityType: "DraftedPlan",
@@ -341,7 +322,6 @@ export class MemStorage implements IStorage {
     const deleted = this.draftedPlans.delete(id);
     
     if (deleted) {
-      await this.logActivity({
         userId: existing.userId,
         type: "delete",
         entityType: "Drafted Plan",
@@ -377,14 +357,6 @@ export class MemStorage implements IStorage {
     };
     this.clarityLabs.set(id, clarityLab);
     
-    // Create activity
-    await this.logActivity({
-      userId: clarityLab.userId,
-      type: "create",
-      entityType: "ClarityLab",
-      entityName: clarityLab.title,
-      metadata: {}
-    });
     
     return clarityLab;
   }
@@ -400,7 +372,6 @@ export class MemStorage implements IStorage {
     };
     this.clarityLabs.set(id, updated);
     
-    await this.logActivity({
       userId: existing.userId,
       type: "update",
       entityType: "ClarityLab",
@@ -420,7 +391,6 @@ export class MemStorage implements IStorage {
     const deleted = this.clarityLabs.delete(id);
     
     if (deleted) {
-      await this.logActivity({
         userId: existing.userId,
         type: "delete",
         entityType: "Clarity Lab",
@@ -457,7 +427,6 @@ export class MemStorage implements IStorage {
       updatedAt: new Date(),
     };
     this.weeklyReflections.set(reflection.id, reflection);
-    await this.logActivity({
       userId: data.userId,
       type: "create",
       entityType: "WeeklyReflection",
@@ -485,7 +454,6 @@ export class MemStorage implements IStorage {
     };
     this.weeklyReflections.set(id, updated);
     
-    await this.logActivity({
       userId: existing.userId,
       type: "update",
       entityType: "WeeklyReflection",
@@ -529,7 +497,6 @@ export class MemStorage implements IStorage {
       updatedAt: new Date(),
     };
     this.monthlyCheckIns.set(checkIn.id, checkIn);
-    await this.logActivity({
       userId: data.userId,
       type: "create",
       entityType: "MonthlyCheckIn",
@@ -559,7 +526,6 @@ export class MemStorage implements IStorage {
     };
     this.monthlyCheckIns.set(id, updated);
     
-    await this.logActivity({
       userId: existing.userId,
       type: "update",
       entityType: "MonthlyCheckIn",
@@ -590,14 +556,6 @@ export class MemStorage implements IStorage {
     };
     this.priorities.set(id, priority);
     
-    // Create activity
-    await this.logActivity({
-      userId: priority.userId,
-      type: "create",
-      entityType: "Priority",
-      entityName: priority.priority,
-      metadata: {}
-    });
     
     return priority;
   }
@@ -613,7 +571,6 @@ export class MemStorage implements IStorage {
     };
     this.priorities.set(id, updated);
     
-    await this.logActivity({
       userId: existing.userId,
       type: "update",
       entityType: "Priority",
@@ -633,7 +590,6 @@ export class MemStorage implements IStorage {
     const deleted = this.priorities.delete(id);
     
     if (deleted) {
-      await this.logActivity({
         userId: existing.userId,
         type: "delete",
         entityType: "Priority",
@@ -672,14 +628,6 @@ export class MemStorage implements IStorage {
     };
     this.decisions.set(id, decision);
     
-    // Create activity
-    await this.logActivity({
-      userId: decision.userId,
-      type: "create",
-      entityType: "Decision",
-      entityName: decision.title,
-      metadata: {
-        category: decision.category,
         decisionDate: decision.decisionDate,
         status: decision.status,
       },
@@ -703,7 +651,6 @@ export class MemStorage implements IStorage {
     };
     this.decisions.set(id, updated);
     
-    await this.logActivity({
       userId: existing.userId,
       type: "update",
       entityType: "Decision",
@@ -721,7 +668,6 @@ export class MemStorage implements IStorage {
     const decision = this.decisions.get(id);
     if (!decision) return false;
     
-    await this.logActivity({
       userId: decision.userId,
       type: "delete",
       entityType: "Decision",
@@ -767,7 +713,6 @@ export class MemStorage implements IStorage {
       updatedAt: new Date(),
     };
     this.offers.set(offer.id, offer);
-    await this.logActivity({
       userId: data.userId,
       type: "create",
       entityType: "Offer",
@@ -796,7 +741,6 @@ export class MemStorage implements IStorage {
     };
     this.offers.set(id, updated);
     
-    await this.logActivity({
       userId: existing.userId,
       type: "update",
       entityType: "Offer",
@@ -817,14 +761,6 @@ export class MemStorage implements IStorage {
     
     this.offers.delete(id);
     
-    // Create activity
-    await this.logActivity({
-      userId: offer.userId,
-      type: "delete",
-      entityType: "Offer",
-      entityName: offer.title,
-      metadata: {}
-    });
     
     return true;
   }
@@ -848,7 +784,6 @@ export class MemStorage implements IStorage {
     };
     this.offerNotes.set(id, offerNote);
     
-    await this.logActivity({
       userId: offerNote.userId,
       type: "create",
       entityType: "OfferNote",
@@ -872,7 +807,6 @@ export class MemStorage implements IStorage {
     };
     this.offerNotes.set(id, updated);
     
-    await this.logActivity({
       userId: existing.userId,
       type: "update",
       entityType: "OfferNote",

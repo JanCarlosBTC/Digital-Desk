@@ -99,18 +99,6 @@ export class MemStorage implements IStorage {
 
   private nextId: number;
   
-  // No-op implementation of logActivity (deprecated method)
-  private async logActivity(params: { 
-    userId: number, 
-    type: string, 
-    entityType: string, 
-    entityName: string, 
-    metadata: Record<string, any> 
-  }): Promise<void> {
-    // This method is intentionally empty as the activity tracking feature is being removed
-    return;
-  }
-  
 
 
   constructor() {
