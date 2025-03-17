@@ -10,7 +10,7 @@ import {
   Decision, InsertDecision,
   Offer, InsertOffer,
   OfferNote, InsertOfferNote
-} from "../shared/schema.js";
+} from "../shared/schema";
 
 export interface IStorage {
   // User methods

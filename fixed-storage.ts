@@ -10,7 +10,7 @@ import {
   Decision, InsertDecision,
   Offer, InsertOffer,
   OfferNote, InsertOfferNote
-} from "../shared/schema.js";
+} from "../shared/schema";
 
 export interface IStorage {
   // User methods
@@ -145,6 +145,7 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.nextId++;
+    const now = new Date();
     // Ensure plan is explicitly null if not defined
     const user: User = { 
       ...insertUser, 
@@ -620,8 +621,8 @@ export class MemStorage implements IStorage {
       .filter(decision => decision.userId === userId)
       .sort((a, b) => {
         // Sort by date descending (newest first)
-        if (a.decisionDate !== b.decisionDate) {
-          return new Date(b.decisionDate).getTime() - new Date(a.decisionDate).getTime();
+        if (a.date !== b.date) {
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
         }
         // If dates are the same, sort by id (newest ID first as they're auto-incremented)
         return b.id - a.id;
@@ -638,11 +639,7 @@ export class MemStorage implements IStorage {
     const decision: Decision = { 
       ...insertDecision, 
       id, 
-      status: insertDecision.status ?? "Pending",
-      alternatives: insertDecision.alternatives ?? null,
-      expectedOutcome: insertDecision.expectedOutcome ?? null,
-      followUpDate: insertDecision.followUpDate ?? null,
-      whatDifferent: insertDecision.whatDifferent ?? null,
+      tags: Array.isArray(insertDecision.tags) ? insertDecision.tags as string[] : [],
       createdAt: now, 
       updatedAt: now 
     };
@@ -654,8 +651,9 @@ export class MemStorage implements IStorage {
       entityType: "Decision",
       entityName: decision.title,
       metadata: {
-        decisionDate: decision.decisionDate,
         status: decision.status,
+        date: decision.date,
+        tags: decision.tags
       }
     });
     
@@ -669,10 +667,7 @@ export class MemStorage implements IStorage {
     const updated: Decision = { 
       ...existing, 
       ...data, 
-      alternatives: data.alternatives || existing.alternatives,
-      expectedOutcome: data.expectedOutcome || existing.expectedOutcome,
-      followUpDate: data.followUpDate || existing.followUpDate,
-      whatDifferent: data.whatDifferent || existing.whatDifferent,
+      tags: data.tags ? data.tags as string[] : existing.tags,
       updatedAt: new Date() 
     };
     this.decisions.set(id, updated);
@@ -683,8 +678,9 @@ export class MemStorage implements IStorage {
       entityType: "Decision",
       entityName: updated.title,
       metadata: {
-        decisionDate: updated.decisionDate,
-        status: updated.status
+        status: updated.status,
+        date: updated.date,
+        tags: updated.tags
       }
     });
     
