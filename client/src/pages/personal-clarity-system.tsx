@@ -5,14 +5,17 @@ import WeeklyReflectionLog from "@/components/personal-clarity/weekly-reflection
 import MonthlyCheckIns from "@/components/personal-clarity/monthly-check-ins";
 import PrioritiesTracker from "@/components/personal-clarity/priorities-tracker";
 import "@/components/personal-clarity/button-styles.css";
+import { PageHeader } from "@/components/ui/page-header";
+import { BrainIcon } from "lucide-react";
 
 const PersonalClaritySystem = () => {
   return (
     <section className="p-6 max-w-6xl mx-auto">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Personal Clarity System</h1>
-        <p className="text-gray-600 mt-2">Track your progress, reflections, and priorities</p>
-      </header>
+      <PageHeader
+        title="Personal Clarity System"
+        description="Track your progress, reflections, and priorities"
+        icon={<BrainIcon className="h-6 w-6" />}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Weekly Reflections, Weekly Reflection Log, and Monthly Check-ins */}

@@ -1,17 +1,43 @@
-import React from "react";
+import React, { useState, createContext, useContext } from "react";
 import { 
   LightbulbIcon, 
   NetworkIcon, 
   ClipboardListIcon, 
-  FlaskConicalIcon 
+  FlaskConicalIcon,
+  BookOpenIcon,
+  PlusIcon
 } from "lucide-react";
 import TabNavigation from "@/components/tab-navigation";
 import BrainDump from "@/components/thinking-desk/brain-dump";
 import ProblemTrees from "@/components/thinking-desk/problem-trees";
 import DraftedPlans from "@/components/thinking-desk/drafted-plans-new";
 import ClarityLab from "@/components/thinking-desk/clarity-lab";
+import { PageHeader } from "@/components/ui/page-header";
+
+// Create a context for Think Desk actions
+interface ThinkingDeskContextType {
+  activeTab: string;
+  createProblemTree: () => void;
+  createPlan: () => void;
+  createClarityEntry: () => void;
+}
+
+export const ThinkingDeskContext = createContext<ThinkingDeskContextType>({
+  activeTab: "brain-dump",
+  createProblemTree: () => {},
+  createPlan: () => {},
+  createClarityEntry: () => {}
+});
+
+// Hook for components to consume the context
+export const useThinkingDesk = () => useContext(ThinkingDeskContext);
 
 const ThinkingDesk = () => {
+  const [activeTab, setActiveTab] = useState("brain-dump");
+  const [showNewProblemTree, setShowNewProblemTree] = useState(false);
+  const [showNewPlan, setShowNewPlan] = useState(false);
+  const [showNewClarityEntry, setShowNewClarityEntry] = useState(false);
+  
   const tabs = [
     {
       id: "brain-dump",
@@ -35,31 +61,82 @@ const ThinkingDesk = () => {
     }
   ];
 
-  return (
-    <section className="p-4 sm:p-6 max-w-6xl mx-auto pb-20 md:pb-8">
-      <header className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">Thinking Desk</h1>
-        <p className="text-gray-600 mt-2">Capture, organize, and refine your ideas</p>
-      </header>
+  // Context value with action handlers
+  const contextValue: ThinkingDeskContextType = {
+    activeTab,
+    createProblemTree: () => setShowNewProblemTree(true),
+    createPlan: () => setShowNewPlan(true),
+    createClarityEntry: () => setShowNewClarityEntry(true)
+  };
 
-      <TabNavigation tabs={tabs} defaultTabId="brain-dump">
-        <div id="brain-dump" className="tab-pane w-full">
-          <BrainDump />
-        </div>
-        
-        <div id="problem-trees" className="tab-pane w-full">
-          <ProblemTrees />
-        </div>
-        
-        <div id="drafted-plans" className="tab-pane w-full">
-          <DraftedPlans />
-        </div>
-        
-        <div id="clarity-lab" className="tab-pane w-full">
-          <ClarityLab />
-        </div>
-      </TabNavigation>
-    </section>
+  // Get action button configuration based on active tab
+  const getAction = () => {
+    switch (activeTab) {
+      case "problem-trees":
+        return {
+          label: "New Problem Tree",
+          onClick: () => contextValue.createProblemTree(),
+          icon: <PlusIcon className="mr-2 h-4 w-4" />
+        };
+      case "drafted-plans":
+        return {
+          label: "New Plan",
+          onClick: () => contextValue.createPlan(),
+          icon: <PlusIcon className="mr-2 h-4 w-4" />
+        };
+      case "clarity-lab":
+        return {
+          label: "New Entry",
+          onClick: () => contextValue.createClarityEntry(),
+          icon: <PlusIcon className="mr-2 h-4 w-4" />
+        };
+      default:
+        return undefined;
+    }
+  };
+
+  return (
+    <ThinkingDeskContext.Provider value={contextValue}>
+      <section className="p-4 sm:p-6 max-w-6xl mx-auto pb-20 md:pb-8">
+        <PageHeader
+          title="Thinking Desk"
+          description="Capture, organize, and refine your ideas"
+          icon={<BookOpenIcon className="h-6 w-6" />}
+          action={getAction()}
+        />
+
+        <TabNavigation 
+          tabs={tabs} 
+          defaultTabId="brain-dump"
+          onTabChange={(tabId: string) => setActiveTab(tabId)}
+        >
+          <div id="brain-dump" className="tab-pane w-full">
+            <BrainDump />
+          </div>
+          
+          <div id="problem-trees" className="tab-pane w-full">
+            <ProblemTrees 
+              showNewProblemTree={showNewProblemTree}
+              onDialogClose={() => setShowNewProblemTree(false)}
+            />
+          </div>
+          
+          <div id="drafted-plans" className="tab-pane w-full">
+            <DraftedPlans 
+              showNewPlan={showNewPlan}
+              onDialogClose={() => setShowNewPlan(false)}
+            />
+          </div>
+          
+          <div id="clarity-lab" className="tab-pane w-full">
+            <ClarityLab 
+              showNewEntry={showNewClarityEntry}
+              onDialogClose={() => setShowNewClarityEntry(false)}
+            />
+          </div>
+        </TabNavigation>
+      </section>
+    </ThinkingDeskContext.Provider>
   );
 };
 
