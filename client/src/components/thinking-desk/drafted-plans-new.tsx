@@ -279,158 +279,157 @@ export default function DraftedPlans({ showNewPlan = false, onDialogClose }: Dra
           <div className="text-center py-10 border border-dashed border-gray-300 rounded-lg">
             <h3 className="text-lg font-medium text-gray-700 mb-2">No Drafted Plans Yet</h3>
             <p className="text-gray-500 mb-4">Start planning your next big initiative by creating a plan.</p>
-            <Button
-              onClick={handleNewPlan}
-              variant="outline"
-              className="border-primary text-primary font-medium hover:bg-primary/10 hover:text-primary/90"
-            >
-              <PlusIcon className="mr-2 h-4 w-4" /> Create Your First Plan
-            </Button>
+            <div className="text-center mt-4">
+              <Button
+                onClick={handleNewPlan}
+                variant="thinkingDesk"
+                className="flex items-center mx-auto"
+              >
+                <PlusIcon className="h-4 w-4 mr-2" /> Create Your First Plan
+              </Button>
+            </div>
           </div>
         )}
 
         {/* New Plan Dialog */}
-        <Dialog open={isOpen} onOpenChange={handleDialogClose}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New Plan</DialogTitle>
-            </DialogHeader>
-            
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Plan Title</FormLabel>
+        <DialogForm
+          title="New Plan"
+          description="Develop initiatives and projects before they're ready for execution"
+          open={isOpen}
+          onOpenChange={setIsOpen}
+          size="full"
+          submitLabel="Save Plan"
+          cancelLabel="Cancel"
+          isSubmitting={createMutation.isPending}
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
+          <Form {...form}>
+            <div className="space-y-5">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium">Plan Title</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="E.g., Q3 Content Marketing Strategy" 
+                        className="bg-white"
+                        {...field} 
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium">Description</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Describe the overall plan and its purpose" 
+                        className="min-h-24 bg-white"
+                        {...field} 
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium">Status</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                    >
                       <FormControl>
-                        <Input placeholder="E.g., Q3 Content Marketing Strategy" {...field} />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
                       </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Describe the overall plan and its purpose" 
-                          rows={3} 
-                          {...field} 
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Draft">Draft</SelectItem>
-                          <SelectItem value="In Progress">In Progress</SelectItem>
-                          <SelectItem value="Ready for Review">Ready for Review</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="components"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Key Components (one per line)</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="E.g.,
+                      <SelectContent>
+                        <SelectItem value="Draft">Draft</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="Ready">Ready</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="components"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium">Key Components (one per line)</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="E.g.,
 SEO blog content (6 articles/month)
 Lead magnet development
 Email nurture sequence optimization" 
-                          rows={3} 
-                          {...field} 
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="resourcesNeeded"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Resources Needed (one per line)</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="E.g.,
+                        rows={4} 
+                        className="bg-white"
+                        {...field} 
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="resourcesNeeded"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium">Resources Needed (one per line)</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="E.g.,
 Content writer ($2,500/mo)
 SEO specialist (internal)
 Designer for lead magnets" 
-                          rows={3} 
-                          {...field} 
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="expectedOutcomes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Expected Outcomes (one per line)</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="E.g.,
+                        rows={4} 
+                        className="bg-white"
+                        {...field} 
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="expectedOutcomes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-medium">Expected Outcomes (one per line)</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="E.g.,
 +30% organic traffic
 100 new email subscribers/month
 15 SQL from content channels" 
-                          rows={3} 
-                          {...field} 
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                
-                <div className="flex justify-end space-x-2 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="border-gray-300 font-medium hover:bg-gray-100"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit"
-                    variant="thinkingDesk"
-                    disabled={createMutation.isPending}
-                  >
-                    {createMutation.isPending ? "Saving..." : "Save Plan"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+                        rows={4} 
+                        className="bg-white"
+                        {...field} 
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+          </Form>
+        </DialogForm>
       </CardContent>
     </Card>
   );

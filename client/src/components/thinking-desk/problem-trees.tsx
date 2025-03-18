@@ -253,10 +253,10 @@ const ProblemTrees = ({ showNewProblemTree = false, onDialogClose }: ProblemTree
           </div>
           <Button
             onClick={handleNewProblemTree}
-            className="bg-primary/90 text-white hover:bg-primary transition-all"
-            size="sm"
+            variant="thinkingDesk"
+            className="min-w-[200px]"
           >
-            <PlusIcon className="mr-2 h-4 w-4" /> New Problem Tree
+            <PlusIcon className="mr-2 h-4 w-4" /> Create Problem Tree
           </Button>
         </div>
       </CardHeader>
@@ -615,7 +615,8 @@ const ProblemTrees = ({ showNewProblemTree = false, onDialogClose }: ProblemTree
             </p>
             <Button
               onClick={handleNewProblemTree}
-              className="bg-primary/90 text-white hover:bg-primary"
+              variant="thinkingDesk"
+              className="min-w-[200px]"
             >
               <PlusIcon className="mr-2 h-4 w-4" /> Create Problem Tree
             </Button>
@@ -624,221 +625,194 @@ const ProblemTrees = ({ showNewProblemTree = false, onDialogClose }: ProblemTree
       </CardContent>
 
       {/* New Problem Tree Dialog */}
-      <Dialog open={isOpen} onOpenChange={handleDialogClose}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-              {selectedProblemTree ? 'Edit Problem Tree' : 'Create New Problem Tree'}
-            </DialogTitle>
-            <DialogDescription className="text-gray-500">
-              Break down complex problems into manageable parts to identify root causes and solutions.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-              <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100 mb-2">
-                <h3 className="text-sm font-semibold text-blue-700 mb-2 flex items-center">
-                  <ChevronDown className="h-4 w-4 mr-1" />
-                  Problem Structure
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-medium">Title</FormLabel>
-                        <FormDescription className="text-xs text-gray-500">
-                          What would you like to call this problem analysis?
-                        </FormDescription>
-                        <FormControl>
-                          <Input 
-                            placeholder="E.g., Customer Acquisition Challenges" 
-                            className="bg-white"
-                            {...field} 
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="mainProblem"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-medium">Main Problem</FormLabel>
-                        <FormDescription className="text-xs text-gray-500">
-                          The core issue you're trying to solve
-                        </FormDescription>
-                        <FormControl>
-                          <Input 
-                            placeholder="E.g., Declining Customer Sign-ups" 
-                            className="bg-white"
-                            {...field} 
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
+      <DialogForm
+        title={selectedProblemTree ? 'Edit Problem Tree' : 'Create New Problem Tree'}
+        description="Break down complex problems into manageable parts to identify root causes and solutions."
+        open={isOpen}
+        onOpenChange={handleDialogClose}
+        size="full"
+        submitLabel="Save Problem Tree"
+        cancelLabel="Cancel"
+        isSubmitting={createMutation.isPending}
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
+        <Form {...form}>
+          <div className="space-y-5">
+            <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100 mb-2">
+              <h3 className="text-sm font-semibold text-blue-700 mb-2 flex items-center">
+                <ChevronDown className="h-4 w-4 mr-1" />
+                Problem Structure
+              </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="subProblems"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex justify-between items-center mb-1">
-                          <FormLabel className="font-medium flex items-center">
-                            <Badge className="mr-2 bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100">Step 1</Badge>
-                            Sub Problems
-                          </FormLabel>
-                        </div>
-                        <FormDescription className="text-xs text-gray-500">
-                          Identify the components of the main problem (one per line)
-                        </FormDescription>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="E.g.,
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium">Title</FormLabel>
+                      <FormDescription className="text-xs text-gray-500">
+                        What would you like to call this problem analysis?
+                      </FormDescription>
+                      <FormControl>
+                        <Input 
+                          placeholder="E.g., Customer Acquisition Challenges" 
+                          className="bg-white"
+                          {...field} 
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="mainProblem"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-medium">Main Problem</FormLabel>
+                      <FormDescription className="text-xs text-gray-500">
+                        The core issue you're trying to solve
+                      </FormDescription>
+                      <FormControl>
+                        <Input 
+                          placeholder="E.g., Declining Customer Sign-ups" 
+                          className="bg-white"
+                          {...field} 
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="subProblems"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex justify-between items-center mb-1">
+                        <FormLabel className="font-medium flex items-center">
+                          <Badge className="mr-2 bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100">Step 1</Badge>
+                          Sub Problems
+                        </FormLabel>
+                      </div>
+                      <FormDescription className="text-xs text-gray-500">
+                        Identify the components of the main problem (one per line)
+                      </FormDescription>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="E.g.,
 High CAC
 Low Conversion Rate
 Poor Retention" 
-                            rows={4}
-                            className="bg-white resize-none"
-                            {...field} 
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="rootCauses"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex justify-between items-center mb-1">
-                          <FormLabel className="font-medium flex items-center">
-                            <Badge className="mr-2 bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-100">Step 2</Badge>
-                            Root Causes
-                          </FormLabel>
-                        </div>
-                        <FormDescription className="text-xs text-gray-500">
-                          Identify underlying causes of the sub-problems (one per line)
-                        </FormDescription>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="E.g.,
+                          rows={4}
+                          className="bg-white resize-none"
+                          {...field} 
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="rootCauses"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex justify-between items-center mb-1">
+                        <FormLabel className="font-medium flex items-center">
+                          <Badge className="mr-2 bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-100">Step 2</Badge>
+                          Root Causes
+                        </FormLabel>
+                      </div>
+                      <FormDescription className="text-xs text-gray-500">
+                        Identify underlying causes of the sub-problems (one per line)
+                      </FormDescription>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="E.g.,
 Unclear Messaging
 Competing Platforms
 Limited Marketing Budget" 
-                            rows={4}
-                            className="bg-white resize-none"
-                            {...field} 
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="potentialSolutions"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex justify-between items-center mb-1">
-                          <FormLabel className="font-medium flex items-center">
-                            <Badge className="mr-2 bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100">Step 3</Badge>
-                            Potential Solutions
-                          </FormLabel>
-                        </div>
-                        <FormDescription className="text-xs text-gray-500">
-                          Brainstorm solutions based on root causes (one per line)
-                        </FormDescription>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="E.g.,
+                          rows={4}
+                          className="bg-white resize-none"
+                          {...field} 
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="potentialSolutions"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex justify-between items-center mb-1">
+                        <FormLabel className="font-medium flex items-center">
+                          <Badge className="mr-2 bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100">Step 3</Badge>
+                          Potential Solutions
+                        </FormLabel>
+                      </div>
+                      <FormDescription className="text-xs text-gray-500">
+                        Brainstorm solutions based on root causes (one per line)
+                      </FormDescription>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="E.g.,
 Revise copywriting on landing page
 A/B test different value propositions
 Enhance onboarding experience
 Optimize ad spend based on channel performance" 
-                            rows={4}
-                            className="bg-white resize-none"
-                            {...field} 
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="nextActions"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex justify-between items-center mb-1">
-                          <FormLabel className="font-medium flex items-center">
-                            <Badge className="mr-2 bg-green-100 text-green-700 border-green-200 hover:bg-green-100">Step 4</Badge>
-                            Next Actions
-                          </FormLabel>
-                        </div>
-                        <FormDescription className="text-xs text-gray-500">
-                          Define immediate next steps to implement solutions (one per line)
-                        </FormDescription>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="E.g.,
+                          rows={4}
+                          className="bg-white resize-none"
+                          {...field} 
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="nextActions"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex justify-between items-center mb-1">
+                        <FormLabel className="font-medium flex items-center">
+                          <Badge className="mr-2 bg-green-100 text-green-700 border-green-200 hover:bg-green-100">Step 4</Badge>
+                          Next Actions
+                        </FormLabel>
+                      </div>
+                      <FormDescription className="text-xs text-gray-500">
+                        Define immediate next steps to implement solutions (one per line)
+                      </FormDescription>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="E.g.,
 Schedule copywriter review by Friday
 Analyze competitor features by next Tuesday
 Set up user interviews for feedback
 Create A/B test plan for homepage" 
-                            rows={4}
-                            className="bg-white resize-none"
-                            {...field} 
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                          rows={4}
+                          className="bg-white resize-none"
+                          {...field} 
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </div>
-              
-              <div className="flex justify-end space-x-2 pt-4 border-t border-gray-100">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsOpen(false)}
-                  className="border-gray-300"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit"
-                  className="bg-primary/90 text-white hover:bg-primary"
-                  disabled={createMutation.isPending}
-                >
-                  {createMutation.isPending ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Saving...
-                    </>
-                  ) : "Save Problem Tree"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+            </div>
+          </div>
+        </Form>
+      </DialogForm>
     </Card>
   );
 };
