@@ -20,6 +20,7 @@ import {
   LayoutListIcon
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { DialogForm } from "@/components/ui/dialog-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -57,7 +58,12 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const ProblemTrees = () => {
+interface ProblemTreesProps {
+  showNewProblemTree?: boolean;
+  onDialogClose?: () => void;
+}
+
+const ProblemTrees = ({ showNewProblemTree = false, onDialogClose }: ProblemTreesProps) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedProblemTree, setSelectedProblemTree] = useState<ProblemTree | null>(null);
@@ -218,6 +224,21 @@ const ProblemTrees = () => {
     }
   };
 
+  // Listen for showNewProblemTree prop changes
+  useEffect(() => {
+    if (showNewProblemTree) {
+      handleNewProblemTree();
+    }
+  }, [showNewProblemTree]);
+  
+  // Handle dialog close
+  const handleDialogClose = (open: boolean) => {
+    setIsOpen(open);
+    if (!open && onDialogClose) {
+      onDialogClose();
+    }
+  };
+
   return (
     <Card className="shadow-lg border-0">
       <CardHeader className="pb-3">
@@ -301,7 +322,7 @@ const ProblemTrees = () => {
                     
                     {/* Sub Problems (Level 1) */}
                     <div className="grid grid-cols-1 gap-3 w-full max-w-3xl mx-auto mb-4">
-                      {problemTrees[0].subProblems.slice(0, 3).map((subProblem, index) => (
+                      {problemTrees[0].subProblems.slice(0, 3).map((subProblem: string, index: number) => (
                         <div key={index} className="bg-gradient-to-r from-orange-50 to-orange-100 shadow-sm border border-orange-200 rounded-lg p-3 text-center flex flex-col items-center">
                           <Badge variant="outline" className="bg-orange-100 border-orange-300 text-orange-700 mb-1">Sub-problem {index + 1}</Badge>
                           <p className="text-gray-800">{subProblem}</p>
@@ -316,7 +337,7 @@ const ProblemTrees = () => {
                     
                     {/* Root Causes (Level 2) */}
                     <div className="grid grid-cols-1 gap-3 w-full max-w-2xl mx-auto mb-1">
-                      {problemTrees[0].rootCauses.slice(0, 2).map((rootCause, index) => (
+                      {problemTrees[0].rootCauses.slice(0, 2).map((rootCause: string, index: number) => (
                         <div key={index} className="bg-gradient-to-r from-yellow-50 to-yellow-100 shadow-sm border border-yellow-200 rounded-lg p-3 text-center flex flex-col items-center">
                           <Badge variant="outline" className="bg-yellow-100 border-yellow-300 text-yellow-700 mb-1">Root Cause {index + 1}</Badge>
                           <p className="text-gray-800">{rootCause}</p>
@@ -336,7 +357,7 @@ const ProblemTrees = () => {
                     </CardHeader>
                     <CardContent className="pt-0">
                       <ul className="space-y-2">
-                        {problemTrees[0].potentialSolutions.map((solution, index) => (
+                        {problemTrees[0].potentialSolutions.map((solution: string, index: number) => (
                           <li key={index} className="flex items-start">
                             <div className="flex-shrink-0 h-5 w-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2 mt-0.5 text-xs font-bold">{index + 1}</div>
                             <span className="text-sm text-gray-700">{solution}</span>
@@ -355,7 +376,7 @@ const ProblemTrees = () => {
                     </CardHeader>
                     <CardContent className="pt-0">
                       <ul className="space-y-2">
-                        {problemTrees[0].nextActions.map((action, index) => (
+                        {problemTrees[0].nextActions.map((action: string, index: number) => (
                           <li key={index} className="flex items-start">
                             <div className="flex-shrink-0 h-5 w-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-2 mt-0.5 text-xs font-bold">{index + 1}</div>
                             <span className="text-sm text-gray-700">{action}</span>
@@ -435,8 +456,8 @@ const ProblemTrees = () => {
                     filteredTrees = filteredTrees.filter(tree => 
                       tree.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                       tree.mainProblem.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      tree.subProblems.some(p => p.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                      tree.rootCauses.some(c => c.toLowerCase().includes(searchTerm.toLowerCase()))
+                      tree.subProblems.some((p: string) => p.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                      tree.rootCauses.some((c: string) => c.toLowerCase().includes(searchTerm.toLowerCase()))
                     );
                   }
                   
@@ -603,7 +624,7 @@ const ProblemTrees = () => {
       </CardContent>
 
       {/* New Problem Tree Dialog */}
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={handleDialogClose}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">

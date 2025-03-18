@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { z } from 'zod';
-import { toast } from '@radix-ui/react-toast'; // Or your preferred toast library
+import { useToast } from '@/hooks/use-toast'; // Using app's toast system
+import { Button } from "@/components/ui/button";
 
 // Hypothetical offer schema
 const offerSchema = z.object({
@@ -9,16 +10,24 @@ const offerSchema = z.object({
   // ... other fields
 });
 
+type OfferFormData = z.infer<typeof offerSchema>;
+
+interface Offer {
+  id: number;
+  title: string;
+  description: string;
+}
+
 const OfferForm = () => {
+  const { toast } = useToast();
   const [formOpen, setFormOpen] = useState(false);
-  const [selectedOffer, setSelectedOffer] = useState(null);
+  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = React.useRef(null);
+  const form = useRef<HTMLFormElement>(null);
 
-
-  const onSubmit = async (data: z.infer<typeof offerSchema>) => {
+  const onSubmit = async (data: OfferFormData) => {
     setIsSubmitting(true);
     try {
       if (selectedOffer) {
@@ -63,7 +72,10 @@ const OfferForm = () => {
 
       setRefreshKey(prev => prev + 1);
       setFormOpen(false);
-      form.current.reset();
+      // Only reset if form.current is not null
+      if (form.current) {
+        form.current.reset();
+      }
       setSelectedOffer(null);
     } catch (error) {
       console.error("Error submitting offer:", error);
@@ -81,21 +93,29 @@ const OfferForm = () => {
     <div>
       <button onClick={() => setFormOpen(true)}>Open Offer Form</button>
       {formOpen && (
-        <form ref={form} onSubmit={(e) => {
-          e.preventDefault();
-          const formData = {
-            title: e.target.title.value,
-            description: e.target.description.value,
-            // ... other fields
-          }
-          onSubmit(offerSchema.parse(formData));
-        }}>
+        <form 
+          ref={form} 
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formElement = e.target as HTMLFormElement;
+            const titleInput = formElement.querySelector('input[name="title"]') as HTMLInputElement;
+            const descriptionInput = formElement.querySelector('textarea[name="description"]') as HTMLTextAreaElement;
+            
+            const formData = {
+              title: titleInput.value,
+              description: descriptionInput.value,
+              // ... other fields
+            };
+            
+            onSubmit(offerSchema.parse(formData));
+          }}
+        >
           <input type="text" name="title" placeholder="Title" />
           <textarea name="description" placeholder="Description" />
           {/* ... other form fields */}
-          <button type="submit" disabled={isSubmitting}>
+          <Button type="submit" variant="offerVault" disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : 'Save Offer'}
-          </button>
+          </Button>
         </form>
       )}
     </div>

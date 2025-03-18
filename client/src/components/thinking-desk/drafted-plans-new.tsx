@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogForm } from "@/components/ui/dialog-form";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,10 +41,15 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function DraftedPlans() {
+interface DraftedPlansProps {
+  showNewPlan?: boolean;
+  onDialogClose?: () => void;
+}
+
+export default function DraftedPlans({ showNewPlan = false, onDialogClose }: DraftedPlansProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
-  const [expandedPlan, setExpandedPlan] = useState<number | null>(0); // First plan expanded by default
+  const [expandedPlans, setExpandedPlans] = useState<Record<number, boolean>>({});
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -56,7 +62,22 @@ export default function DraftedPlans() {
       expectedOutcomes: "",
     },
   });
-
+  
+  // Listen for showNewPlan prop changes
+  useEffect(() => {
+    if (showNewPlan) {
+      handleNewPlan();
+    }
+  }, [showNewPlan]);
+  
+  // Handle dialog close
+  const handleDialogClose = (open: boolean) => {
+    setIsOpen(open);
+    if (!open && onDialogClose) {
+      onDialogClose();
+    }
+  };
+  
   // Fetch drafted plans
   const { data: draftedPlans, isLoading } = useQuery<DraftedPlan[]>({
     queryKey: ['/api/drafted-plans'],
@@ -114,7 +135,7 @@ export default function DraftedPlans() {
   };
 
   const togglePlanExpansion = (id: number) => {
-    setExpandedPlan(expandedPlan === id ? null : id);
+    setExpandedPlans({ ...expandedPlans, [id]: !expandedPlans[id] });
   };
 
   const formatDate = (dateString: Date | string) => {
@@ -137,7 +158,7 @@ export default function DraftedPlans() {
           </div>
           <Button
             onClick={handleNewPlan}
-            className="bg-primary/90 text-white hover:bg-primary transition-all"
+            variant="thinkingDesk"
             size="sm"
           >
             <PlusIcon className="mr-2 h-4 w-4" /> New Plan
@@ -178,13 +199,16 @@ export default function DraftedPlans() {
                 
                 <p className="text-gray-600 mb-4">{plan.description}</p>
                 
-                {expandedPlan === plan.id && (
+                {expandedPlans[plan.id] && (
                   <>
                     <div className="mb-4">
                       <h4 className="font-medium text-gray-700 mb-2">Key Components</h4>
                       <ul className="list-disc list-inside text-gray-600 space-y-1">
-                        {plan.components.map((component, idx) => (
-                          <li key={idx}>{component}</li>
+                        {plan.components.map((component: string, idx: number) => (
+                          <li key={idx} className="ml-6 flex items-start">
+                            <div className="flex-shrink-0 h-5 w-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2 mt-0.5 text-xs font-bold">{idx + 1}</div>
+                            <div className="flex-1">{component}</div>
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -193,16 +217,22 @@ export default function DraftedPlans() {
                       <div>
                         <h4 className="font-medium text-gray-700 mb-2">Resources Needed</h4>
                         <ul className="list-disc list-inside text-gray-600 space-y-1">
-                          {plan.resourcesNeeded.map((resource, idx) => (
-                            <li key={idx}>{resource}</li>
+                          {plan.resourcesNeeded.map((resource: string, idx: number) => (
+                            <li key={idx} className="ml-6 flex items-start">
+                              <div className="h-2 w-2 rounded-full bg-amber-300 mr-2 mt-1.5"></div>
+                              <div className="flex-1">{resource}</div>
+                            </li>
                           ))}
                         </ul>
                       </div>
                       <div>
                         <h4 className="font-medium text-gray-700 mb-2">Expected Outcomes</h4>
                         <ul className="list-disc list-inside text-gray-600 space-y-1">
-                          {plan.expectedOutcomes.map((outcome, idx) => (
-                            <li key={idx}>{outcome}</li>
+                          {plan.expectedOutcomes.map((outcome: string, idx: number) => (
+                            <li key={idx} className="ml-6 flex items-start">
+                              <div className="h-2 w-2 rounded-full bg-emerald-500 mr-2 mt-1.5"></div>
+                              <div className="flex-1">{outcome}</div>
+                            </li>
                           ))}
                         </ul>
                       </div>
@@ -210,7 +240,7 @@ export default function DraftedPlans() {
                   </>
                 )}
                 
-                <div className={`flex justify-between ${expandedPlan === plan.id ? "border-t border-gray-200 pt-3" : ""}`}>
+                <div className={`flex justify-between ${expandedPlans[plan.id] ? "border-t border-gray-200 pt-3" : ""}`}>
                   <div>
                     <button className="text-gray-500 hover:text-gray-700 mr-3">
                       <MessageSquareIcon className="inline-block mr-1 h-4 w-4" /> {plan.comments} Comments
@@ -220,12 +250,12 @@ export default function DraftedPlans() {
                     </button>
                   </div>
                   <div>
-                    {expandedPlan === plan.id && (
+                    {expandedPlans[plan.id] && (
                       <>
-                        <Button variant="outline" className="border-primary text-primary font-medium hover:bg-primary/10 hover:text-primary/90 mr-2">
+                        <Button variant="thinkingDeskOutline" className="mr-2">
                           <EditIcon className="mr-1 h-4 w-4" /> Edit
                         </Button>
-                        <Button className="bg-primary text-white hover:bg-primary/90">
+                        <Button variant="thinkingDesk">
                           Move to Projects <ArrowRightIcon className="ml-1 h-4 w-4" />
                         </Button>
                       </>
@@ -234,7 +264,7 @@ export default function DraftedPlans() {
                       className="text-primary font-medium hover:text-primary/80 ml-3"
                       onClick={() => togglePlanExpansion(plan.id)}
                     >
-                      {expandedPlan === plan.id ? (
+                      {expandedPlans[plan.id] ? (
                         <span>Hide Details <ChevronDownIcon className="inline-block ml-1 h-4 w-4 rotate-180" /></span>
                       ) : (
                         <span>Show Details <ChevronDownIcon className="inline-block ml-1 h-4 w-4" /></span>
@@ -260,7 +290,7 @@ export default function DraftedPlans() {
         )}
 
         {/* New Plan Dialog */}
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={handleDialogClose}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Create New Plan</DialogTitle>
@@ -391,7 +421,7 @@ Designer for lead magnets"
                   </Button>
                   <Button 
                     type="submit"
-                    className="bg-primary text-white hover:bg-primary/90 font-medium"
+                    variant="thinkingDesk"
                     disabled={createMutation.isPending}
                   >
                     {createMutation.isPending ? "Saving..." : "Save Plan"}

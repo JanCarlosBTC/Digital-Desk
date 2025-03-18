@@ -72,7 +72,11 @@ export interface MetadataItem {
 export interface ActionItem {
   label: string;
   onClick: () => void;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 
+    'thinkingDesk' | 'thinkingDeskOutline' | 
+    'personalClarity' | 'personalClarityOutline' | 
+    'decisionLog' | 'decisionLogOutline' | 
+    'offerVault' | 'offerVaultOutline';
   icon?: React.ReactNode;
 }
 
@@ -85,6 +89,7 @@ export interface FeatureCardProps {
   actions?: ActionItem[];
   className?: string;
   children?: React.ReactNode;
+  onClick?: () => void;
 }
 
 /**
