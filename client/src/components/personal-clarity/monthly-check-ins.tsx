@@ -1,17 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { PlusIcon, EyeIcon, CalendarIcon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogForm } from "@/components/ui/dialog-form";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
+import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useToast } from "@/hooks/use-toast";
 import { MonthlyCheckIn } from "@shared/schema";
-import { Skeleton } from "@/components/ui/skeleton";
-import { EyeIcon, CalendarIcon } from "lucide-react";
 import "@/components/ui/clipboard.css";
 
 const formSchema = z.object({
@@ -40,9 +40,9 @@ const MonthlyCheckIns = () => {
     },
   });
 
-  // Get current month and year
+  // Get current month and year for defaults
   const currentDate = new Date();
-  const currentMonth = currentDate.getMonth() + 1; 
+  const currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-indexed
   const currentYear = currentDate.getFullYear();
 
   // Fetch monthly check-ins
@@ -121,7 +121,6 @@ const MonthlyCheckIns = () => {
         <Button 
           onClick={handleNewCheckIn}
           variant="default"
-          className="clarity-button bg-purple-500 hover:bg-purple-600 text-white" 
         >
           <CalendarIcon className="mr-2 h-4 w-4" /> {getMonthName(currentMonth)} Check-in
         </Button>
@@ -144,7 +143,7 @@ const MonthlyCheckIns = () => {
 
                 // Check if this month has a completed check-in
                 const hasCompletedCheckIn = monthlyCheckIns?.some(
-                  checkIn => checkIn.month === month && 
+                  (checkIn: MonthlyCheckIn) => checkIn.month === month && 
                   checkIn.year === currentYear && 
                   checkIn.completedOn
                 );
@@ -154,53 +153,69 @@ const MonthlyCheckIns = () => {
                     key={month}
                     className={`h-16 rounded flex items-center justify-center font-medium ${
                       hasCompletedCheckIn 
-                        ? 'bg-secondary text-white' 
+                        ? 'bg-primary text-white' 
                         : isCurrentMonth 
-                          ? 'border-2 border-dashed border-secondary text-secondary' 
+                          ? 'border-2 border-dashed border-primary text-primary' 
                           : isPastMonth 
-                            ? 'bg-gray-200 text-gray-500' 
-                            : 'bg-gray-200 text-gray-400'
+                            ? 'bg-gray-100 text-gray-500' 
+                            : 'bg-gray-50 text-gray-400'
                     }`}
                   >
-                    {getMonthName(month).slice(0, 3)}
+                    {month}
                   </div>
                 );
               })}
             </div>
 
-            <p className="text-sm text-gray-600">
-              <span className="font-medium">
-                {monthlyCheckIns?.filter(checkIn => checkIn.year === currentYear && checkIn.completedOn).length || 0} out of 12
-              </span> monthly check-ins completed this year
-            </p>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-primary rounded-full mr-2"></div>
+                <span className="text-gray-600">Completed</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 border-2 border-dashed border-primary rounded-full mr-2"></div>
+                <span className="text-gray-600">Current Month</span>
+              </div>
+              <div className="flex items-center">
+                <div className="w-3 h-3 bg-gray-100 rounded-full mr-2"></div>
+                <span className="text-gray-600">Past Months</span>
+              </div>
+            </div>
           </div>
 
-          {/* Previous Check-ins */}
+          {/* Check-in History */}
           {monthlyCheckIns && monthlyCheckIns.length > 0 && (
             <>
-              <h3 className="font-medium text-gray-800 mb-3">Previous Check-ins</h3>
-              <ul className="space-y-2">
+              <h3 className="font-medium text-gray-800 mb-3">Check-in History</h3>
+              <ul className="space-y-3">
                 {monthlyCheckIns
-                  .filter(checkIn => checkIn.completedOn) 
-                  .slice(0, 5) 
-                  .map((checkIn) => (
+                  .sort((a, b) => {
+                    // Sort by year (descending) and then by month (descending)
+                    if (a.year !== b.year) return b.year - a.year;
+                    return b.month - a.month;
+                  })
+                  .map((checkIn: MonthlyCheckIn) => (
                     <li 
-                      key={checkIn.id} 
-                      className="flex justify-between items-center p-3 bg-gray-50 rounded-md hover:bg-gray-100"
+                      key={`${checkIn.year}-${checkIn.month}`}
+                      className="border border-gray-200 rounded-lg p-3 bg-white"
                     >
-                      <div>
-                        <span className="font-medium">{getMonthName(checkIn.month)} {checkIn.year}</span>
-                        <span className="text-sm text-gray-500 ml-2">
-                          Completed on {checkIn.completedOn ? formatCompletedOn(checkIn.completedOn) : 'N/A'}
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-gray-800">
+                          {getMonthName(checkIn.month)} {checkIn.year}
                         </span>
-                      </div>
-                      <div>
-                        <button 
-                          onClick={() => handleViewCheckIn(checkIn)}
-                          className="bg-purple-500 hover:bg-purple-600 text-white p-1 rounded-md"
-                        > 
-                          <EyeIcon className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center space-x-3">
+                          <span className="text-xs text-gray-500">
+                            Completed on {formatCompletedOn(checkIn.completedOn)}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedCheckIn(checkIn)}
+                            className="h-8 px-2"
+                          > 
+                            <EyeIcon className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </li>
                   ))}
@@ -209,125 +224,108 @@ const MonthlyCheckIns = () => {
           )}
 
           {/* View Check-in Dialog */}
-          <Dialog open={!!selectedCheckIn} onOpenChange={() => setSelectedCheckIn(null)}>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>
-                  {selectedCheckIn && `${getMonthName(selectedCheckIn.month)} ${selectedCheckIn.year} Check-in`}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium mb-2">Achievements</h4>
-                  <ul className="list-disc pl-4 space-y-1">
-                    {selectedCheckIn?.achievements.map((achievement, i) => (
-                      <li key={i} className="text-gray-700">{achievement}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Challenges</h4>
-                  <ul className="list-disc pl-4 space-y-1">
-                    {selectedCheckIn?.challenges.map((challenge, i) => (
-                      <li key={i} className="text-gray-700">{challenge}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Next Month Priorities</h4>
-                  <ul className="list-disc pl-4 space-y-1">
-                    {selectedCheckIn?.nextMonthPriorities.map((priority, i) => (
-                      <li key={i} className="text-gray-700">{priority}</li>
-                    ))}
-                  </ul>
-                </div>
+          <DialogForm
+            title={selectedCheckIn && `${getMonthName(selectedCheckIn.month)} ${selectedCheckIn.year} Check-in`}
+            open={!!selectedCheckIn}
+            onOpenChange={(open) => !open && setSelectedCheckIn(null)}
+            size="md"
+            submitLabel="" // No submit button needed for view-only
+          >
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-medium mb-2">Achievements</h4>
+                <ul className="list-disc pl-4 space-y-1">
+                  {selectedCheckIn?.achievements.map((achievement: string, i: number) => (
+                    <li key={i} className="text-gray-700">{achievement}</li>
+                  ))}
+                </ul>
               </div>
-            </DialogContent>
-          </Dialog>
+              <div>
+                <h4 className="font-medium mb-2">Challenges</h4>
+                <ul className="list-disc pl-4 space-y-1">
+                  {selectedCheckIn?.challenges.map((challenge: string, i: number) => (
+                    <li key={i} className="text-gray-700">{challenge}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">Next Month Priorities</h4>
+                <ul className="list-disc pl-4 space-y-1">
+                  {selectedCheckIn?.nextMonthPriorities.map((priority: string, i: number) => (
+                    <li key={i} className="text-gray-700">{priority}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </DialogForm>
         </>
       )}
 
       {/* New Check-in Dialog */}
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{getMonthName(currentMonth)} {currentYear} Check-in</DialogTitle>
-          </DialogHeader>
+      <DialogForm
+        title={`${getMonthName(currentMonth)} ${currentYear} Check-in`}
+        description="Record your monthly progress and plan for the future"
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        size="xl"
+        submitLabel="Save Check-in"
+        onSubmit={form.handleSubmit(onSubmit)}
+      >
+        <Form {...form}>
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="achievements"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Monthly Achievements (one per line)</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="List your key achievements this month..."
+                      rows={4} 
+                      {...field} 
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="achievements"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Monthly Achievements (one per line)</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="List your key achievements this month..."
-                        rows={4} 
-                        {...field} 
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="challenges"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Challenges Faced (one per line)</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="What obstacles did you encounter this month?"
+                      rows={4} 
+                      {...field} 
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="challenges"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Challenges Faced (one per line)</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="What obstacles did you encounter this month?"
-                        rows={4} 
-                        {...field} 
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="nextMonthPriorities"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Priorities for Next Month (one per line)</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="What will you focus on next month?"
-                        rows={4} 
-                        {...field} 
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit"
-                  variant="default"
-                  className="clarity-button bg-violet-500 hover:bg-violet-600 text-white" 
-                  disabled={createMutation.isPending}
-                >
-                  {createMutation.isPending ? "Saving..." : "Complete Check-in"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+            <FormField
+              control={form.control}
+              name="nextMonthPriorities"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Priorities for Next Month (one per line)</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="What will you focus on next month?"
+                      rows={4} 
+                      {...field} 
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+        </Form>
+      </DialogForm>
     </div>
   );
 };

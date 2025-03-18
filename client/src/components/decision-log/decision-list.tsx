@@ -22,6 +22,7 @@ import { format, subMonths, isAfter } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { FeatureCard, StatusBadge, ActionItem } from "@/components/ui/feature-card";
 import {
   Tabs,
   TabsContent,
@@ -332,9 +333,10 @@ const DecisionList = ({
               
               <Button
                 onClick={handleNewDecisionClick}
-                className="bg-emerald-500 text-white hover:bg-emerald-600 transition-colors font-medium h-10 px-4 py-2 flex-shrink-0 flex items-center whitespace-nowrap"
+                variant="default"
+                className="h-10 px-4 py-2 flex-shrink-0 flex items-center whitespace-nowrap"
               >
-                <PlusIcon className="mr-1 h-4 w-4" /> New Decision
+                <PlusIcon className="mr-2 h-4 w-4" /> New Decision
               </Button>
             </div>
           </div>
@@ -487,127 +489,75 @@ const DecisionList = ({
       </div>
 
       {isLoading ? (
-        <div className="space-y-4">
+        <div className="space-y-4 mt-6">
           {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-36 w-full" />
+            <Skeleton key={i} className="h-32 w-full" />
           ))}
         </div>
-      ) : currentDecisions.length > 0 ? (
-        <div className="space-y-4">
-          {currentDecisions.map((decision) => (
-            <div 
-              key={decision.id} 
-              className="border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => handleSelectDecision(decision)}
-            >
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    <span className={`text-xs font-medium px-2.5 py-0.5 rounded inline-block ${getCategoryColor(decision.category)}`}>
-                      {decision.category}
-                    </span>
-                    <span className={`text-xs font-medium px-2.5 py-0.5 rounded inline-block ${getStatusColor(decision.status)}`}>
-                      {decision.status}
-                    </span>
-                  </div>
-                  <h3 className="font-medium text-lg">{decision.title}</h3>
-                </div>
-                <span className="text-sm text-gray-500">
-                  {format(new Date(decision.decisionDate), "MMMM d, yyyy")}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                <div>
-                  <h4 className="font-medium text-gray-700 text-sm mb-1">What was decided</h4>
-                  <p className="text-gray-600">{decision.title}</p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-700 text-sm mb-1">Why</h4>
-                  <p className="text-gray-600">{decision.why.length > 100 
-                    ? `${decision.why.substring(0, 100)}...` 
-                    : decision.why}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-700 text-sm mb-1">
-                    {decision.status === "Failed" ? "What I'd do differently" : "Alternatives considered"}
-                  </h4>
-                  <p className="text-gray-600">
-                    {decision.status === "Failed" && decision.whatDifferent
-                      ? decision.whatDifferent
-                      : decision.alternatives || "None specified"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-200 pt-3 flex justify-end">
-                {decision.status === "Pending" && (
-                  <>
-                    <button 
-                      className="text-success hover:text-green-700 mr-3 font-medium transition-colors flex items-center text-sm h-10 px-4 py-2"
-                      onClick={(e) => handleMarkSuccessful(decision.id, e)}
-                    >
-                      <CheckCircleIcon className="mr-1 h-4 w-4" /> Mark as Successful
-                    </button>
-                    <button 
-                      className="text-red-600 hover:text-red-700 mr-3 font-medium transition-colors flex items-center text-sm h-10 px-4 py-2"
-                      onClick={(e) => handleMarkFailed(decision.id, e)}
-                    >
-                      <XCircleIcon className="mr-1 h-4 w-4" /> Mark as Failed
-                    </button>
-                  </>
-                )}
-                <button 
-                  className="text-gray-600 hover:text-primary font-medium transition-colors flex items-center text-sm mr-3 h-10 px-4 py-2"
-                  onClick={(e) => handleViewDetails(decision, e)}
-                >
-                  <EyeIcon className="mr-1 h-4 w-4" /> View Details
-                </button>
-                <button 
-                  className="text-blue-600 hover:text-blue-800 font-medium transition-colors flex items-center text-sm h-10 px-4 py-2"
-                  onClick={(e) => handleEditDecision(decision, e)}
-                >
-                  <EditIcon className="mr-1 h-4 w-4" /> Edit
-                </button>
-              </div>
-            </div>
-          ))}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-between items-center mt-6">
-              <button 
-                className="text-gray-600 hover:text-primary font-medium disabled:opacity-50 transition-colors flex items-center h-10 px-4 py-2" 
-                disabled={page === 1}
-                onClick={() => setPage(page - 1)}
-              >
-                <span className="mr-1">←</span> Previous
-              </button>
-              <div className="text-sm text-gray-500">
-                Showing <span className="font-medium">{(page - 1) * decisionsPerPage + 1}-{Math.min(page * decisionsPerPage, filteredDecisions.length)}</span> of <span className="font-medium">{filteredDecisions.length}</span> decisions
-              </div>
-              <button 
-                className="text-gray-600 hover:text-primary font-medium disabled:opacity-50 transition-colors flex items-center h-10 px-4 py-2" 
-                disabled={page === totalPages}
-                onClick={() => setPage(page + 1)}
-              >
-                Next <span className="ml-1">→</span>
-              </button>
-            </div>
+      ) : filteredDecisions.length === 0 ? (
+        <div className="text-center py-10 mt-6 border border-dashed border-gray-300 rounded-lg">
+          <h3 className="text-lg font-medium text-gray-700 mb-2">No Decisions Found</h3>
+          <p className="text-gray-500 mb-4">
+            {decisions.length === 0 
+              ? "Start logging your important decisions to track outcomes over time."
+              : "Try adjusting your filters to see more results."}
+          </p>
+          {decisions.length === 0 && (
+            <Button onClick={handleNewDecisionClick}>
+              <PlusIcon className="mr-2 h-4 w-4" /> Log Your First Decision
+            </Button>
           )}
         </div>
       ) : (
-        <div className="text-center py-10 border border-dashed border-gray-300 rounded-lg">
-          <h3 className="text-lg font-medium text-gray-700 mb-2">No Decisions Logged Yet</h3>
-          <p className="text-gray-500 mb-4">Start documenting your important decisions.</p>
-          <Button
-            onClick={() => setSelectedDecision(null)}
-            variant="outline"
-            className="border-success text-success hover:bg-green-50 font-medium h-10 px-4 py-2 flex items-center"
-          >
-            Log Your First Decision
-          </Button>
+        <div className="space-y-4 mt-6">
+          {currentDecisions.map((decision) => (
+            <FeatureCard
+              key={decision.id}
+              title={decision.title}
+              description={decision.why.length > 120 ? decision.why.substring(0, 120) + "..." : decision.why}
+              status={decision.status}
+              date={new Date(decision.decisionDate)}
+              metadata={[
+                { label: "Category", value: <StatusBadge status={decision.category} /> },
+                ...(decision.followUpDate ? [{ 
+                  label: "Follow-up", 
+                  value: format(new Date(decision.followUpDate), "MMM d, yyyy") 
+                }] : [])
+              ]}
+              actions={[
+                {
+                  label: "View",
+                  onClick: () => {
+                    if (onViewDetailsClick) onViewDetailsClick(decision);
+                  },
+                  icon: <EyeIcon className="h-4 w-4 mr-2" />,
+                  variant: "ghost"
+                },
+                {
+                  label: "Edit",
+                  onClick: () => handleSelectDecision(decision),
+                  icon: <EditIcon className="h-4 w-4 mr-2" />,
+                  variant: "ghost"
+                },
+                ...(decision.status === "Pending" ? [
+                  {
+                    label: "Success",
+                    onClick: () => updateStatusMutation.mutate(decision.id),
+                    icon: <CheckCircleIcon className="h-4 w-4 mr-2" />,
+                    variant: "outline"
+                  },
+                  {
+                    label: "Failed",
+                    onClick: () => markFailedMutation.mutate(decision.id),
+                    icon: <XCircleIcon className="h-4 w-4 mr-2" />,
+                    variant: "outline"
+                  }
+                ] : [])
+              ]}
+              className="cursor-pointer hover:border-gray-300 transition-colors"
+              onClick={() => handleSelectDecision(decision)}
+            />
+          ))}
         </div>
       )}
     </div>

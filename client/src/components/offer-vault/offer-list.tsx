@@ -15,7 +15,7 @@ import { Offer } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlusIcon, ArrowUpDown, EditIcon, HistoryIcon } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FeatureCard } from "@/components/ui/feature-card";
+import { FeatureCard, StatusBadge } from "@/components/ui/feature-card";
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -29,31 +29,24 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const OfferList = () => {
+interface OfferListProps {
+  showNewOffer?: boolean;
+  onDialogClose?: () => void;
+}
+
+const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [sortBy, setSortBy] = useState<string>("status");
   
-  // Add global styling for form labels and inputs
+  // Listen for showNewOffer prop changes
   useEffect(() => {
-    // Apply consistent styling to all form labels in this component
-    const formLabels = document.querySelectorAll('.dialog-form-content .form-label');
-    formLabels.forEach(label => {
-      label.classList.add('text-gray-700', 'font-medium');
-    });
-    
-    // Apply styling to all inputs in the form
-    const formInputs = document.querySelectorAll('.dialog-form-content input, .dialog-form-content textarea');
-    formInputs.forEach(input => {
-      input.classList.add('border-gray-300', 'focus:border-amber-400', 'focus:ring-amber-400');
-    });
-    
-    return () => {
-      // Clean up is not necessary as classes will be removed when component unmounts
-    };
-  }, [isOpen, isEditOpen]); // Re-apply when dialogs open
+    if (showNewOffer) {
+      handleNewOffer();
+    }
+  }, [showNewOffer]);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -219,6 +212,14 @@ const OfferList = () => {
     });
   };
 
+  // Handle dialog close with callback to parent
+  const handleDialogClose = (open: boolean) => {
+    setIsOpen(open);
+    if (!open && onDialogClose) {
+      onDialogClose();
+    }
+  };
+
   return (
     <FeatureCard
       title="Your Offers"
@@ -262,70 +263,34 @@ const OfferList = () => {
       ) : offers && offers.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {sortOffers(offers).map((offer) => (
-            <div 
-              key={offer.id} 
-              className="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-            >
-              <div className="bg-gradient-to-r from-amber-500 to-amber-300 h-3"></div>
-              <div className="p-5">
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-medium text-lg">{offer.title}</h3>
-                  <span className={`text-xs font-medium px-2.5 py-0.5 rounded ${getStatusBadgeColor(offer.status)}`}>
-                    {offer.status}
-                  </span>
-                </div>
-                
-                <p className="text-gray-600 text-sm mb-4">{offer.description}</p>
-                
-                <div className="mb-4">
-                  <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-700">Price</span>
-                    <span className="text-sm text-gray-700">{offer.price}</span>
-                  </div>
-                  {offer.duration && (
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-700">Duration</span>
-                      <span className="text-sm text-gray-700">{offer.duration}</span>
-                    </div>
-                  )}
-                  {offer.format && (
-                    <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-700">Format</span>
-                      <span className="text-sm text-gray-700">{offer.format}</span>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
-                  <div className="text-xs text-gray-500">
-                    {offer.status === "Archived" 
-                      ? `Retired: ${formatDate(offer.archivedAt ? offer.archivedAt.toString() : null)} • ${offer.clientCount} sales`
-                      : `Created: ${formatDate(offer.createdAt.toString())} • ${offer.clientCount} clients`
-                    }
-                  </div>
-                  <button 
-                    className="text-amber-500 hover:text-amber-700"
-                    onClick={() => offer.status === "Archived" ? null : handleManageOffer(offer)}
-                  >
-                    {offer.status === "Archived" 
-                      ? <><HistoryIcon className="inline-block mr-1 h-4 w-4" /> View History</>
-                      : <><EditIcon className="inline-block mr-1 h-4 w-4" /> Manage</>
-                    }
-                  </button>
-                </div>
-              </div>
-            </div>
+            <FeatureCard
+              key={offer.id}
+              title={offer.title}
+              description={offer.description}
+              status={offer.status}
+              date={new Date(offer.createdAt)}
+              metadata={[
+                { label: "Price", value: offer.price },
+                ...(offer.duration ? [{ label: "Duration", value: offer.duration }] : []),
+                ...(offer.format ? [{ label: "Format", value: offer.format }] : []),
+                ...(offer.clientCount ? [{ label: "Clients", value: offer.clientCount }] : [])
+              ]}
+              actions={[
+                {
+                  label: "Edit",
+                  onClick: () => handleManageOffer(offer),
+                  icon: <EditIcon className="h-4 w-4 mr-2" />
+                }
+              ]}
+              className="h-full"
+            />
           ))}
         </div>
       ) : (
         <div className="text-center py-10 border border-dashed border-gray-300 rounded-lg">
           <h3 className="text-lg font-medium text-gray-700 mb-2">No Offers Yet</h3>
-          <p className="text-gray-500 mb-4">Start creating your product and service offerings.</p>
-          <Button
-            onClick={handleNewOffer}
-            variant="outline"
-            className="border-warning text-warning hover:bg-amber-50 font-medium shadow-sm"
-          >
+          <p className="text-gray-500 mb-4">Start adding your products and services.</p>
+          <Button onClick={handleNewOffer}>
             <PlusIcon className="mr-2 h-4 w-4" /> Create Your First Offer
           </Button>
         </div>
@@ -334,19 +299,18 @@ const OfferList = () => {
       {/* New Offer Dialog */}
       <DialogForm
         title="Create New Offer"
-        description="Add products and services to your portfolio to track sales and manage your catalog."
+        description="Add a new product or service to your offerings"
         open={isOpen}
-        onOpenChange={setIsOpen}
+        onOpenChange={handleDialogClose}
+        size="lg"
+        submitLabel="Save Offer"
         onSubmit={(e) => {
           e.preventDefault();
           form.handleSubmit(onSubmit)(e);
         }}
-        submitLabel="Save Offer"
-        isSubmitting={createMutation.isPending}
-        size="lg"
       >
         <Form {...form}>
-          <div className="space-y-8">
+          <div className="space-y-4">
             <FormField
               control={form.control}
               name="title"
@@ -460,20 +424,19 @@ const OfferList = () => {
       
       {/* Edit Offer Dialog */}
       <DialogForm
-        title="Edit Offer"
-        description="Update the details of your product or service offering."
+        title={`Edit Offer: ${selectedOffer?.title}`}
+        description="Update your product or service details"
         open={isEditOpen}
         onOpenChange={setIsEditOpen}
+        size="lg"
+        submitLabel="Save Changes"
         onSubmit={(e) => {
           e.preventDefault();
           form.handleSubmit(onSubmit)(e);
         }}
-        submitLabel="Update Offer"
-        isSubmitting={updateMutation.isPending}
-        size="lg"
       >
         <Form {...form}>
-          <div className="space-y-8">
+          <div className="space-y-4">
             <FormField
               control={form.control}
               name="title"
