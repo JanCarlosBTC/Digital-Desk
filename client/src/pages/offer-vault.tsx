@@ -77,12 +77,6 @@ const OfferVault = () => {
           title="Offer Vault"
           description="Create and manage your products, services, and packages."
           icon={<Package className="h-8 w-8" />}
-          action={{
-            label: "New Offer",
-            onClick: () => contextValue.showNewOfferDialog(),
-            icon: <PlusIcon className="mr-2 h-4 w-4" />,
-            variant: "offerVault"
-          }}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-6">
