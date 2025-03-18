@@ -6,15 +6,21 @@ import MonthlyCheckIns from "@/components/personal-clarity/monthly-check-ins";
 import PrioritiesTracker from "@/components/personal-clarity/priorities-tracker";
 import "@/components/personal-clarity/button-styles.css";
 import { PageHeader } from "@/components/ui/page-header";
-import { BrainIcon } from "lucide-react";
+import { BrainIcon, Compass, CalendarIcon } from "lucide-react";
 
 const PersonalClaritySystem = () => {
   return (
     <section className="p-6 max-w-6xl mx-auto">
       <PageHeader
         title="Personal Clarity System"
-        description="Track your progress, reflections, and priorities"
-        icon={<BrainIcon className="h-6 w-6" />}
+        description="Track your priorities and reflect on your progress."
+        icon={<Compass className="h-8 w-8" />}
+        action={{
+          label: "Monthly Check-in",
+          onClick: () => { /* Your action here */ },
+          icon: <CalendarIcon className="mr-2 h-4 w-4" />,
+          variant: "personalClarity"
+        }}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

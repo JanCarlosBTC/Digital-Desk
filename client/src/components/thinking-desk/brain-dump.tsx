@@ -166,7 +166,7 @@ const BrainDump = () => {
   };
   
   // Format text as bullet points
-  const formatAsBullets = () => {
+  const formatAsBulletList = () => {
     if (!textareaRef.current) return;
     
     // Get current selection or cursor position
@@ -227,11 +227,11 @@ const BrainDump = () => {
   };
 
   return (
-    <Card className="shadow-lg border-0">
+    <Card className="shadow-md border border-gray-200 rounded-lg">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+            <CardTitle className="text-xl font-bold">
               Brain Dump
             </CardTitle>
             <CardDescription className="text-gray-600 text-sm mt-1">
@@ -240,20 +240,19 @@ const BrainDump = () => {
           </div>
           <div className="flex items-center space-x-2">
             {isSaving && (
-              <span className="text-xs text-amber-600 animate-pulse flex items-center">
+              <span className="text-xs text-gray-600 animate-pulse flex items-center">
                 <ClockIcon className="h-3 w-3 mr-1" />
                 Auto-saving...
               </span>
             )}
             {lastSaved && !isSaving && (
-              <span className="text-xs text-green-600 flex items-center">
+              <span className="text-xs text-gray-600 flex items-center">
                 <ClockIcon className="h-3 w-3 mr-1" />
                 Saved {formatLastEdited(lastSaved)}
               </span>
             )}
             <Button 
               variant="default" 
-              className="bg-primary/90 text-white hover:bg-primary transition-all"
               onClick={handleSave}
               disabled={isLoading || isSaving || mutation.isPending}
               size="sm"
@@ -266,56 +265,44 @@ const BrainDump = () => {
       </CardHeader>
       
       <CardContent>
-        <div className="bg-gradient-to-b from-white to-gray-50 shadow-sm border rounded-lg p-4 mb-6">
+        <div className="bg-white shadow-sm border rounded-lg p-4 mb-6">
           {/* Text formatting toolbar */}
-          <div className="flex items-center mb-3 bg-white border rounded-md p-1 shadow-sm justify-between">
-            <div className="flex space-x-1">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 px-2 text-gray-700"
-                      onClick={formatAsParagraph}
-                    >
-                      <FileTextIcon className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Format as paragraph</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 px-2 text-gray-700"
-                      onClick={formatAsBullets}
-                    >
-                      <ListIcon className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Format as bullet list</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
+          <div className="flex flex-wrap items-center gap-2 mb-4 p-2 bg-gray-50 rounded-md">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={formatAsParagraph} 
+                    size="sm" 
+                    variant="ghost" 
+                    className="h-8"
+                  >
+                    <FileTextIcon className="h-4 w-4 mr-1" /> Paragraph
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p className="text-xs">Format text with proper paragraph spacing</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             
-            <div className="flex items-center space-x-2">
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                Free-form
-              </Badge>
-              <div className="flex items-center text-sm text-gray-500">
-                <ClockIcon className="h-3.5 w-3.5 mr-1 text-gray-400" />
-                Last edited: {brainDump ? formatLastEdited(new Date(brainDump.updatedAt)) : "Never"}
-              </div>
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={formatAsBulletList} 
+                    size="sm" 
+                    variant="ghost" 
+                    className="h-8"
+                  >
+                    <ListIcon className="h-4 w-4 mr-1" /> Bullet List
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p className="text-xs">Format text as a bullet list</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           
           {isLoading ? (
@@ -366,7 +353,7 @@ const BrainDump = () => {
             <span className="text-sm text-gray-700 font-medium">Your brain dump is private by default</span>
           </div>
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm" className="text-gray-600 border-gray-200">
+            <Button variant="thinkingDeskOutline" size="sm" className="text-gray-600">
               <ShareIcon className="mr-1 h-4 w-4" /> Share
             </Button>
           </div>

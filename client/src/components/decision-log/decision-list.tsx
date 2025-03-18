@@ -279,6 +279,45 @@ const DecisionList = ({
     }
   };
 
+  // Define custom type for the decision action items
+  const getDecisionActions = (decision: Decision): ActionItem[] => {
+    const baseActions: ActionItem[] = [
+      {
+        label: "View",
+        onClick: () => {
+          if (onViewDetailsClick) onViewDetailsClick(decision);
+        },
+        icon: <EyeIcon className="h-4 w-4 mr-2" />,
+        variant: "decisionLogOutline"
+      },
+      {
+        label: "Edit",
+        onClick: () => handleSelectDecision(decision),
+        icon: <EditIcon className="h-4 w-4 mr-2" />,
+        variant: "decisionLogOutline"
+      }
+    ];
+
+    if (decision.status === "Pending") {
+      baseActions.push(
+        {
+          label: "Successful",
+          onClick: () => updateStatusMutation.mutate(decision.id),
+          icon: <CheckCircleIcon className="h-4 w-4 mr-2" />,
+          variant: "decisionLogOutline"
+        },
+        {
+          label: "Failed",
+          onClick: () => markFailedMutation.mutate(decision.id),
+          icon: <XCircleIcon className="h-4 w-4 mr-2" />,
+          variant: "decisionLogOutline"
+        }
+      );
+    }
+
+    return baseActions;
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
       {/* Decision Metrics and Tabs */}
@@ -333,7 +372,7 @@ const DecisionList = ({
               
               <Button
                 onClick={handleNewDecisionClick}
-                variant="default"
+                variant="decisionLogOutline"
                 className="h-10 px-4 py-2 flex-shrink-0 flex items-center whitespace-nowrap"
               >
                 <PlusIcon className="mr-2 h-4 w-4" /> New Decision
@@ -346,7 +385,7 @@ const DecisionList = ({
             {/* Category Filter */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-10 px-4 py-2 text-sm flex items-center">
+                <Button variant="decisionLogOutline" className="h-10 px-4 py-2 text-sm flex items-center">
                   <TagIcon className="h-4 w-4 mr-2" />
                   {categoryFilter || "Category"}
                   {categoryFilter && <span className="ml-1 text-xs">×</span>}
@@ -355,49 +394,49 @@ const DecisionList = ({
               <PopoverContent className="w-[200px] p-2">
                 <div className="space-y-1">
                   <Button 
-                    variant="ghost" 
+                    variant="decisionLogOutline" 
                     className="w-full justify-start text-sm h-8" 
                     onClick={() => handleCategoryFilterChange("all")}
                   >
                     All Categories
                   </Button>
                   <Button 
-                    variant="ghost" 
+                    variant="decisionLogOutline" 
                     className="w-full justify-start text-sm h-8" 
                     onClick={() => handleCategoryFilterChange("Strategy")}
                   >
                     Strategy
                   </Button>
                   <Button 
-                    variant="ghost" 
+                    variant="decisionLogOutline" 
                     className="w-full justify-start text-sm h-8" 
                     onClick={() => handleCategoryFilterChange("Marketing")}
                   >
                     Marketing
                   </Button>
                   <Button 
-                    variant="ghost" 
+                    variant="decisionLogOutline" 
                     className="w-full justify-start text-sm h-8" 
                     onClick={() => handleCategoryFilterChange("Operations")}
                   >
                     Operations
                   </Button>
                   <Button 
-                    variant="ghost" 
+                    variant="decisionLogOutline" 
                     className="w-full justify-start text-sm h-8" 
                     onClick={() => handleCategoryFilterChange("Product")}
                   >
                     Product
                   </Button>
                   <Button 
-                    variant="ghost" 
+                    variant="decisionLogOutline" 
                     className="w-full justify-start text-sm h-8" 
                     onClick={() => handleCategoryFilterChange("Hiring")}
                   >
                     Hiring
                   </Button>
                   <Button 
-                    variant="ghost" 
+                    variant="decisionLogOutline" 
                     className="w-full justify-start text-sm h-8" 
                     onClick={() => handleCategoryFilterChange("Financial")}
                   >
@@ -410,7 +449,7 @@ const DecisionList = ({
             {/* Time Filter */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-10 px-4 py-2 text-sm flex items-center">
+                <Button variant="decisionLogOutline" className="h-10 px-4 py-2 text-sm flex items-center">
                   <CalendarIcon className="h-4 w-4 mr-2" />
                   {timeFilter === "last30days" 
                     ? "Last 30 Days" 
@@ -425,28 +464,28 @@ const DecisionList = ({
               <PopoverContent className="w-[200px] p-2">
                 <div className="space-y-1">
                   <Button 
-                    variant="ghost" 
+                    variant="decisionLogOutline" 
                     className="w-full justify-start text-sm h-8" 
                     onClick={() => handleTimeFilterChange("all")}
                   >
                     All Time
                   </Button>
                   <Button 
-                    variant="ghost" 
+                    variant="decisionLogOutline" 
                     className="w-full justify-start text-sm h-8" 
                     onClick={() => handleTimeFilterChange("last30days")}
                   >
                     Last 30 Days
                   </Button>
                   <Button 
-                    variant="ghost" 
+                    variant="decisionLogOutline" 
                     className="w-full justify-start text-sm h-8" 
                     onClick={() => handleTimeFilterChange("last3months")}
                   >
                     Last 3 Months
                   </Button>
                   <Button 
-                    variant="ghost" 
+                    variant="decisionLogOutline" 
                     className="w-full justify-start text-sm h-8" 
                     onClick={() => handleTimeFilterChange("last6months")}
                   >
@@ -471,7 +510,7 @@ const DecisionList = ({
             {/* Clear Filters */}
             {(categoryFilter || statusFilter || timeFilter || searchQuery) && (
               <Button 
-                variant="ghost" 
+                variant="decisionLogOutline" 
                 className="h-10 px-4 py-2 text-sm text-gray-500 flex items-center"
                 onClick={() => {
                   setCategoryFilter(null);
@@ -524,36 +563,7 @@ const DecisionList = ({
                   value: format(new Date(decision.followUpDate), "MMM d, yyyy") 
                 }] : [])
               ]}
-              actions={[
-                {
-                  label: "View",
-                  onClick: () => {
-                    if (onViewDetailsClick) onViewDetailsClick(decision);
-                  },
-                  icon: <EyeIcon className="h-4 w-4 mr-2" />,
-                  variant: "ghost"
-                },
-                {
-                  label: "Edit",
-                  onClick: () => handleSelectDecision(decision),
-                  icon: <EditIcon className="h-4 w-4 mr-2" />,
-                  variant: "ghost"
-                },
-                ...(decision.status === "Pending" ? [
-                  {
-                    label: "Success",
-                    onClick: () => updateStatusMutation.mutate(decision.id),
-                    icon: <CheckCircleIcon className="h-4 w-4 mr-2" />,
-                    variant: "outline"
-                  },
-                  {
-                    label: "Failed",
-                    onClick: () => markFailedMutation.mutate(decision.id),
-                    icon: <XCircleIcon className="h-4 w-4 mr-2" />,
-                    variant: "outline"
-                  }
-                ] : [])
-              ]}
+              actions={getDecisionActions(decision)}
               className="cursor-pointer hover:border-gray-300 transition-colors"
               onClick={() => handleSelectDecision(decision)}
             />

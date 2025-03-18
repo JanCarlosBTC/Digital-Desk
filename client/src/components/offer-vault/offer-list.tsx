@@ -290,7 +290,7 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
         <div className="text-center py-10 border border-dashed border-gray-300 rounded-lg">
           <h3 className="text-lg font-medium text-gray-700 mb-2">No Offers Yet</h3>
           <p className="text-gray-500 mb-4">Start adding your products and services.</p>
-          <Button onClick={handleNewOffer}>
+          <Button onClick={handleNewOffer} variant="offerVault">
             <PlusIcon className="mr-2 h-4 w-4" /> Create Your First Offer
           </Button>
         </div>

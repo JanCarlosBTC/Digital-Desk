@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Edit as EditIcon } from "lucide-react";
+import { Edit as EditIcon, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogForm } from "@/components/ui/dialog-form";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,7 +13,6 @@ import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Priority } from "@shared/schema";
-import { X } from "lucide-react";
 import "@/components/ui/clipboard.css"; // Added import for clipboard styles
 
 const formSchema = z.object({
@@ -168,37 +167,32 @@ const PrioritiesTracker = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 sticky top-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">What Matters Most?</h2>
-      <p className="text-gray-600 mb-6">Keep your top priorities visible and top-of-mind.</p>
-
-      {/* Priorities List */}
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="font-medium text-gray-800">Current Priorities</h3>
+      <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-gray-800">What Matters Most</h2>
           <Button 
-            className="bg-violet-100 text-black hover:bg-violet-200 hover:text-black text-sm font-medium"
-            onClick={handleEditPriorities}
+            variant="personalClarityOutline"
+            onClick={() => setIsOpen(true)}
+            className="flex items-center"
           >
-            <EditIcon className="inline-block mr-1 h-4 w-4 text-black" /> Edit
+            <EditIcon className="mr-2 h-4 w-4" /> Edit
           </Button>
         </div>
-
+        
+        <p className="text-gray-600 mb-4">Maintain focus by tracking your top 3 priorities.</p>
+        
         {isLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-            <Skeleton className="h-12 w-full" />
-          </div>
+          <Skeleton className="h-48 w-full" />
         ) : priorities && priorities.length > 0 ? (
           <ul className="space-y-3">
-            {priorities.map((priority, index) => (
-              <li key={priority.id} className="flex items-center p-3 bg-violet-50 border border-violet-100 rounded-md">
-                <div className="h-6 w-6 bg-purple-200 text-black rounded-full flex items-center justify-center mr-3">
-                  {index + 1}
-                </div>
-                <span className="font-medium text-gray-800 flex-1">{priority.priority}</span>
+            {priorities.sort((a, b) => a.order - b.order).map((priority) => (
+              <li 
+                key={priority.id} 
+                className="flex justify-between items-center p-3 bg-gray-50 border border-gray-100 rounded-lg"
+              >
+                <span className="font-medium text-gray-800">{priority.priority}</span>
                 <button 
-                  className="text-gray-400 hover:text-gray-600 clarity-button"
+                  className="text-gray-400 hover:text-gray-600"
                   onClick={() => handleDeletePriority(priority.id)}
                 >
                   <X className="h-4 w-4" />
@@ -207,7 +201,7 @@ const PrioritiesTracker = () => {
             ))}
           </ul>
         ) : (
-          <div className="text-center py-4 bg-violet-50 rounded-md">
+          <div className="text-center py-4 bg-gray-50 rounded-md">
             <p className="text-gray-600">No priorities set yet.</p>
             <p className="text-sm text-gray-500">Add your first priority below!</p>
           </div>
@@ -227,7 +221,7 @@ const PrioritiesTracker = () => {
         <h3 className="font-medium text-gray-800 mb-3">Add a Priority</h3>
         <div className="flex">
           <Input 
-            className="flex-1 border border-gray-300 rounded-l-lg p-2 focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
+            className="flex-1 border border-gray-300 rounded-l-lg p-2 focus:outline-none focus:ring-2 focus:border-transparent"
             placeholder="Enter a new priority..."
             value={newPriority}
             onChange={(e) => setNewPriority(e.target.value)}
@@ -238,10 +232,10 @@ const PrioritiesTracker = () => {
             }}
           />
           <Button 
-            variant="default"
-            className="bg-purple-300 text-white rounded-r-lg hover:bg-purple-400 transition-colors font-medium shadow-sm clarity-button"
+            className="rounded-r-lg"
+            variant="personalClarity"
             onClick={handleAddPriority}
-            disabled={isSubmitting || !newPriority.trim()} // Use isSubmitting state
+            disabled={isSubmitting || !newPriority.trim()} 
           >
             {isSubmitting ? "Adding..." : "Add"}
           </Button>
@@ -249,84 +243,60 @@ const PrioritiesTracker = () => {
       </div>
 
       {/* Edit Priorities Dialog */}
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent 
-          className="max-w-md"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
-              e.stopPropagation();
-            }
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle>Edit Top Priorities</DialogTitle>
-          </DialogHeader>
+      <DialogForm
+        title="Edit Top Priorities"
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        size="md"
+        submitLabel="Save Changes"
+        onSubmit={(e) => {
+          e.preventDefault();
+          form.handleSubmit(onSubmit)(e);
+        }}
+      >
+        <Form {...form}>
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="priority1"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Priority #1</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your top priority" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
-          <Form {...form}>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              form.handleSubmit(onSubmit)(e);
-            }} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="priority1"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Priority #1</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your top priority" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="priority2"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Priority #2</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your second priority" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="priority2"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Priority #2</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your second priority" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="priority3"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Priority #3</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Your third priority" {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit"
-                  variant="default"
-                  className="bg-secondary text-white hover:bg-violet-600 font-medium shadow-sm clarity-button"
-                  disabled={updateAllMutation.isPending}
-                >
-                  {updateAllMutation.isPending ? "Saving..." : "Save Priorities"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+            <FormField
+              control={form.control}
+              name="priority3"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Priority #3</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Your third priority" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+        </Form>
+      </DialogForm>
     </div>
   );
 };

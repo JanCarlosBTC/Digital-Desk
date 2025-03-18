@@ -12,9 +12,10 @@ interface TabNavigationProps {
   tabs: Tab[];
   defaultTabId?: string;
   children: ReactNode;
+  onTabChange?: (tabId: string) => void;
 }
 
-const TabNavigation = ({ tabs, defaultTabId = "", children }: TabNavigationProps) => {
+const TabNavigation = ({ tabs, defaultTabId = "", children, onTabChange }: TabNavigationProps) => {
   const [activeTab, setActiveTab] = useState(defaultTabId || tabs[0]?.id || "");
 
   // Filter React children to only show the active tab
@@ -23,6 +24,13 @@ const TabNavigation = ({ tabs, defaultTabId = "", children }: TabNavigationProps
     if (!isValidElement(child)) return false;
     return child.props.id === activeTab;
   });
+  
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    if (onTabChange) {
+      onTabChange(tabId);
+    }
+  };
 
   return (
     <div className="w-full">
@@ -42,7 +50,7 @@ const TabNavigation = ({ tabs, defaultTabId = "", children }: TabNavigationProps
                       ? "border-primary text-primary" 
                       : "border-transparent hover:text-gray-600 hover:border-gray-300"
                   )}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
                   aria-current={isActive ? "page" : undefined}
                 >
                   <Icon className="mr-2 h-4 w-4" />

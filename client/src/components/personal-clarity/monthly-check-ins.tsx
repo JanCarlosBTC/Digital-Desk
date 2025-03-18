@@ -120,7 +120,7 @@ const MonthlyCheckIns = () => {
         <h2 className="text-xl font-semibold text-gray-800">Monthly Check-ins</h2>
         <Button 
           onClick={handleNewCheckIn}
-          variant="default"
+          variant="personalClarity"
         >
           <CalendarIcon className="mr-2 h-4 w-4" /> {getMonthName(currentMonth)} Check-in
         </Button>
@@ -208,7 +208,7 @@ const MonthlyCheckIns = () => {
                             Completed on {formatCompletedOn(checkIn.completedOn)}
                           </span>
                           <Button
-                            variant="ghost"
+                            variant="personalClarityOutline"
                             size="sm"
                             onClick={() => setSelectedCheckIn(checkIn)}
                             className="h-8 px-2"

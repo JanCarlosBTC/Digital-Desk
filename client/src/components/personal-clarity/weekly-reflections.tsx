@@ -182,7 +182,7 @@ const WeeklyReflections = () => {
         <h2 className="text-xl font-semibold text-gray-800">Weekly Reflections</h2>
         <Button 
           onClick={handleNewReflection}
-          className="bg-purple-500 hover:bg-purple-600 text-white"
+          variant="personalClarity"
         >
           <PlusIcon className="mr-2 h-4 w-4" /> New Reflection
         </Button>
@@ -246,18 +246,17 @@ const WeeklyReflections = () => {
 
             <div className="flex justify-end">
               <Button 
-                variant="outline" 
+                variant="personalClarityOutline" 
                 className="mr-2"
                 onClick={() => handleSave(true)}
-                disabled={mutation.isPending || isSubmitting} // Disable button while submitting
+                disabled={mutation.isPending || isSubmitting}
               >
                 Save Draft
               </Button>
               <Button 
-                variant="default" 
-                className="bg-purple-500 hover:bg-purple-600 text-white"
+                variant="personalClarity"
                 onClick={() => handleSave(false)}
-                disabled={mutation.isPending || isSubmitting} // Disable button while submitting
+                disabled={mutation.isPending || isSubmitting}
               >
                 {mutation.isPending || isSubmitting ? "Saving..." : "Complete Reflection"}
               </Button>

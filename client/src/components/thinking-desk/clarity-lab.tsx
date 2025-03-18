@@ -1,19 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogForm } from "@/components/ui/dialog-form";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ClarityLab } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PlusIcon, FilterIcon } from "lucide-react";
+import { PlusIcon, FilterIcon, CheckCircleIcon, FlaskConicalIcon, LightbulbIcon, CalendarIcon } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { FeatureCard, StatusBadge } from "@/components/ui/feature-card";
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -23,7 +25,12 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const ClarityLabComponent = () => {
+interface ClarityLabProps {
+  showNewEntry?: boolean;
+  onDialogClose?: () => void;
+}
+
+const ClarityLabComponent = ({ showNewEntry = false, onDialogClose }: ClarityLabProps) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -36,6 +43,21 @@ const ClarityLabComponent = () => {
       category: "",
     },
   });
+  
+  // Listen for showNewEntry prop changes
+  useEffect(() => {
+    if (showNewEntry) {
+      setIsOpen(true);
+    }
+  }, [showNewEntry]);
+  
+  // Handle dialog close
+  const handleDialogClose = (open: boolean) => {
+    setIsOpen(open);
+    if (!open && onDialogClose) {
+      onDialogClose();
+    }
+  };
 
   // Fetch clarity lab entries
   const { data: clarityLabs, isLoading } = useQuery<ClarityLab[]>({
@@ -104,7 +126,7 @@ const ClarityLabComponent = () => {
         <div>
           <Button
             variant="outline"
-            className="mr-2 border-gray-300 hover:bg-gray-100"
+            className="mr-2"
             onClick={() => {
               // Toggle category filtering UI
               setActiveCategory(activeCategory ? null : 'Lesson');
@@ -114,7 +136,6 @@ const ClarityLabComponent = () => {
           </Button>
           <Button
             onClick={handleNewEntry}
-            className="bg-primary text-white hover:bg-blue-600 transition-colors"
           >
             <PlusIcon className="mr-2 h-4 w-4" /> New Entry
           </Button>
@@ -186,17 +207,21 @@ const ClarityLabComponent = () => {
       ) : clarityLabs && clarityLabs.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 md:grid-cols-2 gap-4">
           {clarityLabs.map((entry) => (
-            <div key={entry.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-              <span className={`text-xs font-medium px-2.5 py-0.5 rounded mb-2 inline-block ${getBadgeColor(entry.category)}`}>
-                {entry.category}
-              </span>
-              <h3 className="font-medium text-gray-800 mb-2">{entry.title}</h3>
-              <p className="text-gray-600 text-sm mb-3">{entry.description}</p>
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>{formatDate(entry.createdAt)}</span>
-                <button className="text-primary hover:text-blue-700">View Details</button>
-              </div>
-            </div>
+            <FeatureCard
+              key={entry.id}
+              title={entry.title}
+              description={entry.description}
+              status={entry.category}
+              date={new Date(entry.createdAt)}
+              actions={[
+                {
+                  label: "View Details",
+                  onClick: () => {},
+                  variant: "ghost"
+                }
+              ]}
+              className="h-full hover:shadow-md transition-shadow"
+            />
           ))}
         </div>
       ) : (
@@ -205,8 +230,6 @@ const ClarityLabComponent = () => {
           <p className="text-gray-500 mb-4">Start documenting your lessons, workflows, and solutions.</p>
           <Button
             onClick={handleNewEntry}
-            variant="outline"
-            className="border-primary text-primary hover:bg-blue-50"
           >
             <PlusIcon className="mr-2 h-4 w-4" /> Create Your First Entry
           </Button>
@@ -214,96 +237,73 @@ const ClarityLabComponent = () => {
       )}
 
       {/* New Entry Dialog */}
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent 
-          className="max-w-md"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
-              e.stopPropagation();
-            }
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle>Create New Entry</DialogTitle>
-          </DialogHeader>
-          
-          <Form {...form}>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              form.handleSubmit(onSubmit)(e);
-            }} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
+      <DialogForm
+        title="Create New Entry"
+        open={isOpen}
+        onOpenChange={handleDialogClose}
+        size="md"
+        submitLabel="Save Entry"
+        onSubmit={(e) => {
+          e.preventDefault();
+          form.handleSubmit(onSubmit)(e);
+        }}
+      >
+        <Form {...form}>
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="E.g., Client Onboarding Improvements" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <Input placeholder="E.g., Client Onboarding Improvements" {...field} />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
                     </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Lesson">Lesson Learned</SelectItem>
-                        <SelectItem value="Workflow">Workflow</SelectItem>
-                        <SelectItem value="Solution">Solution</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="E.g., Adding a welcome video reduced onboarding questions by 40% and improved client satisfaction."
-                        rows={4} 
-                        {...field} 
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit"
-                  className="bg-primary text-white hover:bg-blue-600"
-                  disabled={createMutation.isPending}
-                >
-                  {createMutation.isPending ? "Saving..." : "Save Entry"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+                    <SelectContent>
+                      <SelectItem value="Lesson">Lesson Learned</SelectItem>
+                      <SelectItem value="Workflow">Workflow</SelectItem>
+                      <SelectItem value="Solution">Solution</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="E.g., Adding a welcome video reduced onboarding questions by 40% and improved client satisfaction."
+                      rows={4} 
+                      {...field} 
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+        </Form>
+      </DialogForm>
     </div>
   );
 };

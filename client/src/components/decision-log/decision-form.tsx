@@ -464,26 +464,21 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
               <div className="flex justify-end space-x-2">
                 {isEditing && (
                   <Button
+                    variant="decisionLogOutline"
                     type="button"
-                    variant="outline"
-                    className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-medium h-10 px-4 py-2 flex items-center"
                     onClick={handleCancel}
+                    className="h-10 px-4 py-2 flex items-center"
                   >
                     Cancel
                   </Button>
                 )}
-                <Button 
+                <Button
+                  variant="decisionLog"
                   type="submit"
-                  variant="default"
-                  className="bg-emerald-500 text-white hover:bg-emerald-600 font-medium shadow-sm h-10 px-4 py-2 flex items-center"
-                  disabled={mutation.isPending || isSubmitting}
+                  disabled={isSubmitting}
+                  className="h-10 px-4 py-2 flex items-center"
                 >
-                  {mutation.isPending || isSubmitting
-                    ? "Saving..." 
-                    : isEditing 
-                      ? "Update Decision" 
-                      : "Save Decision"
-                  }
+                  {isSubmitting ? "Saving..." : "Save Decision"}
                 </Button>
               </div>
             </div>

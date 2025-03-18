@@ -100,9 +100,14 @@ const ThinkingDesk = () => {
       <section className="p-4 sm:p-6 max-w-6xl mx-auto pb-20 md:pb-8">
         <PageHeader
           title="Thinking Desk"
-          description="Capture, organize, and refine your ideas"
-          icon={<BookOpenIcon className="h-6 w-6" />}
-          action={getAction()}
+          description="Organize your thinking and develop new ideas."
+          icon={<LightbulbIcon className="h-8 w-8" />}
+          action={{
+            label: "New Item",
+            onClick: () => setActiveTab("Brain Dump"),
+            icon: <PlusIcon className="mr-2 h-4 w-4" />,
+            variant: "thinkingDesk"
+          }}
         />
 
         <TabNavigation 

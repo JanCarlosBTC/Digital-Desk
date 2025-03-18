@@ -4,7 +4,7 @@ import DecisionForm from "@/components/decision-log/decision-form";
 import { useQuery } from "@tanstack/react-query";
 import { Decision } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, ClipboardListIcon } from "lucide-react";
+import { PlusIcon, ClipboardListIcon, CheckSquare } from "lucide-react";
 import { DialogForm } from "@/components/ui/dialog-form";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/feature-card";
@@ -36,12 +36,13 @@ const DecisionLog = () => {
     <section className="p-6 max-w-6xl mx-auto">
       <PageHeader
         title="Decision Log"
-        description="Record, track, and learn from your decisions"
-        icon={<ClipboardListIcon className="h-6 w-6" />}
+        description="Record, track, and learn from your business decisions."
+        icon={<CheckSquare className="h-8 w-8" />}
         action={{
           label: "New Decision",
           onClick: handleNewDecisionClick,
-          icon: <PlusIcon className="mr-2 h-4 w-4" />
+          icon: <PlusIcon className="mr-2 h-4 w-4" />,
+          variant: "decisionLog"
         }}
       />
 

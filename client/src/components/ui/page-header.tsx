@@ -11,9 +11,25 @@ interface PageHeaderProps {
     label: string;
     onClick: () => void;
     icon?: React.ReactNode;
+    variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 
+      'thinkingDesk' | 'thinkingDeskOutline' | 
+      'personalClarity' | 'personalClarityOutline' | 
+      'decisionLog' | 'decisionLogOutline' | 
+      'offerVault' | 'offerVaultOutline';
   };
   className?: string;
   children?: React.ReactNode;
+}
+
+export interface PageHeaderAction {
+  label: string;
+  onClick: () => void;
+  icon?: React.ReactNode;
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 
+    'thinkingDesk' | 'thinkingDeskOutline' | 
+    'personalClarity' | 'personalClarityOutline' | 
+    'decisionLog' | 'decisionLogOutline' | 
+    'offerVault' | 'offerVaultOutline';
 }
 
 /**
@@ -37,7 +53,7 @@ export function PageHeader({
         </div>
         
         {action && (
-          <Button onClick={action.onClick}>
+          <Button onClick={action.onClick} variant={action.variant}>
             {action.icon || <Plus className="mr-2 h-4 w-4" />}
             {action.label}
           </Button>
