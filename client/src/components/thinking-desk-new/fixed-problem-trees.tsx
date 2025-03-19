@@ -303,7 +303,8 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
     }
     
     if (Object.keys(newErrors).length > 0) {
-      setError(Object.values(newErrors)[0]);
+      const firstError = Object.values(newErrors)[0];
+      setError(firstError !== undefined ? firstError : "Validation error");
       return false;
     }
     

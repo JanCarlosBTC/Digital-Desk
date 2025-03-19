@@ -24,7 +24,7 @@ export const ProblemTreeVisualization: React.FC<{
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-lg">
-      <style jsx>{`
+      <style>{`
         .tree {
           --line-color: #ccc;
           --problem-color: #f56565;
