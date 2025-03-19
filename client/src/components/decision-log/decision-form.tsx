@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { useFormContext, FormProvider } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Decision } from "@shared/prisma-schema";
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
@@ -223,8 +223,8 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
         </>
       )}
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+      {/* Using only one form element to avoid nesting */}
+      <Form {...form} onSubmit={form.handleSubmit(onSubmit)}>
           <div className="space-y-8">
             {/* Basic Information Section */}
             <div>
@@ -483,7 +483,6 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
               </div>
             </div>
           </div>
-        </form>
       </Form>
     </div>
   );
