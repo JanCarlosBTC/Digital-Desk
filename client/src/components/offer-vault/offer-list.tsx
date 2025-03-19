@@ -117,6 +117,29 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
       });
     }
   });
+  
+  // Delete offer
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest('DELETE', `/api/offers/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
+      toast({
+        title: "Offer deleted",
+        description: "Your offer has been deleted successfully.",
+      });
+      setIsEditOpen(false);
+      setSelectedOffer(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error deleting offer",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
 
   const onSubmit = (data: FormValues) => {
     if (selectedOffer) {
