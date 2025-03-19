@@ -84,6 +84,7 @@ const DecisionLog = () => {
       {/* View Decision Dialog */}
       <DialogForm
         title={viewingDecision?.title || "Decision Details"}
+        description="View the details of your recorded decision"
         open={viewDialogOpen}
         onOpenChange={setViewDialogOpen}
         size="lg"
