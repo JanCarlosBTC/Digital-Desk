@@ -1,9 +1,8 @@
-import { useQuery, useMutation, useQueryClient, UseQueryOptions } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useErrorHandler } from "@/lib/error-utils";
-import { apiRequest } from "@/lib/queryClient";
-import { queryKeys, defaultQueryConfig, getQueryKey } from "@/lib/query-keys";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { memo, useCallback, useState, useMemo } from "react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -113,17 +112,19 @@ export const ProblemTrees = memo(function ProblemTrees({
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const handleError = useErrorHandler();
 
-  const { data: trees = [], isLoading } = useQuery({
-    queryKey: getQueryKey('problemTrees'),
-    ...defaultQueryConfig,
-  } as UseQueryOptions<ProblemTree[], Error>);
+  const { data: problemTreesData, isLoading } = useQuery({
+    queryKey: ['/api/problem-trees']
+  });
+  
+  // Safely cast the data as ProblemTree[] with a fallback to empty array
+  const trees = (problemTreesData ? problemTreesData as ProblemTree[] : []);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       return apiRequest('DELETE', `/api/problem-trees/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: getQueryKey('problemTrees') });
+      queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
       toast({
         title: "Success",
         description: "Problem tree deleted successfully",
