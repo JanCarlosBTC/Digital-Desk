@@ -14,6 +14,7 @@ import { DraftedPlans } from "@/components/thinking-desk/drafted-plans-new";
 import ClarityLab from "@/components/thinking-desk/clarity-lab";
 import { PageHeader } from "@/components/ui/page-header";
 import ProblemTreeSimple from "@/components/thinking-desk/problem-tree-simple";
+import MinimalTest from "@/components/thinking-desk/minimal-test";
 
 // Create a context for Think Desk actions
 interface ThinkingDeskContextType {
@@ -131,11 +132,17 @@ const ThinkingDesk = () => {
             <div className="mb-6">
               <h2 className="text-xl font-bold mb-4">Problem Trees</h2>
               <p className="text-gray-600 mb-4">
-                Use this simplified version to create a new problem tree.
+                Let's do a direct test of the API to make sure it works.
               </p>
             </div>
             
-            {/* Importing and using our simplified version */}
+            {/* Use the minimal test component to verify API works */}
+            <MinimalTest />
+            
+            {/* Add some space between components */}
+            <div className="h-8"></div>
+            
+            {/* Also include the simplified form */}
             <ProblemTreeSimple />
           </div>
           
