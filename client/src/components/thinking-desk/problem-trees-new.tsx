@@ -14,6 +14,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+/**
+ * Problem Trees Component - A unified approach
+ * 
+ * This component handles the display and management of problem trees
+ * with a simplified, more reliable UI structure
+ */
+
 // Define the form schema for validating problem tree creation/editing
 const problemTreeFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -47,7 +54,10 @@ interface ProblemTreesProps {
   onEdit: (tree: ProblemTree) => void;
 }
 
-// Component for a single Problem Tree item
+/**
+ * Single Problem Tree Item Component
+ * Displays an individual problem tree with a simplified, clean UI
+ */
 const ProblemTreeItem = memo(function ProblemTreeItem({ 
   tree, 
   onEdit,
@@ -65,34 +75,24 @@ const ProblemTreeItem = memo(function ProblemTreeItem({
     onDelete(tree.id);
   }, [tree.id, onDelete]);
 
-  // Function to render nodes with connecting lines
-  const renderConnectedItems = (items: string[], nodeColor: string, lineColor: string) => {
+  // Render a list of items with consistent styling
+  const renderList = (items: string[], title: string, colorClass: string) => {
     if (!items || items.length === 0) return null;
     
     return (
-      <div className="flex flex-col items-center">
-        {items.map((item, index) => (
-          <div key={index} className="relative flex flex-col items-center w-full">
-            {index > 0 && (
-              <div 
-                className="absolute top-0 h-4 border-l-2 z-0" 
-                style={{ borderColor: lineColor }}
-              />
-            )}
-            <div 
-              className={`relative z-10 px-4 py-2 mb-2 rounded-md shadow-md w-full max-w-sm text-white text-sm font-medium`}
-              style={{ backgroundColor: nodeColor }}
-            >
-              {item}
-            </div>
-          </div>
-        ))}
+      <div className="mt-3">
+        <h4 className={`font-semibold ${colorClass} text-sm mb-2`}>{title}</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          {items.map((item, index) => (
+            <li key={index} className="text-sm text-gray-700">{item}</li>
+          ))}
+        </ul>
       </div>
     );
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-lg border border-gray-100">
+    <div className="p-6 bg-white rounded-lg shadow border border-gray-100">
       <div className="flex justify-between items-start mb-4">
         <div>
           <h3 className="text-xl font-bold text-primary">{tree.title}</h3>
@@ -101,7 +101,7 @@ const ProblemTreeItem = memo(function ProblemTreeItem({
           </div>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm" onClick={handleEdit} className="text-primary">
+          <Button variant="outline" size="sm" onClick={handleEdit}>
             Edit
           </Button>
           <Button variant="destructive" size="sm" onClick={handleDelete}>
@@ -110,50 +110,21 @@ const ProblemTreeItem = memo(function ProblemTreeItem({
         </div>
       </div>
       
-      {/* Tree Visualization */}
-      <div className="mt-6 relative">
-        {/* Main Problem (Tree Trunk) */}
-        <div className="flex justify-center mb-4">
-          <div className="relative w-full max-w-md">
-            <div className="bg-primary text-white p-4 rounded-lg shadow-md text-center font-semibold">
-              {tree.mainProblem}
-            </div>
-            {/* Vertical connector line down to root causes */}
-            {tree.rootCauses && tree.rootCauses.length > 0 && (
-              <div className="absolute left-1/2 -ml-px h-6 border-l-2 border-amber-500"></div>
-            )}
-            {/* Vertical connector line up to sub problems */}
-            {tree.subProblems && tree.subProblems.length > 0 && (
-              <div className="absolute left-1/2 -ml-px -top-6 h-6 border-l-2 border-blue-500"></div>
-            )}
-          </div>
+      {/* Simple Problem Tree Visualization */}
+      <div className="mt-4">
+        <div className="p-4 bg-primary/10 rounded-lg mb-4">
+          <h4 className="font-medium text-primary mb-2">Main Problem</h4>
+          <p className="text-gray-800">{tree.mainProblem}</p>
         </div>
         
-        {/* Tree Structure */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Left Branch - Sub Problems */}
-          <div className="flex flex-col items-center">
-            <h4 className="font-semibold text-blue-600 mb-3 text-center">Sub Problems</h4>
-            {renderConnectedItems(tree.subProblems, '#3b82f6', '#93c5fd')}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            {renderList(tree.subProblems, "Sub Problems", "text-blue-600")}
+            {renderList(tree.rootCauses, "Root Causes", "text-amber-600")}
           </div>
-          
-          {/* Middle Branch - Root Causes */}
-          <div className="flex flex-col items-center">
-            <h4 className="font-semibold text-amber-600 mb-3 text-center">Root Causes</h4>
-            {renderConnectedItems(tree.rootCauses, '#d97706', '#fcd34d')}
-          </div>
-          
-          {/* Right Branch - Solutions */}
-          <div className="flex flex-col items-center">
-            <div>
-              <h4 className="font-semibold text-emerald-600 mb-3 text-center">Potential Solutions</h4>
-              {renderConnectedItems(tree.potentialSolutions, '#059669', '#6ee7b7')}
-            </div>
-            
-            <div className="mt-6">
-              <h4 className="font-semibold text-purple-600 mb-3 text-center">Next Actions</h4>
-              {renderConnectedItems(tree.nextActions, '#7c3aed', '#c4b5fd')}
-            </div>
+          <div>
+            {renderList(tree.potentialSolutions, "Potential Solutions", "text-emerald-600")}
+            {renderList(tree.nextActions, "Next Actions", "text-purple-600")}
           </div>
         </div>
       </div>
@@ -161,7 +132,10 @@ const ProblemTreeItem = memo(function ProblemTreeItem({
   );
 });
 
-// Main Problem Trees component
+/**
+ * Main Problem Trees Component
+ * Manages the display of all problem trees and handles CRUD operations
+ */
 export const ProblemTrees = memo(function ProblemTrees({ 
   showNewProblemTree = false, 
   onDialogClose, 
