@@ -1,6 +1,5 @@
 import React, { useState, useEffect, memo, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DialogForm } from "@/components/ui/dialog-form";
@@ -18,21 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// Define the DraftedPlan interface locally
-interface DraftedPlan {
-  id: number;
-  userId: number;
-  title: string;
-  description: string;
-  components: string[];
-  resourcesNeeded: string[];
-  expectedOutcomes: string[];
-  status: string;
-  comments: number;
-  attachments: number;
-  createdAt: string | Date;
-  updatedAt: string | Date;
-};
 import { 
   ArrowRightIcon, 
   ChevronDownIcon, 
@@ -46,6 +30,23 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useErrorHandler } from "@/lib/error-utils";
 
+// Define the DraftedPlan interface
+interface DraftedPlan {
+  id: number;
+  userId: number;
+  title: string;
+  description: string;
+  components: string[];
+  resourcesNeeded: string[];
+  expectedOutcomes: string[];
+  status: string;
+  comments: number;
+  attachments: number;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
+// Define the form schema for validation
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
@@ -63,6 +64,7 @@ interface DraftedPlanItemProps {
   onDelete: (id: number) => void;
 }
 
+// Component for a single Drafted Plan item
 const DraftedPlanItem = memo(function DraftedPlanItem({ 
   plan, 
   onEdit, 
@@ -86,7 +88,7 @@ const DraftedPlanItem = memo(function DraftedPlanItem({
             Last updated: {new Date(plan.updatedAt).toLocaleDateString()}
           </p>
         </div>
-        <div className="space-x-2">
+        <div className="flex space-x-2">
           <Button
             variant="outline"
             size="sm"
@@ -113,6 +115,7 @@ interface DraftedPlansProps {
   onEdit: (id: number) => void;
 }
 
+// Main DraftedPlans component
 export const DraftedPlans = memo(function DraftedPlans({ 
   showNewPlan = false, 
   onDialogClose, 
@@ -126,6 +129,7 @@ export const DraftedPlans = memo(function DraftedPlans({
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const handleError = useErrorHandler();
 
+  // Initialize form with default values
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -154,16 +158,29 @@ export const DraftedPlans = memo(function DraftedPlans({
   };
 
   // Fetch drafted plans
-  const { data: plansData, isLoading } = useQuery({
+  const { data: plansData, isLoading, error } = useQuery({
     queryKey: ['/api/drafted-plans']
   });
   
-  // Safely cast the data as DraftedPlan[] with a fallback to empty array
-  const plans = (plansData ? plansData as DraftedPlan[] : []);
+  // Safely cast the data as DraftedPlan[]
+  const plans = Array.isArray(plansData) ? plansData as DraftedPlan[] : [];
 
+  // Mutation for deleting a plan
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest('DELETE', `/api/drafted-plans/${id}`);
+      const response = await fetch(`/api/drafted-plans/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to delete plan');
+      }
+      
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/drafted-plans'] });
@@ -181,6 +198,7 @@ export const DraftedPlans = memo(function DraftedPlans({
     }
   });
 
+  // Handle deletion of a plan
   const handleDelete = useCallback(async (id: number) => {
     try {
       await deleteMutation.mutateAsync(id);
@@ -189,6 +207,7 @@ export const DraftedPlans = memo(function DraftedPlans({
     }
   }, [deleteMutation, handleError]);
 
+  // Handle sorting of plans
   const handleSort = useCallback((field: keyof DraftedPlan) => {
     setSortField(current => {
       if (current === field) {
@@ -200,7 +219,10 @@ export const DraftedPlans = memo(function DraftedPlans({
     });
   }, []);
 
+  // Sort plans based on selected field and direction
   const sortedPlans = useMemo(() => {
+    if (!plans.length) return [];
+    
     return [...plans].sort((a, b) => {
       const aValue = a[sortField];
       const bValue = b[sortField];
@@ -212,10 +234,10 @@ export const DraftedPlans = memo(function DraftedPlans({
     });
   }, [plans, sortField, sortDirection]);
 
-  // Create drafted plan
+  // Mutation for creating a drafted plan
   const createMutation = useMutation({
     mutationFn: async (data: FormValues) => {
-      // Convert line-separated strings to arrays
+      // Transform data for API
       const formattedData = {
         title: data.title,
         description: data.description,
@@ -227,7 +249,20 @@ export const DraftedPlans = memo(function DraftedPlans({
         attachments: 0,
       };
 
-      return apiRequest('POST', '/api/drafted-plans', formattedData);
+      const response = await fetch('/api/drafted-plans', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formattedData)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to create plan');
+      }
+      
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/drafted-plans'] });
@@ -241,16 +276,18 @@ export const DraftedPlans = memo(function DraftedPlans({
     onError: (error) => {
       toast({
         title: "Error creating plan",
-        description: error.message || "Please try again.",
+        description: error instanceof Error ? error.message : "Please try again.",
         variant: "destructive",
       });
     }
   });
 
+  // Handle form submission
   const onSubmit = (data: FormValues) => {
     createMutation.mutate(data);
   };
 
+  // Open the "New Plan" dialog
   const handleNewPlan = () => {
     form.reset({
       title: "",
@@ -263,18 +300,33 @@ export const DraftedPlans = memo(function DraftedPlans({
     setIsOpen(true);
   };
 
+  // Toggle plan expansion
   const togglePlanExpansion = (id: number) => {
-    setExpandedPlans({ ...expandedPlans, [id]: !expandedPlans[id] });
+    setExpandedPlans(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  // Format date for display
   const formatDate = (dateString: Date | string) => {
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
     const date = dateString instanceof Date ? dateString : new Date(dateString);
     return date.toLocaleDateString(undefined, options);
   };
 
+  // Show loading state while fetching data
   if (isLoading) {
     return <LoadingState type="list" count={3} />;
+  }
+
+  // Show error state if there was an error fetching data
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 text-red-800 rounded-lg">
+        <h3 className="font-medium">Error Loading Drafted Plans</h3>
+        <p className="text-sm mt-1">
+          {error instanceof Error ? error.message : "An unknown error occurred. Please try again."}
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -300,7 +352,7 @@ export const DraftedPlans = memo(function DraftedPlans({
       </CardHeader>
 
       <CardContent>
-        <div className="flex justify-end space-x-2">
+        <div className="flex justify-end space-x-2 mb-4">
           <Button
             variant="outline"
             size="sm"
@@ -316,16 +368,23 @@ export const DraftedPlans = memo(function DraftedPlans({
             Sort by Date
           </Button>
         </div>
-        <div className="space-y-6">
-          {sortedPlans.map(plan => (
-            <DraftedPlanItem
-              key={plan.id}
-              plan={plan}
-              onEdit={onEdit}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
+        
+        {sortedPlans.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No drafted plans found. Create your first one!</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {sortedPlans.map(plan => (
+              <DraftedPlanItem
+                key={plan.id}
+                plan={plan}
+                onEdit={onEdit}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+        )}
 
         {/* New Plan Dialog */}
         <DialogForm
