@@ -117,23 +117,48 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
     }
   }, [selectedDecision, form]);
 
-  // Create or update decision
-  const mutation = useMutation({
+  // Define the response type for the mutation
+  type DecisionResponse = {
+    id: number;
+    title: string;
+    status: string;
+    [key: string]: any;
+  };
+
+  // Create or update decision with improved type safety
+  const mutation = useMutation<DecisionResponse, Error, FormValues>({
     mutationFn: async (data: FormValues) => {
+      // Format dates for API transmission
       const formattedData = {
         ...data,
         decisionDate: new Date(data.decisionDate),
-        followUpDate: data.followUpDate ? new Date(data.followUpDate) : undefined,
+        followUpDate: data.followUpDate ? new Date(data.followUpDate) : null,
       };
 
+      console.log('Submitting decision:', formattedData);
+
       if (selectedDecision) {
-        return apiRequest('PUT', `/api/decisions/${selectedDecision.id}`, formattedData);
+        return apiRequest<DecisionResponse>(
+          'PUT', 
+          `/api/decisions/${selectedDecision.id}`, 
+          formattedData
+        );
       } else {
-        return apiRequest('POST', '/api/decisions', formattedData);
+        return apiRequest<DecisionResponse>(
+          'POST', 
+          '/api/decisions', 
+          formattedData
+        );
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // More specific query invalidation with proper type
       queryClient.invalidateQueries({ queryKey: ['/api/decisions'] });
+      
+      // Log success for debugging
+      console.log('Decision saved successfully:', data);
+
+      // Notify user of success
       toast({
         title: selectedDecision ? "Decision updated" : "Decision logged",
         description: selectedDecision 
@@ -142,6 +167,7 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
         variant: "success",
       });
 
+      // Reset form if creating a new decision
       if (!selectedDecision) {
         form.reset({
           title: "",
@@ -161,7 +187,11 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
         onSuccess();
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      // Log error for debugging
+      console.error('Error saving decision:', error);
+      
+      // Extract and display a user-friendly error message
       toast({
         title: "Error saving decision",
         description: error.message || "Please try again.",
@@ -176,25 +206,36 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
     },
   });
 
-  // Delete decision mutation
-  const deleteMutation = useMutation({
+  // Delete decision mutation with improved type safety
+  const deleteMutation = useMutation<void, Error, void>({
     mutationFn: async () => {
-      if (!selectedDecision) return;
-      return apiRequest('DELETE', `/api/decisions/${selectedDecision.id}`);
+      if (!selectedDecision) {
+        throw new Error("No decision selected for deletion");
+      }
+      
+      console.log('Deleting decision:', selectedDecision.id);
+      await apiRequest<void>('DELETE', `/api/decisions/${selectedDecision.id}`);
     },
     onSuccess: () => {
+      // More specific query invalidation
       queryClient.invalidateQueries({ queryKey: ['/api/decisions'] });
+      
       toast({
         title: "Decision deleted",
         description: "The decision has been deleted successfully.",
         variant: "success",
       });
+      
       setIsEditing(false);
+      
       if (onSuccess) {
         onSuccess();
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      // Log error for debugging
+      console.error('Error deleting decision:', error);
+      
       toast({
         title: "Error deleting decision",
         description: error.message || "Please try again.",

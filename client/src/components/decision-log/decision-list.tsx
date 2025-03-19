@@ -60,19 +60,39 @@ const DecisionList = ({
   const [activeTab, setActiveTab] = useState("all");
   const decisionsPerPage = 5;
 
-  // Update decision status (mark as successful)
-  const updateStatusMutation = useMutation({
+  // Define return type for status updates
+  type StatusUpdateResponse = {
+    id: number;
+    status: string;
+  };
+
+  // Update decision status (mark as successful) with improved type safety
+  const updateStatusMutation = useMutation<StatusUpdateResponse, Error, number>({
     mutationFn: async (id: number) => {
-      return apiRequest('PUT', `/api/decisions/${id}`, { status: "Successful" });
+      console.log('Marking decision as successful:', id);
+      return apiRequest<StatusUpdateResponse>(
+        'PUT', 
+        `/api/decisions/${id}`, 
+        { status: "Successful" }
+      );
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Log success for debugging
+      console.log('Decision status updated to successful:', data);
+      
+      // More specific query invalidation
       queryClient.invalidateQueries({ queryKey: ['/api/decisions'] });
+      
       toast({
         title: "Status updated",
         description: "Decision has been marked as successful.",
+        variant: "success",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      // Log error for debugging
+      console.error('Error marking decision as successful:', error);
+      
       toast({
         title: "Error updating status",
         description: error.message || "Please try again.",
@@ -81,11 +101,47 @@ const DecisionList = ({
     }
   });
 
-  const handleSelectDecision = (decision: Decision) => {
-    setSelectedDecision(decision);
-  };
+  // Update status to Failed with improved type safety
+  const markFailedMutation = useMutation<StatusUpdateResponse, Error, number>({
+    mutationFn: async (id: number) => {
+      console.log('Marking decision as failed:', id);
+      return apiRequest<StatusUpdateResponse>(
+        'PUT', 
+        `/api/decisions/${id}`, 
+        { status: "Failed" }
+      );
+    },
+    onSuccess: (data) => {
+      // Log success for debugging
+      console.log('Decision status updated to failed:', data);
+      
+      // More specific query invalidation
+      queryClient.invalidateQueries({ queryKey: ['/api/decisions'] });
+      
+      toast({
+        title: "Status updated",
+        description: "Decision has been marked as failed.",
+        variant: "success", 
+      });
+    },
+    onError: (error: Error) => {
+      // Log error for debugging
+      console.error('Error marking decision as failed:', error);
+      
+      toast({
+        title: "Error updating status",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
 
-  const handleViewDetails = (decision: Decision, e: React.MouseEvent) => {
+  // Type-safe event handlers with proper event types
+  const handleSelectDecision = useCallback((decision: Decision) => {
+    setSelectedDecision(decision);
+  }, [setSelectedDecision]);
+
+  const handleViewDetails = useCallback((decision: Decision, e: React.MouseEvent) => {
     e.stopPropagation();
     if (onViewDetailsClick) {
       onViewDetailsClick(decision);
@@ -93,43 +149,22 @@ const DecisionList = ({
       // Default behavior: select the decision to view in detail
       setSelectedDecision(decision);
     }
-  };
+  }, [onViewDetailsClick, setSelectedDecision]);
 
-  const handleEditDecision = (decision: Decision, e: React.MouseEvent) => {
+  const handleEditDecision = useCallback((decision: Decision, e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedDecision(decision);
-  };
+  }, [setSelectedDecision]);
 
-  const handleMarkSuccessful = (id: number, e: React.MouseEvent) => {
+  const handleMarkSuccessful = useCallback((id: number, e: React.MouseEvent) => {
     e.stopPropagation();
     updateStatusMutation.mutate(id);
-  };
+  }, [updateStatusMutation]);
 
-  // Update status to Failed
-  const markFailedMutation = useMutation({
-    mutationFn: async (id: number) => {
-      return apiRequest('PUT', `/api/decisions/${id}`, { status: "Failed" });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/decisions'] });
-      toast({
-        title: "Status updated",
-        description: "Decision has been marked as failed.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error updating status",
-        description: error.message || "Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const handleMarkFailed = (id: number, e: React.MouseEvent) => {
+  const handleMarkFailed = useCallback((id: number, e: React.MouseEvent) => {
     e.stopPropagation();
     markFailedMutation.mutate(id);
-  };
+  }, [markFailedMutation]);
 
   const handleCategoryFilterChange = (value: string) => {
     setCategoryFilter(value === "all" ? null : value);
