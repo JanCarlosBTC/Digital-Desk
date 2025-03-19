@@ -4,7 +4,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { WeeklyReflection } from "@shared/prisma-schema";
+import { WeeklyReflection } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlusIcon, EyeIcon } from "lucide-react";
 import { Form } from "@/components/ui/form";
