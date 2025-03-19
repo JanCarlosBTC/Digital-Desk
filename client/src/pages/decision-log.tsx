@@ -143,9 +143,9 @@ const DecisionLog = () => {
         )}
       </DialogForm>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Decision List */}
-        <div className="lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Decision List - Now takes full width when no form is shown */}
+        <div className={selectedDecision ? "lg:col-span-8" : "lg:col-span-12"}>
           <DecisionList 
             decisions={decisions || []} 
             isLoading={isLoading} 
@@ -155,10 +155,16 @@ const DecisionLog = () => {
           />
         </div>
         
-        {/* Decision Form */}
-        <div className="lg:col-span-1">
-          <DecisionForm selectedDecision={selectedDecision} onSuccess={() => setSelectedDecision(null)} />
-        </div>
+        {/* Decision Form - Only shown when a decision is selected */}
+        {selectedDecision && (
+          <div className="lg:col-span-4">
+            <DecisionForm 
+              selectedDecision={selectedDecision} 
+              onSuccess={() => setSelectedDecision(null)} 
+              isDialog={false}
+            />
+          </div>
+        )}
       </div>
     </section>
   );

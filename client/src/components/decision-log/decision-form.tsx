@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
@@ -9,6 +9,20 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { format } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { TrashIcon } from "lucide-react";
 
 // Define the Decision interface based on Prisma model
 interface Decision {
@@ -26,25 +40,11 @@ interface Decision {
   createdAt: string | Date;
   updatedAt: string | Date;
 }
-import { format } from "date-fns";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { TrashIcon } from "lucide-react";
 
 interface DecisionFormProps {
   selectedDecision: Decision | null;
   onSuccess?: () => void;
-  isDialog?: boolean;
+  isDialog?: boolean; // Controls whether the form is rendered in a dialog
 }
 
 const formSchema = z.object({
@@ -139,7 +139,7 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
         description: selectedDecision 
           ? "Your decision has been updated successfully." 
           : "Your decision has been logged successfully.",
-        variant: "success", // Added success variant
+        variant: "success",
       });
 
       if (!selectedDecision) {
@@ -208,18 +208,11 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
   };
 
   const handleCancel = () => {
-    form.reset({
-      title: "",
-      category: "",
-      decisionDate: format(new Date(), "yyyy-MM-dd"),
-      why: "",
-      alternatives: "",
-      expectedOutcome: "",
-      followUpDate: "",
-      whatDifferent: "",
-      status: "Pending",
-    });
+    form.reset();
     setIsEditing(false);
+    if (onSuccess) {
+      onSuccess();
+    }
   };
 
   const handleDelete = () => {
@@ -239,8 +232,8 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
         </>
       )}
 
-      {/* Using Form from shadcn/ui, which is FormProvider under the hood */}
-      <Form {...form} onSubmit={form.handleSubmit(onSubmit)}>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="space-y-8">
             {/* Basic Information Section */}
             <div>
@@ -499,6 +492,7 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
               </div>
             </div>
           </div>
+        </form>
       </Form>
     </div>
   );
