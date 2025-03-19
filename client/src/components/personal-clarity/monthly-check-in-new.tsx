@@ -36,31 +36,31 @@ const MonthlyCheckInItem = memo(function MonthlyCheckInItem({
             {dateUtils.getMonthName(checkIn.month)} {checkIn.year}
           </h3>
           <div className="mt-2 space-y-2">
-            {(checkIn.achievements || []).length > 0 && (
+            {Array.isArray(checkIn.achievements) && checkIn.achievements.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium text-gray-700">Key Achievements</h4>
                 <ul className="list-disc list-inside text-sm text-gray-600">
-                  {(checkIn.achievements || []).map((achievement, index) => (
+                  {checkIn.achievements.map((achievement, index) => (
                     <li key={index}>{achievement}</li>
                   ))}
                 </ul>
               </div>
             )}
-            {(checkIn.challenges || []).length > 0 && (
+            {Array.isArray(checkIn.challenges) && checkIn.challenges.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium text-gray-700">Challenges</h4>
                 <ul className="list-disc list-inside text-sm text-gray-600">
-                  {(checkIn.challenges || []).map((challenge, index) => (
+                  {checkIn.challenges.map((challenge, index) => (
                     <li key={index}>{challenge}</li>
                   ))}
                 </ul>
               </div>
             )}
-            {(checkIn.nextMonthPriorities || []).length > 0 && (
+            {Array.isArray(checkIn.nextMonthPriorities) && checkIn.nextMonthPriorities.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium text-gray-700">Next Month's Priorities</h4>
                 <ul className="list-disc list-inside text-sm text-gray-600">
-                  {(checkIn.nextMonthPriorities || []).map((priority, index) => (
+                  {checkIn.nextMonthPriorities.map((priority, index) => (
                     <li key={index}>{priority}</li>
                   ))}
                 </ul>
