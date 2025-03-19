@@ -11,7 +11,7 @@ import BrainDump from "@/components/thinking-desk/brain-dump";
 import { DraftedPlans } from "@/components/thinking-desk/drafted-plans-new";
 import ClarityLab from "@/components/thinking-desk/clarity-lab";
 import { PageHeader } from "@/components/ui/page-header";
-import { MinimalProblemTrees } from "@/components/thinking-desk-new/minimal-problem-trees";
+import { FixedProblemTrees } from "@/components/thinking-desk-new/fixed-problem-trees";
 
 // Create context for ThinkingDesk 
 interface ThinkingDeskContextType {
@@ -83,7 +83,7 @@ const ThinkingDesk = () => {
           
           {/* Problem Trees Tab - Using completely new implementation */}
           <div id="problem-trees" className="tab-pane w-full">
-            <MinimalProblemTrees 
+            <FixedProblemTrees 
               showNewProblemTree={showNewProblemTree}
               onDialogClose={() => setShowNewProblemTree(false)}
             />
