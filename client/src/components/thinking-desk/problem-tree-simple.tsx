@@ -108,12 +108,15 @@ export const ProblemTreeSimple = ({ onSuccess }: ProblemTreeProps) => {
   // Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Problem Tree form submitted");
     
     if (!validateForm()) {
+      console.log("Form validation failed:", errors);
       return;
     }
     
     setIsSubmitting(true);
+    console.log("Form validation passed, submitting data");
     
     // Filter out empty fields
     const filteredSubProblems = subProblems.filter(sp => sp.trim() !== '');
@@ -131,6 +134,8 @@ export const ProblemTreeSimple = ({ onSuccess }: ProblemTreeProps) => {
       nextActions: filteredNextActions
     };
     
+    console.log("Submitting data to API:", data);
+    
     try {
       // Create new problem tree
       const response = await fetch('/api/problem-trees', {
@@ -139,10 +144,16 @@ export const ProblemTreeSimple = ({ onSuccess }: ProblemTreeProps) => {
         body: JSON.stringify(data)
       });
       
+      console.log("API response status:", response.status);
+      
       if (!response.ok) {
         const errorText = await response.text();
+        console.error("API error response:", errorText);
         throw new Error(errorText || 'Failed to save problem tree');
       }
+      
+      const result = await response.json();
+      console.log("API success response:", result);
       
       // Success
       queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
@@ -173,6 +184,7 @@ export const ProblemTreeSimple = ({ onSuccess }: ProblemTreeProps) => {
       });
     } finally {
       setIsSubmitting(false);
+      console.log("Form submission completed");
     }
   };
   
