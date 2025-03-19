@@ -3,11 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { PlusIcon, NetworkIcon, TrashIcon, EditIcon } from 'lucide-react';
+import { PlusIcon, NetworkIcon, TrashIcon, EditIcon, TreePine } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { LoadingState } from '@/components/ui/loading-state';
+import { ProblemTreeVisualization } from './visual-problem-tree';
 
 // Type definitions
 interface ProblemTree {
@@ -405,31 +406,44 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {problemTrees.map((tree) => (
-              <Card key={tree.id} className="overflow-hidden">
-                <CardHeader className="pb-3">
-                  <CardTitle className="truncate text-lg">{tree.title}</CardTitle>
-                  <CardDescription className="line-clamp-2">{tree.mainProblem}</CardDescription>
+              <Card key={tree.id} className="overflow-hidden border-2 border-gray-200 hover:border-gray-300 transition-all">
+                <CardHeader className="pb-3 bg-gradient-to-r from-gray-50 to-white">
+                  <div className="flex items-center gap-2">
+                    <TreePine className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                    <CardTitle className="truncate text-lg">{tree.title}</CardTitle>
+                  </div>
+                  <CardDescription className="line-clamp-2 mt-1">{tree.mainProblem}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex justify-between items-center text-sm text-gray-500 mb-4">
+                  {/* Mini-visualization preview */}
+                  <div className="mb-3 bg-gray-50 p-2 rounded-md text-xs text-gray-600 flex flex-col items-center">
+                    <div className="bg-red-50 border border-red-100 rounded px-2 py-1 mb-1 w-4/5 text-center">Problem</div>
+                    <div className="h-3 w-px bg-gray-300"></div>
+                    <div className="flex gap-1 mb-1">
+                      <div className="bg-yellow-50 border border-yellow-100 rounded px-2 py-1">Causes</div>
+                      <div className="bg-green-50 border border-green-100 rounded px-2 py-1">Solutions</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center text-sm text-gray-500 mb-3">
                     <div>Updated: {formatDate(tree.updatedAt)}</div>
-                    <div>
-                      <span className="px-2 py-1 bg-gray-100 rounded-full text-xs mr-2">
+                    <div className="flex gap-1">
+                      <span className="px-2 py-1 bg-orange-50 border border-orange-100 rounded-full text-xs">
                         {tree.subProblems.length} sub-problems
                       </span>
-                      <span className="px-2 py-1 bg-gray-100 rounded-full text-xs">
+                      <span className="px-2 py-1 bg-green-50 border border-green-100 rounded-full text-xs">
                         {tree.potentialSolutions.length} solutions
                       </span>
                     </div>
                   </div>
-                  <div className="flex space-x-2 mt-4">
+                  <div className="flex space-x-2 mt-3">
                     <Button
                       size="sm"
-                      variant="outline"
+                      variant="default"
                       className="flex-1"
                       onClick={() => viewTree(tree)}
                     >
-                      View Details
+                      View Tree
                     </Button>
                     <Button
                       size="sm"
@@ -640,71 +654,32 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
       
       {/* View Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-5xl">
           {selectedTree && (
             <>
               <DialogHeader>
-                <DialogTitle>{selectedTree.title}</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <TreePine className="h-5 w-5 text-gray-600" />
+                  {selectedTree.title}
+                </DialogTitle>
                 <DialogDescription>
                   Created: {formatDate(selectedTree.createdAt)} | 
                   Last updated: {formatDate(selectedTree.updatedAt)}
                 </DialogDescription>
               </DialogHeader>
               
-              <div className="space-y-5 py-4">
-                <div>
-                  <h3 className="font-medium mb-2">Main Problem</h3>
-                  <p className="bg-gray-50 p-3 rounded-md">{selectedTree.mainProblem}</p>
-                </div>
-                
-                <div>
-                  <h3 className="font-medium mb-2">Sub Problems</h3>
-                  <ul className="space-y-2">
-                    {selectedTree.subProblems.map((problem, index) => (
-                      <li key={`view-sub-${index}`} className="bg-gray-50 p-3 rounded-md">
-                        {problem}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                
-                <div>
-                  <h3 className="font-medium mb-2">Root Causes</h3>
-                  <ul className="space-y-2">
-                    {selectedTree.rootCauses.map((cause, index) => (
-                      <li key={`view-cause-${index}`} className="bg-gray-50 p-3 rounded-md">
-                        {cause}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                
-                <div>
-                  <h3 className="font-medium mb-2">Potential Solutions</h3>
-                  <ul className="space-y-2">
-                    {selectedTree.potentialSolutions.map((solution, index) => (
-                      <li key={`view-solution-${index}`} className="bg-gray-50 p-3 rounded-md">
-                        {solution}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                
-                {selectedTree.nextActions.length > 0 && (
-                  <div>
-                    <h3 className="font-medium mb-2">Next Actions</h3>
-                    <ul className="space-y-2">
-                      {selectedTree.nextActions.map((action, index) => (
-                        <li key={`view-action-${index}`} className="bg-gray-50 p-3 rounded-md">
-                          {action}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+              {/* Visual Problem Tree View */}
+              <div className="border border-gray-200 rounded-lg bg-white">
+                <ProblemTreeVisualization 
+                  mainProblem={selectedTree.mainProblem}
+                  subProblems={selectedTree.subProblems}
+                  rootCauses={selectedTree.rootCauses}
+                  potentialSolutions={selectedTree.potentialSolutions}
+                  nextActions={selectedTree.nextActions}
+                />
               </div>
               
-              <DialogFooter>
+              <DialogFooter className="space-x-2">
                 <Button 
                   variant="destructive" 
                   onClick={() => deleteTree(selectedTree.id)}
@@ -716,7 +691,7 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
                   variant="outline" 
                   onClick={() => editTree(selectedTree)}
                 >
-                  Edit
+                  <EditIcon className="h-4 w-4 mr-1" /> Edit
                 </Button>
                 <Button variant="outline" onClick={() => setViewDialogOpen(false)}>
                   Close
