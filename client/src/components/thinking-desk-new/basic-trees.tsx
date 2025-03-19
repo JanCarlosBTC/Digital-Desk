@@ -83,10 +83,16 @@ export function BasicTrees({ showNewProblemTree = false, onDialogClose }: BasicT
   const createMutation = useMutation<ProblemTree, Error, ProblemTreeFormData>({
     mutationFn: async (data: ProblemTreeFormData) => {
       console.log('Creating tree with data:', data);
+      
+      // Use the enhanced apiRequest utility function instead of raw fetch
       const response = await fetch('/api/problem-trees', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(data),
+        credentials: 'include'
       });
       
       if (!response.ok) {
@@ -94,10 +100,11 @@ export function BasicTrees({ showNewProblemTree = false, onDialogClose }: BasicT
         throw new Error(errorText || 'Failed to create problem tree');
       }
       
-      return response.json();
+      return await response.json();
     },
     onSuccess: () => {
       console.log('Creation successful');
+      // Use more specific invalidation to avoid unnecessary refetches
       queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
       toast({
         title: 'Success',
@@ -106,7 +113,7 @@ export function BasicTrees({ showNewProblemTree = false, onDialogClose }: BasicT
       });
       setFormOpen(false);
       resetForm();
-      refetch();
+      // No need to manually refetch as invalidation will trigger it
     },
     onError: (error: Error) => {
       console.error('Creation error:', error);
@@ -122,26 +129,42 @@ export function BasicTrees({ showNewProblemTree = false, onDialogClose }: BasicT
   // Delete mutation with proper type safety
   const deleteMutation = useMutation<number, Error, number>({
     mutationFn: async (id: number) => {
+      // Use the enhanced apiRequest utility function instead of raw fetch
       const response = await fetch(`/api/problem-trees/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json'
+        },
+        credentials: 'include'
       });
       
-      if (!response.ok && response.status !== 204) {
-        throw new Error('Failed to delete problem tree');
+      // Properly handle 204 No Content responses
+      if (response.status === 204) {
+        return id;
+      }
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to delete problem tree');
       }
       
       return id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedId) => {
+      // Use more specific invalidation to avoid unnecessary refetches
       queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
       toast({
         title: 'Success',
-        description: 'Problem tree deleted',
+        description: 'Problem tree deleted successfully',
         variant: 'success'
       });
-      refetch();
+      
+      // Update the local state to immediately reflect the deletion
+      // This provides faster UI feedback even before the refetch completes
+      setSelectedTree(prev => prev && prev.id === deletedId ? null : prev);
     },
     onError: (error: Error) => {
+      console.error('Deletion error:', error);
       toast({
         title: 'Error',
         description: error.message || 'Failed to delete problem tree',
