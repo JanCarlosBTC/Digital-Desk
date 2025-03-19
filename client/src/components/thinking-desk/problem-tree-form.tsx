@@ -15,18 +15,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import { TextField, TextAreaField } from "@/components/ui/form-elements";
 import { Tag } from "lucide-react";
 
-// Define validation schema
+// Define validation schema - simpler to avoid validation issues
 const problemTreeSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters").max(100, "Title cannot exceed 100 characters"),
-  mainProblem: z.string().min(10, "Main problem must be at least 10 characters").max(500, "Main problem cannot exceed 500 characters"),
-  subProblems: z.array(z.string()).min(1, "Add at least one sub-problem"),
-  rootCauses: z.array(z.string()).min(1, "Add at least one root cause"),
-  potentialSolutions: z.array(z.string()).min(1, "Add at least one potential solution"),
-  nextActions: z.array(z.string()).optional()
+  title: z.string().min(1, "Title is required"),
+  mainProblem: z.string().min(1, "Main problem is required"),
+  subProblems: z.string().optional(),
+  rootCauses: z.string().optional(),
+  potentialSolutions: z.string().optional(),
+  nextActions: z.string().optional()
 });
 
 // Define form values type
@@ -62,27 +61,60 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
     defaultValues: selectedProblemTree ? {
       title: selectedProblemTree.title,
       mainProblem: selectedProblemTree.mainProblem,
-      subProblems: selectedProblemTree.subProblems,
-      rootCauses: selectedProblemTree.rootCauses,
-      potentialSolutions: selectedProblemTree.potentialSolutions,
-      nextActions: selectedProblemTree.nextActions || [],
+      subProblems: selectedProblemTree.subProblems.join('\n'),
+      rootCauses: selectedProblemTree.rootCauses.join('\n'),
+      potentialSolutions: selectedProblemTree.potentialSolutions.join('\n'),
+      nextActions: selectedProblemTree.nextActions.join('\n') || "",
     } : {
       title: "",
       mainProblem: "",
-      subProblems: [""],
-      rootCauses: [""],
-      potentialSolutions: [""],
-      nextActions: [""],
+      subProblems: "",
+      rootCauses: "",
+      potentialSolutions: "",
+      nextActions: ""
     }
   });
 
   // Create or update mutation
   const mutation = useMutation({
     mutationFn: async (data: FormValues) => {
+      // Process form data (convert string inputs to arrays)
+      const formattedData = {
+        title: data.title,
+        mainProblem: data.mainProblem,
+        subProblems: data.subProblems ? data.subProblems.split('\n').filter(line => line.trim() !== '') : [],
+        rootCauses: data.rootCauses ? data.rootCauses.split('\n').filter(line => line.trim() !== '') : [],
+        potentialSolutions: data.potentialSolutions ? data.potentialSolutions.split('\n').filter(line => line.trim() !== '') : [],
+        nextActions: data.nextActions ? data.nextActions.split('\n').filter(line => line.trim() !== '') : []
+      };
+      
+      // Make API request
       if (isEditing && selectedProblemTree) {
-        return apiRequest('PUT', `/api/problem-trees/${selectedProblemTree.id}`, data);
+        const response = await fetch(`/api/problem-trees/${selectedProblemTree.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formattedData)
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || 'Failed to update problem tree');
+        }
+        
+        return response.json();
       } else {
-        return apiRequest('POST', '/api/problem-trees', data);
+        const response = await fetch('/api/problem-trees', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formattedData)
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || 'Failed to create problem tree');
+        }
+        
+        return response.json();
       }
     },
     onSuccess: () => {
@@ -102,7 +134,7 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
     onError: (error) => {
       toast({
         title: "Error",
-        description: error.message || "An error occurred. Please try again.",
+        description: error instanceof Error ? error.message : "An error occurred. Please try again.",
         variant: "destructive",
       });
     }
@@ -111,8 +143,18 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedProblemTree) return;
-      return apiRequest('DELETE', `/api/problem-trees/${selectedProblemTree.id}`);
+      if (!selectedProblemTree) return null;
+      const response = await fetch(`/api/problem-trees/${selectedProblemTree.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok && response.status !== 204) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to delete problem tree');
+      }
+      
+      return true;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
@@ -129,7 +171,7 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
     onError: (error) => {
       toast({
         title: "Error deleting problem tree",
-        description: error.message || "Please try again.",
+        description: error instanceof Error ? error.message : "Please try again.",
         variant: "destructive",
       });
     }
@@ -143,7 +185,6 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
   // Cancel button handler
   const handleCancel = () => {
     form.reset();
-    setIsEditing(false);
     if (onSuccess) {
       onSuccess();
     }
@@ -152,21 +193,6 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
   // Delete button handler
   const handleDelete = () => {
     deleteMutation.mutate();
-  };
-
-  // Function to handle array fields (subProblems, rootCauses, etc.)
-  const handleArrayField = (field: "subProblems" | "rootCauses" | "potentialSolutions" | "nextActions", action: "add" | "remove", index?: number) => {
-    const currentValues = form.getValues(field) || [];
-    
-    if (action === "add") {
-      form.setValue(field, [...currentValues, ""], { shouldValidate: true });
-    } else if (action === "remove" && typeof index === "number") {
-      if (currentValues.length > 1) {
-        const newValues = [...currentValues];
-        newValues.splice(index, 1);
-        form.setValue(field, newValues, { shouldValidate: true });
-      }
-    }
   };
 
   return (
@@ -184,222 +210,105 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Title field */}
-          <TextField
-            form={form}
+          <FormField
+            control={form.control}
             name="title"
-            label="Title"
-            placeholder="Enter a concise title for your problem tree"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Title</FormLabel>
+                <FormControl>
+                  <Input placeholder="Give your problem tree a title" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-
-          {/* Main Problem field */}
-          <TextAreaField
-            form={form}
+          
+          <FormField
+            control={form.control}
             name="mainProblem"
-            label="Main Problem"
-            placeholder="Describe the central problem you're trying to solve"
-            rows={3}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Main Problem</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="Describe the main problem you're analyzing" 
+                    className="min-h-20"
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-
-          {/* Sub-Problems fields */}
+          
           <FormField
             control={form.control}
             name="subProblems"
-            render={() => (
+            render={({ field }) => (
               <FormItem>
-                <FormLabel>Sub-Problems</FormLabel>
-                <div className="space-y-2">
-                  {(form.getValues("subProblems") || []).map((_, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <FormField
-                        control={form.control}
-                        name={`subProblems.${index}`}
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormControl>
-                              <Input 
-                                placeholder="Enter a sub-problem" 
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleArrayField("subProblems", "remove", index)}
-                        disabled={(form.getValues("subProblems") || []).length <= 1}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleArrayField("subProblems", "add")}
-                  className="mt-2"
-                >
-                  Add Sub-Problem
-                </Button>
+                <FormLabel>Sub Problems (one per line)</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="List the sub-problems (one per line)" 
+                    className="min-h-20"
+                    {...field} 
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-
-          {/* Root Causes fields */}
+          
           <FormField
             control={form.control}
             name="rootCauses"
-            render={() => (
+            render={({ field }) => (
               <FormItem>
-                <FormLabel>Root Causes</FormLabel>
-                <div className="space-y-2">
-                  {(form.getValues("rootCauses") || []).map((_, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <FormField
-                        control={form.control}
-                        name={`rootCauses.${index}`}
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormControl>
-                              <Input 
-                                placeholder="Enter a root cause" 
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleArrayField("rootCauses", "remove", index)}
-                        disabled={(form.getValues("rootCauses") || []).length <= 1}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleArrayField("rootCauses", "add")}
-                  className="mt-2"
-                >
-                  Add Root Cause
-                </Button>
+                <FormLabel>Root Causes (one per line)</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="List the root causes (one per line)" 
+                    className="min-h-20"
+                    {...field} 
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-
-          {/* Potential Solutions fields */}
+          
           <FormField
             control={form.control}
             name="potentialSolutions"
-            render={() => (
+            render={({ field }) => (
               <FormItem>
-                <FormLabel>Potential Solutions</FormLabel>
-                <div className="space-y-2">
-                  {(form.getValues("potentialSolutions") || []).map((_, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <FormField
-                        control={form.control}
-                        name={`potentialSolutions.${index}`}
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormControl>
-                              <Input 
-                                placeholder="Enter a potential solution" 
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleArrayField("potentialSolutions", "remove", index)}
-                        disabled={(form.getValues("potentialSolutions") || []).length <= 1}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleArrayField("potentialSolutions", "add")}
-                  className="mt-2"
-                >
-                  Add Solution
-                </Button>
+                <FormLabel>Potential Solutions (one per line)</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="List potential solutions (one per line)" 
+                    className="min-h-20"
+                    {...field} 
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-
-          {/* Next Actions fields */}
+          
           <FormField
             control={form.control}
             name="nextActions"
-            render={() => (
+            render={({ field }) => (
               <FormItem>
-                <FormLabel>Next Actions (Optional)</FormLabel>
-                <div className="space-y-2">
-                  {(form.getValues("nextActions") || []).map((_, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <FormField
-                        control={form.control}
-                        name={`nextActions.${index}`}
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <FormControl>
-                              <Input 
-                                placeholder="Enter a next action" 
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleArrayField("nextActions", "remove", index)}
-                        disabled={(form.getValues("nextActions") || []).length <= 1}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleArrayField("nextActions", "add")}
-                  className="mt-2"
-                >
-                  Add Action
-                </Button>
+                <FormLabel>Next Actions (one per line)</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="List next actions (one per line)" 
+                    className="min-h-20"
+                    {...field} 
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
