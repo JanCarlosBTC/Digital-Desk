@@ -13,6 +13,28 @@ import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
 // For simplicity, we're using a fixed user ID for now
 const DEMO_USER_ID = 1;
 
+/**
+ * Helper function to safely parse an ID from request parameters
+ * 
+ * @param id The ID string to parse
+ * @param res The response object to return errors through
+ * @returns The parsed ID if valid, or undefined if an error was sent
+ */
+function parseAndValidateId(id: string | undefined, res: Response): number | undefined {
+  if (id === undefined) {
+    res.status(400).json({ message: "ID parameter is required" });
+    return undefined;
+  }
+  
+  const parsedId = parseInt(id);
+  if (isNaN(parsedId)) {
+    res.status(400).json({ message: "Invalid ID format" });
+    return undefined;
+  }
+  
+  return parsedId;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Error handling middleware for Zod validation errors
   const handleZodError = (error: unknown, res: Response): Response => {
@@ -36,9 +58,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Don't return the password
       const { password, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      return res.json(userWithoutPassword);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching user" });
+      return res.status(500).json({ message: "Error fetching user" });
     }
   });
 
@@ -67,14 +89,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { content } = req.body;
       
-      const updatedBrainDump = await storage.updateBrainDump(parseInt(id), content);
+      // Parse and validate ID
+      const parsedId = parseInt(id);
+      if (isNaN(parsedId)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+      
+      // Validate content
+      if (content === undefined || content === null) {
+        return res.status(400).json({ message: "Content is required" });
+      }
+      
+      const updatedBrainDump = await storage.updateBrainDump(parsedId, content);
       if (!updatedBrainDump) {
         return res.status(404).json({ message: "Brain dump not found" });
       }
       
-      res.json(updatedBrainDump);
+      return res.json(updatedBrainDump);
     } catch (error) {
-      res.status(500).json({ message: "Error updating brain dump" });
+      return res.status(500).json({ message: "Error updating brain dump" });
     }
   });
 
@@ -91,15 +124,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/problem-trees/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const problemTree = await storage.getProblemTree(parseInt(id));
+      
+      // Parse and validate ID
+      const parsedId = parseInt(id);
+      if (isNaN(parsedId)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+      
+      const problemTree = await storage.getProblemTree(parsedId);
       
       if (!problemTree) {
         return res.status(404).json({ message: "Problem tree not found" });
       }
       
-      res.json(problemTree);
+      return res.json(problemTree);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching problem tree" });
+      return res.status(500).json({ message: "Error fetching problem tree" });
     }
   });
 
@@ -113,9 +153,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertProblemTreeSchema.parse(data);
       const problemTree = await storage.createProblemTree(validatedData);
       
-      res.status(201).json(problemTree);
+      return res.status(201).json(problemTree);
     } catch (error) {
-      handleZodError(error, res);
+      return handleZodError(error, res);
     }
   });
 
@@ -124,29 +164,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const data = req.body;
       
-      const updatedProblemTree = await storage.updateProblemTree(parseInt(id), data);
+      // Parse and validate ID
+      const parsedId = parseInt(id);
+      if (isNaN(parsedId)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+      
+      const updatedProblemTree = await storage.updateProblemTree(parsedId, data);
       if (!updatedProblemTree) {
         return res.status(404).json({ message: "Problem tree not found" });
       }
       
-      res.json(updatedProblemTree);
+      return res.json(updatedProblemTree);
     } catch (error) {
-      res.status(500).json({ message: "Error updating problem tree" });
+      return res.status(500).json({ message: "Error updating problem tree" });
     }
   });
 
   app.delete('/api/problem-trees/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const deleted = await storage.deleteProblemTree(parseInt(id));
+      
+      // Parse and validate ID
+      const parsedId = parseInt(id);
+      if (isNaN(parsedId)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+      
+      const deleted = await storage.deleteProblemTree(parsedId);
       
       if (!deleted) {
         return res.status(404).json({ message: "Problem tree not found" });
       }
       
-      res.status(204).end();
+      return res.status(204).end();
     } catch (error) {
-      res.status(500).json({ message: "Error deleting problem tree" });
+      return res.status(500).json({ message: "Error deleting problem tree" });
     }
   });
 
