@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { navItems } from "@/main";
 import { useQuery } from "@tanstack/react-query";
-import { User } from "@shared/schema";
+import { User } from "@shared/prisma-schema";
 
 const Sidebar = () => {
   const [location] = useLocation();

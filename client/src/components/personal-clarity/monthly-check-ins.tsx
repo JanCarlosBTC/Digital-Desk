@@ -11,8 +11,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { MonthlyCheckIn } from "@shared/schema";
+import { MonthlyCheckIn } from "@shared/prisma-schema";
 import "@/components/ui/clipboard.css";
+import { format } from "date-fns";
 
 const formSchema = z.object({
   achievements: z.string().min(5, "Achievements must be at least 5 characters"),
@@ -110,8 +111,9 @@ const MonthlyCheckIns = () => {
     return monthNames[month - 1];
   };
 
-  const formatCompletedOn = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+  const formatCompletedOn = (date: Date | null): string => {
+    if (!date) return 'Not completed';
+    return format(date, 'MMMM d, yyyy');
   };
 
   return (
@@ -225,7 +227,7 @@ const MonthlyCheckIns = () => {
 
           {/* View Check-in Dialog */}
           <DialogForm
-            title={selectedCheckIn && `${getMonthName(selectedCheckIn.month)} ${selectedCheckIn.year} Check-in`}
+            title={selectedCheckIn ? `${getMonthName(selectedCheckIn.month)} ${selectedCheckIn.year} Check-in` : ''}
             open={!!selectedCheckIn}
             onOpenChange={(open) => !open && setSelectedCheckIn(null)}
             size="md"

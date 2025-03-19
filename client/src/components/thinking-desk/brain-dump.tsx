@@ -14,7 +14,7 @@ import {
   ListIcon,
   InfoIcon
 } from "lucide-react";
-import { BrainDump as BrainDumpType } from "@shared/schema";
+import { BrainDump as BrainDumpType } from "@shared/prisma-schema";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {

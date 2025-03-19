@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import React, { useState, useEffect, memo, useCallback, useMemo } from "react";
+import { useQuery, useMutation, UseQueryOptions } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DraftedPlan } from "@shared/schema";
+import { DraftedPlan } from "@shared/prisma-schema";
 import { 
   ArrowRightIcon, 
   ChevronDownIcon, 
@@ -29,27 +29,89 @@ import {
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingState } from "@/components/ui/loading-state";
+import { useErrorHandler } from "@/lib/error-utils";
+import { useApiMutation } from "@/lib/api-utils";
+import { queryKeys, defaultQueryConfig, getQueryKey } from "@/lib/query-keys";
 
 const formSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  description: z.string().min(5, "Description must be at least 5 characters"),
-  status: z.string(),
-  components: z.string().min(5, "Components must be at least 5 characters"),
-  resourcesNeeded: z.string().min(5, "Resources needed must be at least 5 characters"),
-  expectedOutcomes: z.string().min(5, "Expected outcomes must be at least 5 characters"),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  components: z.array(z.string()),
+  resourcesNeeded: z.array(z.string()),
+  expectedOutcomes: z.array(z.string()),
+  status: z.enum(["Draft", "In Progress", "Completed"]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
+interface DraftedPlanItemProps {
+  plan: DraftedPlan;
+  onEdit: (id: number) => void;
+  onDelete: (id: number) => void;
+}
+
+const DraftedPlanItem = memo(function DraftedPlanItem({ 
+  plan, 
+  onEdit, 
+  onDelete 
+}: DraftedPlanItemProps) {
+  const handleEdit = useCallback(() => {
+    onEdit(plan.id);
+  }, [onEdit, plan.id]);
+
+  const handleDelete = useCallback(() => {
+    onDelete(plan.id);
+  }, [onDelete, plan.id]);
+
+  return (
+    <div className="p-4 bg-white rounded-lg shadow">
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="text-lg font-semibold">{plan.title}</h3>
+          <p className="text-sm text-gray-600 mt-1">{plan.description}</p>
+          <p className="text-xs text-gray-500 mt-2">
+            Last updated: {new Date(plan.updatedAt).toLocaleDateString()}
+          </p>
+        </div>
+        <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleEdit}
+          >
+            Edit
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleDelete}
+          >
+            Delete
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 interface DraftedPlansProps {
   showNewPlan?: boolean;
   onDialogClose?: () => void;
+  onEdit: (id: number) => void;
 }
 
-export default function DraftedPlans({ showNewPlan = false, onDialogClose }: DraftedPlansProps) {
+export const DraftedPlans = memo(function DraftedPlans({ 
+  showNewPlan = false, 
+  onDialogClose, 
+  onEdit 
+}: DraftedPlansProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [expandedPlans, setExpandedPlans] = useState<Record<number, boolean>>({});
+  const [sortField, setSortField] = useState<keyof DraftedPlan>('updatedAt');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const handleError = useErrorHandler();
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -57,9 +119,9 @@ export default function DraftedPlans({ showNewPlan = false, onDialogClose }: Dra
       title: "",
       description: "",
       status: "Draft",
-      components: "",
-      resourcesNeeded: "",
-      expectedOutcomes: "",
+      components: [],
+      resourcesNeeded: [],
+      expectedOutcomes: [],
     },
   });
   
@@ -79,9 +141,53 @@ export default function DraftedPlans({ showNewPlan = false, onDialogClose }: Dra
   };
   
   // Fetch drafted plans
-  const { data: draftedPlans, isLoading } = useQuery<DraftedPlan[]>({
-    queryKey: ['/api/drafted-plans'],
-  });
+  const { data: plans = [], isLoading } = useQuery({
+    queryKey: getQueryKey('draftedPlans'),
+    ...defaultQueryConfig,
+  } as UseQueryOptions<DraftedPlan[], Error>);
+
+  const deleteMutation = useApiMutation<void, { id: number }>(
+    '/api/drafted-plans/delete',
+    'DELETE',
+    {
+      invalidateQueries: ['drafted-plans'],
+    }
+  );
+
+  const handleDelete = useCallback(async (id: number) => {
+    try {
+      await deleteMutation.mutateAsync({ id });
+      toast({
+        title: "Success",
+        description: "Plan deleted successfully",
+      });
+    } catch (error) {
+      handleError(error);
+    }
+  }, [deleteMutation, handleError, toast]);
+
+  const handleSort = useCallback((field: keyof DraftedPlan) => {
+    setSortField(current => {
+      if (current === field) {
+        setSortDirection(dir => dir === 'asc' ? 'desc' : 'asc');
+        return field;
+      }
+      setSortDirection('asc');
+      return field;
+    });
+  }, []);
+
+  const sortedPlans = useMemo(() => {
+    return [...plans].sort((a, b) => {
+      const aValue = a[sortField];
+      const bValue = b[sortField];
+      const modifier = sortDirection === 'asc' ? 1 : -1;
+      
+      if (aValue < bValue) return -1 * modifier;
+      if (aValue > bValue) return 1 * modifier;
+      return 0;
+    });
+  }, [plans, sortField, sortDirection]);
 
   // Create drafted plan
   const createMutation = useMutation({
@@ -91,9 +197,9 @@ export default function DraftedPlans({ showNewPlan = false, onDialogClose }: Dra
         title: data.title,
         description: data.description,
         status: data.status,
-        components: data.components.split('\n').filter(Boolean),
-        resourcesNeeded: data.resourcesNeeded.split('\n').filter(Boolean),
-        expectedOutcomes: data.expectedOutcomes.split('\n').filter(Boolean),
+        components: data.components,
+        resourcesNeeded: data.resourcesNeeded,
+        expectedOutcomes: data.expectedOutcomes,
         comments: 0,
         attachments: 0,
       };
@@ -127,9 +233,9 @@ export default function DraftedPlans({ showNewPlan = false, onDialogClose }: Dra
       title: "",
       description: "",
       status: "Draft",
-      components: "",
-      resourcesNeeded: "",
-      expectedOutcomes: "",
+      components: [],
+      resourcesNeeded: [],
+      expectedOutcomes: [],
     });
     setIsOpen(true);
   };
@@ -143,6 +249,10 @@ export default function DraftedPlans({ showNewPlan = false, onDialogClose }: Dra
     const date = dateString instanceof Date ? dateString : new Date(dateString);
     return date.toLocaleDateString(undefined, options);
   };
+
+  if (isLoading) {
+    return <LoadingState type="list" count={3} />;
+  }
 
   return (
     <Card className="shadow-lg border-0">
@@ -167,129 +277,32 @@ export default function DraftedPlans({ showNewPlan = false, onDialogClose }: Dra
       </CardHeader>
       
       <CardContent>
-        {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-64 w-full" />
-            <Skeleton className="h-64 w-full" />
-          </div>
-        ) : draftedPlans && draftedPlans.length > 0 ? (
-          <div className="space-y-4">
-            {draftedPlans.map((plan) => (
-              <div key={plan.id} className="border border-gray-200 rounded-lg p-5">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-medium text-lg">{plan.title}</h3>
-                    <p className="text-sm text-gray-500">
-                      Created: {formatDate(plan.createdAt)} • 
-                      Updated: {
-                        new Date(plan.updatedAt).toDateString() === new Date().toDateString() 
-                          ? 'Today' 
-                          : formatDate(plan.updatedAt)
-                      }
-                    </p>
-                  </div>
-                  <span className={`text-xs font-medium px-2.5 py-0.5 rounded ${
-                    plan.status === 'In Progress' 
-                      ? 'bg-yellow-100 text-yellow-800' 
-                      : 'bg-blue-100 text-blue-800'
-                  }`}>
-                    {plan.status}
-                  </span>
-                </div>
-                
-                <p className="text-gray-600 mb-4">{plan.description}</p>
-                
-                {expandedPlans[plan.id] && (
-                  <>
-                    <div className="mb-4">
-                      <h4 className="font-medium text-gray-700 mb-2">Key Components</h4>
-                      <ul className="list-disc list-inside text-gray-600 space-y-1">
-                        {plan.components.map((component: string, idx: number) => (
-                          <li key={idx} className="ml-6 flex items-start">
-                            <div className="flex-shrink-0 h-5 w-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2 mt-0.5 text-xs font-bold">{idx + 1}</div>
-                            <div className="flex-1">{component}</div>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <h4 className="font-medium text-gray-700 mb-2">Resources Needed</h4>
-                        <ul className="list-disc list-inside text-gray-600 space-y-1">
-                          {plan.resourcesNeeded.map((resource: string, idx: number) => (
-                            <li key={idx} className="ml-6 flex items-start">
-                              <div className="h-2 w-2 rounded-full bg-amber-300 mr-2 mt-1.5"></div>
-                              <div className="flex-1">{resource}</div>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-700 mb-2">Expected Outcomes</h4>
-                        <ul className="list-disc list-inside text-gray-600 space-y-1">
-                          {plan.expectedOutcomes.map((outcome: string, idx: number) => (
-                            <li key={idx} className="ml-6 flex items-start">
-                              <div className="h-2 w-2 rounded-full bg-emerald-500 mr-2 mt-1.5"></div>
-                              <div className="flex-1">{outcome}</div>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </>
-                )}
-                
-                <div className={`flex justify-between ${expandedPlans[plan.id] ? "border-t border-gray-200 pt-3" : ""}`}>
-                  <div>
-                    <button className="text-gray-500 hover:text-gray-700 mr-3">
-                      <MessageSquareIcon className="inline-block mr-1 h-4 w-4" /> {plan.comments} Comments
-                    </button>
-                    <button className="text-gray-500 hover:text-gray-700">
-                      <PaperclipIcon className="inline-block mr-1 h-4 w-4" /> {plan.attachments} Attachments
-                    </button>
-                  </div>
-                  <div>
-                    {expandedPlans[plan.id] && (
-                      <>
-                        <Button variant="thinkingDeskOutline" className="mr-2">
-                          <EditIcon className="mr-1 h-4 w-4" /> Edit
-                        </Button>
-                        <Button variant="thinkingDesk">
-                          Move to Projects <ArrowRightIcon className="ml-1 h-4 w-4" />
-                        </Button>
-                      </>
-                    )}
-                    <button 
-                      className="text-primary font-medium hover:text-primary/80 ml-3"
-                      onClick={() => togglePlanExpansion(plan.id)}
-                    >
-                      {expandedPlans[plan.id] ? (
-                        <span>Hide Details <ChevronDownIcon className="inline-block ml-1 h-4 w-4 rotate-180" /></span>
-                      ) : (
-                        <span>Show Details <ChevronDownIcon className="inline-block ml-1 h-4 w-4" /></span>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-10 border border-dashed border-gray-300 rounded-lg">
-            <h3 className="text-lg font-medium text-gray-700 mb-2">No Drafted Plans Yet</h3>
-            <p className="text-gray-500 mb-4">Start planning your next big initiative by creating a plan.</p>
-            <div className="text-center mt-4">
-              <Button
-                onClick={handleNewPlan}
-                variant="thinkingDesk"
-                className="flex items-center mx-auto"
-              >
-                <PlusIcon className="h-4 w-4 mr-2" /> Create Your First Plan
-              </Button>
-            </div>
-          </div>
-        )}
+        <div className="flex justify-end space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleSort('title')}
+          >
+            Sort by Title
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleSort('updatedAt')}
+          >
+            Sort by Date
+          </Button>
+        </div>
+        <div className="space-y-6">
+          {sortedPlans.map(plan => (
+            <DraftedPlanItem
+              key={plan.id}
+              plan={plan}
+              onEdit={onEdit}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
 
         {/* New Plan Dialog */}
         <DialogForm
@@ -433,4 +446,4 @@ Designer for lead magnets"
       </CardContent>
     </Card>
   );
-}
+});

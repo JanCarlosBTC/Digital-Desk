@@ -1,6 +1,6 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Offer } from "@shared/schema";
+import { Offer } from "@shared/prisma-schema";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const OfferMetrics = () => {
