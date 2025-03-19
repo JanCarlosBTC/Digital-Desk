@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient, UseQueryOptions } from "@tanstac
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useErrorHandler } from "@/lib/error-utils";
-import { apiRequest } from "@/lib/api-utils";
+import { apiRequest } from "@/lib/queryClient";
 import { queryKeys, defaultQueryConfig, getQueryKey } from "@/lib/query-keys";
 import { memo, useCallback, useState, useMemo } from "react";
 import { useToast } from "@/components/ui/use-toast";
@@ -108,6 +108,7 @@ export const ProblemTrees = memo(function ProblemTrees({
   onEdit 
 }: ProblemTreesProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [sortField, setSortField] = useState<keyof ProblemTree>('updatedAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const handleError = useErrorHandler();
@@ -122,7 +123,7 @@ export const ProblemTrees = memo(function ProblemTrees({
       return apiRequest('DELETE', `/api/problem-trees/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['problem-trees'] });
+      queryClient.invalidateQueries({ queryKey: getQueryKey('problemTrees') });
       toast({
         title: "Success",
         description: "Problem tree deleted successfully",
@@ -140,14 +141,10 @@ export const ProblemTrees = memo(function ProblemTrees({
   const handleDelete = useCallback(async (id: number) => {
     try {
       await deleteMutation.mutateAsync(id);
-      toast({
-        title: "Success",
-        description: "Problem tree deleted successfully",
-      });
     } catch (error) {
       handleError(error);
     }
-  }, [deleteMutation, handleError, toast]);
+  }, [deleteMutation, handleError]);
 
   const handleSort = useCallback((field: keyof ProblemTree) => {
     setSortField(current => {

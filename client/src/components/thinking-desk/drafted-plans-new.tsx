@@ -146,13 +146,25 @@ export const DraftedPlans = memo(function DraftedPlans({
     ...defaultQueryConfig,
   } as UseQueryOptions<DraftedPlan[], Error>);
 
-  const deleteMutation = useApiMutation<void, { id: number }>(
-    '/api/drafted-plans/delete',
-    'DELETE',
-    {
-      invalidateQueries: ['drafted-plans'],
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest('DELETE', `/api/drafted-plans/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: getQueryKey('draftedPlans') });
+      toast({
+        title: "Success",
+        description: "Plan deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error deleting plan",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
     }
-  );
+  });
 
   const handleDelete = useCallback(async (id: number) => {
     try {
