@@ -15,7 +15,7 @@ const DEMO_USER_ID = 1;
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Error handling middleware for Zod validation errors
-  const handleZodError = (error: unknown, res: Response) => {
+  const handleZodError = (error: unknown, res: Response): Response => {
     if (error instanceof ZodError) {
       const validationError = fromZodError(error);
       return res.status(400).json({ 
@@ -283,15 +283,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/clarity-labs/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const deleted = await storage.deleteClarityLab(parseInt(id));
+      // Ensure we have a valid ID by parsing and checking for NaN
+      const parsedId = parseInt(id);
+      if (isNaN(parsedId)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+      
+      const deleted = await storage.deleteClarityLab(parsedId);
       
       if (!deleted) {
         return res.status(404).json({ message: "Clarity lab entry not found" });
       }
       
-      res.status(204).end();
+      return res.status(204).end();
     } catch (error) {
-      res.status(500).json({ message: "Error deleting clarity lab entry" });
+      return res.status(500).json({ message: "Error deleting clarity lab entry" });
     }
   });
 
@@ -299,9 +305,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/weekly-reflections', async (req: Request, res: Response) => {
     try {
       const weeklyReflections = await storage.getWeeklyReflections(DEMO_USER_ID);
-      res.json(weeklyReflections);
+      return res.json(weeklyReflections);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching weekly reflections" });
+      return res.status(500).json({ message: "Error fetching weekly reflections" });
     }
   });
 
@@ -332,14 +338,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const validatedData = insertWeeklyReflectionSchema.parse(data);
         const weeklyReflection = await storage.createWeeklyReflection(validatedData);
-        res.status(201).json(weeklyReflection);
+        return res.status(201).json(weeklyReflection);
       } catch (zodError) {
         console.error("Weekly reflection validation error:", zodError);
-        handleZodError(zodError, res);
+        return handleZodError(zodError, res);
       }
     } catch (error) {
       console.error("Unexpected error in weekly reflection creation:", error);
-      res.status(500).json({ message: "Error creating weekly reflection" });
+      return res.status(500).json({ message: "Error creating weekly reflection" });
     }
   });
 
