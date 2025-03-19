@@ -1,22 +1,28 @@
 import React from 'react';
 
 /**
- * A simple, clear problem tree visualization in a vertical tree format
+ * Type definitions for the Problem Tree visualization component
  */
-export const ProblemTreeVisualization: React.FC<{
+interface ProblemTreeVisualizationProps {
   mainProblem: string;
   subProblems: string[];
   rootCauses: string[];
   potentialSolutions: string[];
   nextActions: string[];
-}> = ({
+}
+
+/**
+ * A TypeScript-friendly, accessible problem tree visualization component
+ * Presents a hierarchical view of problems, causes, solutions, and actions
+ */
+export const ProblemTreeVisualization: React.FC<ProblemTreeVisualizationProps> = ({
   mainProblem,
   subProblems = [],
   rootCauses = [],
   potentialSolutions = [],
   nextActions = []
 }) => {
-  // Filter out empty entries
+  // Filter out empty entries to avoid displaying empty items
   const filteredSubProblems = subProblems.filter(p => p && p.trim() !== '');
   const filteredRootCauses = rootCauses.filter(c => c && c.trim() !== '');
   const filteredSolutions = potentialSolutions.filter(s => s && s.trim() !== '');
@@ -24,7 +30,8 @@ export const ProblemTreeVisualization: React.FC<{
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-lg">
-      <style>{`
+      {/* CSS is defined inline with type-safe dangerouslySetInnerHTML */}
+      <style dangerouslySetInnerHTML={{ __html: `
         .tree {
           --line-color: #ccc;
           --problem-color: #f56565;
@@ -187,7 +194,7 @@ export const ProblemTreeVisualization: React.FC<{
           font-size: 0.85rem;
           text-align: left;
         }
-      `}</style>
+      `}} />
 
       <div className="tree mx-auto overflow-auto max-h-[500px] p-4">
         <ul>
