@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useThinkingDesk } from '@/pages/thinking-desk';
 import ProblemTreeList from './problem-tree-list';
 import ProblemTreeForm from './problem-tree-form';
 import ProblemTreeDetails from './problem-tree-details';
 import { DialogForm } from '@/components/ui/dialog-form';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 // Interface for Problem Tree
 interface ProblemTree {
@@ -28,6 +31,8 @@ export const ProblemTrees = ({
   showNewProblemTree = false, 
   onDialogClose 
 }: ProblemTreesProps) => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedProblemTree, setSelectedProblemTree] = useState<ProblemTree | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
@@ -54,6 +59,43 @@ export const ProblemTrees = ({
     setViewDialogOpen(true);
   };
 
+  // Handle edit problem tree
+  const handleEdit = useCallback((tree: ProblemTree) => {
+    setViewDialogOpen(false);
+    setSelectedProblemTree(tree);
+  }, []);
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest('DELETE', `/api/problem-trees/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
+      toast({
+        title: "Problem tree deleted",
+        description: "The problem tree has been deleted successfully.",
+        variant: "success",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error deleting problem tree",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Handle delete problem tree
+  const handleDelete = useCallback(async (id: number) => {
+    try {
+      await deleteMutation.mutateAsync(id);
+    } catch (error) {
+      console.error("Failed to delete problem tree:", error);
+    }
+  }, [deleteMutation]);
+
   // Handle new problem tree button click
   const handleNewProblemTreeClick = () => {
     setSelectedProblemTree(null);
@@ -69,6 +111,7 @@ export const ProblemTrees = ({
             onViewDetailsClick={handleViewDetailsClick}
             setSelectedProblemTree={setSelectedProblemTree}
             onNewProblemTreeClick={handleNewProblemTreeClick}
+            onDeleteProblemTree={handleDelete}
           />
         </div>
         
@@ -117,10 +160,7 @@ export const ProblemTrees = ({
         {viewingProblemTree && (
           <ProblemTreeDetails
             tree={viewingProblemTree}
-            onEdit={() => {
-              setViewDialogOpen(false);
-              setSelectedProblemTree(viewingProblemTree);
-            }}
+            onEdit={() => handleEdit(viewingProblemTree)}
             onBack={() => setViewDialogOpen(false)}
           />
         )}

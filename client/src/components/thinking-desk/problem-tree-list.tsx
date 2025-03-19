@@ -1,4 +1,4 @@
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -14,7 +14,8 @@ import {
   SearchIcon, 
   FilterIcon,
   ArrowDownIcon,
-  ArrowUpIcon
+  ArrowUpIcon,
+  TrashIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,12 +50,14 @@ interface ProblemTreeListProps {
   onViewDetailsClick?: (tree: ProblemTree) => void;
   setSelectedProblemTree?: (tree: ProblemTree) => void;
   onNewProblemTreeClick?: () => void;
+  onDeleteProblemTree?: (id: number) => void;
 }
 
 const ProblemTreeList = memo(function ProblemTreeList({ 
   onViewDetailsClick, 
   setSelectedProblemTree,
-  onNewProblemTreeClick
+  onNewProblemTreeClick,
+  onDeleteProblemTree
 }: ProblemTreeListProps) {
   const { toast } = useToast();
   const { createProblemTree } = useThinkingDesk();
@@ -92,6 +95,13 @@ const ProblemTreeList = memo(function ProblemTreeList({
       setSelectedProblemTree(tree);
     }
   };
+
+  // Handle delete of a problem tree
+  const handleDelete = useCallback((id: number) => {
+    if (onDeleteProblemTree) {
+      onDeleteProblemTree(id);
+    }
+  }, [onDeleteProblemTree]);
 
   // Format date for display
   const formatDate = (dateString: Date | string) => {
@@ -245,6 +255,12 @@ const ProblemTreeList = memo(function ProblemTreeList({
                     label: "Edit",
                     onClick: () => handleSelectProblemTree(tree),
                     variant: "thinkingDeskOutline"
+                  },
+                  {
+                    label: "Delete",
+                    onClick: () => handleDelete(tree.id),
+                    variant: "destructive",
+                    icon: <TrashIcon className="h-4 w-4" />
                   }
                 ]}
                 className="hover:shadow-md transition-shadow"
