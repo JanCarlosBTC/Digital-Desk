@@ -18,7 +18,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DraftedPlan } from "@shared/prisma-schema";
+// Define the DraftedPlan interface locally
+interface DraftedPlan {
+  id: number;
+  userId: number;
+  title: string;
+  description: string;
+  components: string[];
+  resourcesNeeded: string[];
+  expectedOutcomes: string[];
+  status: string;
+  comments: number;
+  attachments: number;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+};
 import { 
   ArrowRightIcon, 
   ChevronDownIcon, 
@@ -31,7 +45,6 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useErrorHandler } from "@/lib/error-utils";
-import { useApiMutation } from "@/lib/api-utils";
 import { queryKeys, defaultQueryConfig, getQueryKey } from "@/lib/query-keys";
 
 const formSchema = z.object({
@@ -168,15 +181,11 @@ export const DraftedPlans = memo(function DraftedPlans({
 
   const handleDelete = useCallback(async (id: number) => {
     try {
-      await deleteMutation.mutateAsync({ id });
-      toast({
-        title: "Success",
-        description: "Plan deleted successfully",
-      });
+      await deleteMutation.mutateAsync(id);
     } catch (error) {
       handleError(error);
     }
-  }, [deleteMutation, handleError, toast]);
+  }, [deleteMutation, handleError]);
 
   const handleSort = useCallback((field: keyof DraftedPlan) => {
     setSortField(current => {
@@ -219,7 +228,7 @@ export const DraftedPlans = memo(function DraftedPlans({
       return apiRequest('POST', '/api/drafted-plans', formattedData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/drafted-plans'] });
+      queryClient.invalidateQueries({ queryKey: getQueryKey('draftedPlans') });
       toast({
         title: "Plan created",
         description: "Your drafted plan has been created successfully.",
