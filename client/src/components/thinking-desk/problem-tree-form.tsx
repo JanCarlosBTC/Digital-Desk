@@ -125,11 +125,14 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
   // Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Form submitted");
     
     if (!validateForm()) {
+      console.log("Form validation failed:", errors);
       return;
     }
     
+    console.log("Form validation passed");
     setIsSubmitting(true);
     
     // Filter out empty fields
@@ -148,11 +151,15 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
       nextActions: filteredNextActions
     };
     
+    console.log("Submitting data:", data);
+    console.log("isEditing:", isEditing);
+    
     try {
       let response;
       
       if (isEditing && selectedProblemTree) {
         // Update existing problem tree
+        console.log("Updating problem tree ID:", selectedProblemTree.id);
         response = await fetch(`/api/problem-trees/${selectedProblemTree.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -160,6 +167,7 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
         });
       } else {
         // Create new problem tree
+        console.log("Creating new problem tree");
         response = await fetch('/api/problem-trees', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -167,12 +175,24 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
         });
       }
       
+      console.log("API response status:", response.status);
+      
       if (!response.ok) {
         const errorText = await response.text();
+        console.error("API error response:", errorText);
         throw new Error(errorText || 'Failed to save problem tree');
       }
       
+      // Try to get the response JSON for logging
+      try {
+        const responseData = await response.json();
+        console.log("API response data:", responseData);
+      } catch (jsonError) {
+        console.log("No JSON response or invalid JSON");
+      }
+      
       // Success
+      console.log("Invalidating queries");
       queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
       toast({
         title: isEditing ? 'Problem tree updated' : 'Problem tree created',
@@ -181,6 +201,7 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
       });
       
       if (onSuccess) {
+        console.log("Calling onSuccess callback");
         onSuccess();
       }
       
@@ -193,6 +214,7 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
       });
     } finally {
       setIsSubmitting(false);
+      console.log("Form submission completed");
     }
   };
   

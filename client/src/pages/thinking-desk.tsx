@@ -128,22 +128,19 @@ const ThinkingDesk = () => {
               onDialogClose={() => setShowNewProblemTree(false)}
             /> */}
             
-            {/* Using the simplified version that doesn't rely on DialogForm */}
+            {/* Standard layout for Problem Trees section */}
             <div className="mb-6">
               <h2 className="text-xl font-bold mb-4">Problem Trees</h2>
               <p className="text-gray-600 mb-4">
-                Let's do a direct test of the API to make sure it works.
+                Break down complex problems into root causes and potential solutions.
               </p>
             </div>
             
-            {/* Use the minimal test component to verify API works */}
-            <MinimalTest />
-            
-            {/* Add some space between components */}
-            <div className="h-8"></div>
-            
-            {/* Also include the simplified form */}
-            <ProblemTreeSimple />
+            {/* Use the original ProblemTrees component */}
+            <ProblemTrees 
+              showNewProblemTree={showNewProblemTree}
+              onDialogClose={() => setShowNewProblemTree(false)}
+            />
           </div>
           
           <div id="drafted-plans" className="tab-pane w-full">
