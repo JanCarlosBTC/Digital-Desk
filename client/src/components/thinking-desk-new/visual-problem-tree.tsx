@@ -2,16 +2,29 @@ import React, { useMemo } from 'react';
 
 /**
  * Type definitions for the Problem Tree visualization component
- * Strong typing with React.FC for better component typing
+ * Strong typing with detailed properties for better tooling support and accessibility
  */
 export interface ProblemTreeVisualizationProps {
+  /** Main problem text to display at the top of the tree */
   mainProblem: string;
+  
+  /** List of sub-problems related to the main problem */
   subProblems: string[];
+  
+  /** List of identified root causes for the problems */
   rootCauses: string[];
+  
+  /** List of potential solutions addressing the problems/causes */
   potentialSolutions: string[];
+  
+  /** List of actionable next steps to implement solutions */
   nextActions: string[];
+  
+  /** Optional CSS class name for custom styling */
   className?: string;
-  testId?: string; // For testing purposes
+  
+  /** Optional test ID for automated testing and selection in tests */
+  testId?: string;
 }
 
 /**
@@ -69,6 +82,46 @@ const ProblemTreeVisualization = React.memo(function ProblemTreeVisualization(
     filteredActions.length > 0, 
     [mainProblem, filteredSubProblems, filteredRootCauses, filteredSolutions, filteredActions]
   );
+  
+  // Handle keyboard navigation for improved accessibility
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    // Get all focusable tree items
+    const treeItems = document.querySelectorAll('[role="treeitem"] > div[tabindex="0"]');
+    const currentIndex = Array.from(treeItems).findIndex(item => item === document.activeElement);
+    
+    switch (event.key) {
+      case 'ArrowDown':
+        // Move focus to the next tree item
+        if (currentIndex < treeItems.length - 1) {
+          event.preventDefault();
+          (treeItems[currentIndex + 1] as HTMLElement).focus();
+        }
+        break;
+      case 'ArrowUp':
+        // Move focus to the previous tree item
+        if (currentIndex > 0) {
+          event.preventDefault();
+          (treeItems[currentIndex - 1] as HTMLElement).focus();
+        }
+        break;
+      case 'Home':
+        // Move focus to the first tree item
+        if (treeItems.length > 0) {
+          event.preventDefault();
+          (treeItems[0] as HTMLElement).focus();
+        }
+        break;
+      case 'End':
+        // Move focus to the last tree item
+        if (treeItems.length > 0) {
+          event.preventDefault();
+          (treeItems[treeItems.length - 1] as HTMLElement).focus();
+        }
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <div 
@@ -254,6 +307,9 @@ const ProblemTreeVisualization = React.memo(function ProblemTreeVisualization(
         className="tree mx-auto overflow-auto max-h-[500px] p-4"
         aria-hidden={!hasContent}
         tabIndex={hasContent ? 0 : -1}
+        onKeyDown={handleKeyDown}
+        role="application"
+        aria-roledescription="problem tree visualization"
       >
         <ul role="tree">
           <li role="treeitem">
@@ -316,14 +372,16 @@ const ProblemTreeVisualization = React.memo(function ProblemTreeVisualization(
                         
                         {/* Actions */}
                         {filteredActions.length > 0 && (
-                          <ul>
-                            <li>
-                              <div className="action-node">
-                                <div className="node-title action-title">Next Actions</div>
-                                <div className="node-content">
+                          <ul role="group">
+                            <li role="treeitem">
+                              <div className="action-node" tabIndex={0}>
+                                <div className="node-title action-title" id="next-actions-title">Next Actions</div>
+                                <div className="node-content" aria-labelledby="next-actions-title">
                                   <ul className="list-disc pl-4 space-y-1">
                                     {filteredActions.map((action, idx) => (
-                                      <li key={`act-${idx}`} className="text-left">{action}</li>
+                                      <li key={`act-${idx}`} className="text-left">
+                                        {action}
+                                      </li>
                                     ))}
                                   </ul>
                                 </div>
@@ -336,13 +394,15 @@ const ProblemTreeVisualization = React.memo(function ProblemTreeVisualization(
                     
                     {/* If there are actions but no solutions */}
                     {filteredSolutions.length === 0 && filteredActions.length > 0 && (
-                      <li>
-                        <div className="action-node">
-                          <div className="node-title action-title">Next Actions</div>
-                          <div className="node-content">
+                      <li role="treeitem">
+                        <div className="action-node" tabIndex={0}>
+                          <div className="node-title action-title" id="next-actions-alt-title">Next Actions</div>
+                          <div className="node-content" aria-labelledby="next-actions-alt-title">
                             <ul className="list-disc pl-4 space-y-1">
                               {filteredActions.map((action, idx) => (
-                                <li key={`act-${idx}`} className="text-left">{action}</li>
+                                <li key={`act-${idx}`} className="text-left">
+                                  {action}
+                                </li>
                               ))}
                             </ul>
                           </div>
@@ -355,13 +415,15 @@ const ProblemTreeVisualization = React.memo(function ProblemTreeVisualization(
               
               {/* If there are solutions but no root causes */}
               {filteredRootCauses.length === 0 && filteredSolutions.length > 0 && (
-                <li>
-                  <div className="solution-node">
-                    <div className="node-title solution-title">Solutions</div>
-                    <div className="node-content">
+                <li role="treeitem">
+                  <div className="solution-node" tabIndex={0}>
+                    <div className="node-title solution-title" id="solutions-no-causes-title">Solutions</div>
+                    <div className="node-content" aria-labelledby="solutions-no-causes-title">
                       <ul className="list-disc pl-4 space-y-1">
                         {filteredSolutions.map((solution, idx) => (
-                          <li key={`sol-${idx}`} className="text-left">{solution}</li>
+                          <li key={`sol-${idx}`} className="text-left">
+                            {solution}
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -369,14 +431,16 @@ const ProblemTreeVisualization = React.memo(function ProblemTreeVisualization(
                   
                   {/* Actions */}
                   {filteredActions.length > 0 && (
-                    <ul>
-                      <li>
-                        <div className="action-node">
-                          <div className="node-title action-title">Next Actions</div>
-                          <div className="node-content">
+                    <ul role="group">
+                      <li role="treeitem">
+                        <div className="action-node" tabIndex={0}>
+                          <div className="node-title action-title" id="solo-actions-title">Next Actions</div>
+                          <div className="node-content" aria-labelledby="solo-actions-title">
                             <ul className="list-disc pl-4 space-y-1">
                               {filteredActions.map((action, idx) => (
-                                <li key={`act-${idx}`} className="text-left">{action}</li>
+                                <li key={`act-${idx}`} className="text-left">
+                                  {action}
+                                </li>
                               ))}
                             </ul>
                           </div>
@@ -389,13 +453,15 @@ const ProblemTreeVisualization = React.memo(function ProblemTreeVisualization(
               
               {/* If there are only actions, but no root causes or solutions */}
               {filteredRootCauses.length === 0 && filteredSolutions.length === 0 && filteredActions.length > 0 && (
-                <li>
-                  <div className="action-node">
-                    <div className="node-title action-title">Next Actions</div>
-                    <div className="node-content">
+                <li role="treeitem">
+                  <div className="action-node" tabIndex={0}>
+                    <div className="node-title action-title" id="direct-actions-title">Next Actions</div>
+                    <div className="node-content" aria-labelledby="direct-actions-title">
                       <ul className="list-disc pl-4 space-y-1">
                         {filteredActions.map((action, idx) => (
-                          <li key={`act-${idx}`} className="text-left">{action}</li>
+                          <li key={`act-${idx}`} className="text-left">
+                            {action}
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -406,8 +472,11 @@ const ProblemTreeVisualization = React.memo(function ProblemTreeVisualization(
               {/* Empty state */}
               {filteredSubProblems.length === 0 && filteredRootCauses.length === 0 && 
                filteredSolutions.length === 0 && filteredActions.length === 0 && (
-                <li>
-                  <div className="border border-gray-300 bg-gray-50 text-gray-500 italic">
+                <li role="treeitem">
+                  <div 
+                    className="border border-gray-300 bg-gray-50 text-gray-500 italic"
+                    aria-label="No tree details available"
+                  >
                     No details defined yet
                   </div>
                 </li>
