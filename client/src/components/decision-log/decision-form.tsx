@@ -240,7 +240,7 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
       )}
 
       {/* Using Form from shadcn/ui, which is FormProvider under the hood */}
-      <Form {...form}>
+      <Form {...form} onSubmit={form.handleSubmit(onSubmit)}>
           <div className="space-y-8">
             {/* Basic Information Section */}
             <div>
