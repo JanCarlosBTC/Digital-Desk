@@ -13,6 +13,7 @@ import ProblemTrees from "@/components/thinking-desk/problem-trees";
 import { DraftedPlans } from "@/components/thinking-desk/drafted-plans-new";
 import ClarityLab from "@/components/thinking-desk/clarity-lab";
 import { PageHeader } from "@/components/ui/page-header";
+import ProblemTreeSimple from "@/components/thinking-desk/problem-tree-simple";
 
 // Create a context for Think Desk actions
 interface ThinkingDeskContextType {
@@ -120,10 +121,22 @@ const ThinkingDesk = () => {
           </div>
           
           <div id="problem-trees" className="tab-pane w-full">
-            <ProblemTrees 
+            {/* We're bypassing the normal ProblemTrees component temporarily */}
+            {/* <ProblemTrees 
               showNewProblemTree={showNewProblemTree}
               onDialogClose={() => setShowNewProblemTree(false)}
-            />
+            /> */}
+            
+            {/* Using the simplified version that doesn't rely on DialogForm */}
+            <div className="mb-6">
+              <h2 className="text-xl font-bold mb-4">Problem Trees</h2>
+              <p className="text-gray-600 mb-4">
+                Use this simplified version to create a new problem tree.
+              </p>
+            </div>
+            
+            {/* Importing and using our simplified version */}
+            <ProblemTreeSimple />
           </div>
           
           <div id="drafted-plans" className="tab-pane w-full">
