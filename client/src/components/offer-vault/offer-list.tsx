@@ -82,21 +82,40 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
     queryKey: ['/api/offers'],
   });
 
-  // Create offer
-  const createMutation = useMutation({
+  // Define response type for API requests
+  type OfferResponse = {
+    id: number;
+    title: string;
+    status: string;
+    [key: string]: any;
+  };
+
+  // Create offer with improved type safety
+  const createMutation = useMutation<OfferResponse, Error, FormValues>({
     mutationFn: async (data: FormValues) => {
-      return apiRequest('POST', '/api/offers', data);
+      console.log('Creating offer with data:', data);
+      return apiRequest<OfferResponse>('POST', '/api/offers', data);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Log success for debugging
+      console.log('Offer created successfully:', data);
+      
+      // Use more specific query invalidation
       queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
+      
       toast({
         title: "Offer created",
         description: "Your offer has been created successfully.",
+        variant: "success",
       });
+      
       setIsOpen(false);
       form.reset();
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      // Log error for debugging
+      console.error('Error creating offer:', error);
+      
       toast({
         title: "Error creating offer",
         description: error.message || "Please try again.",
@@ -105,22 +124,33 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
     }
   });
 
-  // Update offer
-  const updateMutation = useMutation({
+  // Update offer with improved type safety
+  const updateMutation = useMutation<OfferResponse, Error, FormValues & { id: number }>({
     mutationFn: async (data: FormValues & { id: number }) => {
       const { id, ...rest } = data;
-      return apiRequest('PUT', `/api/offers/${id}`, rest);
+      console.log('Updating offer with ID:', id, 'and data:', rest);
+      return apiRequest<OfferResponse>('PUT', `/api/offers/${id}`, rest);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Log success for debugging
+      console.log('Offer updated successfully:', data);
+      
+      // Use more specific query invalidation
       queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
+      
       toast({
         title: "Offer updated",
         description: "Your offer has been updated successfully.",
+        variant: "success",
       });
+      
       setIsEditOpen(false);
       setSelectedOffer(null);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      // Log error for debugging
+      console.error('Error updating offer:', error);
+      
       toast({
         title: "Error updating offer",
         description: error.message || "Please try again.",
@@ -129,24 +159,32 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
     }
   });
   
-  // Delete offer
-  const deleteMutation = useMutation({
+  // Delete offer with improved type safety
+  const deleteMutation = useMutation<void, Error, number>({
     mutationFn: async (id: number) => {
-      return apiRequest('DELETE', `/api/offers/${id}`);
+      console.log('Deleting offer with ID:', id);
+      return apiRequest<void>('DELETE', `/api/offers/${id}`);
     },
     onSuccess: () => {
+      // Use more specific query invalidation
       queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
+      
       toast({
         title: "Offer deleted",
         description: "Your offer has been deleted successfully.",
+        variant: "success",
       });
+      
       setIsEditOpen(false);
       setSelectedOffer(null);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      // Log error for debugging
+      console.error('Error deleting offer:', error);
+      
       toast({
         title: "Error deleting offer",
-        description: error instanceof Error ? error.message : "Please try again.",
+        description: error.message || "Please try again.",
         variant: "destructive",
       });
     }
