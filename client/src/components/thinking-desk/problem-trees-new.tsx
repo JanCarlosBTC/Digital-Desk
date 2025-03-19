@@ -1,8 +1,8 @@
-import { useQuery, useMutation, UseQueryOptions } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, UseQueryOptions } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useErrorHandler } from "@/lib/error-utils";
-import { useApiMutation } from "@/lib/api-utils";
+import { apiRequest } from "@/lib/api-utils";
 import { queryKeys, defaultQueryConfig, getQueryKey } from "@/lib/query-keys";
 import { memo, useCallback, useState, useMemo } from "react";
 import { useToast } from "@/components/ui/use-toast";
@@ -117,17 +117,29 @@ export const ProblemTrees = memo(function ProblemTrees({
     ...defaultQueryConfig,
   } as UseQueryOptions<ProblemTree[], Error>);
 
-  const deleteMutation = useApiMutation<void, { id: number }>(
-    `/api/problem-trees`,
-    'DELETE',
-    {
-      invalidateQueries: ['problem-trees'],
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest('DELETE', `/api/problem-trees/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['problem-trees'] });
+      toast({
+        title: "Success",
+        description: "Problem tree deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error deleting problem tree",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
     }
-  );
+  });
 
   const handleDelete = useCallback(async (id: number) => {
     try {
-      await deleteMutation.mutateAsync({ id });
+      await deleteMutation.mutateAsync(id);
       toast({
         title: "Success",
         description: "Problem tree deleted successfully",
