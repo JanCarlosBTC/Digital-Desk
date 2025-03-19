@@ -1,5 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { handleApiError } from "./error-utils";
+import { useMutation, useQueryClient, QueryKey } from "@tanstack/react-query";
+import { handleApiError, ErrorType, ErrorData, EnhancedError } from "./error-utils";
 
 /**
  * Structured API error with additional metadata
@@ -7,23 +7,65 @@ import { handleApiError } from "./error-utils";
  */
 export interface ApiError extends Error {
   status?: number;
-  data?: any;
+  data?: ErrorData;
   url?: string;
   method?: string;
-  timestamp?: string;
+  timestamp: string;
   originalError?: unknown;
   requestData?: unknown;
+  retryable?: boolean;
+  errorType?: ErrorType;
+  operationId?: string;
 }
+
+/**
+ * HTTP Methods supported by the API
+ */
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
 /**
  * API request parameters with strict typing
  */
-export interface ApiRequest {
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+export interface ApiRequest<TData = unknown> {
+  method: HttpMethod;
   url: string;
-  data?: unknown;
+  data?: TData;
   headers?: Record<string, string>;
   timeout?: number;
+  retryConfig?: {
+    maxRetries: number;
+    retryableStatuses: number[];
+  };
+  cache?: RequestCache;
+  signal?: AbortSignal;
+}
+
+/**
+ * API response with metadata
+ */
+export interface ApiResponse<T> {
+  data: T;
+  status: number;
+  headers: Headers;
+  serverTiming?: Record<string, number>;
+  timestamp: string;
+}
+
+/**
+ * Request metadata for performance tracking and debugging
+ */
+interface RequestMetadata {
+  startTime: number;
+  url: string;
+  method: HttpMethod;
+  requestId: string;
+}
+
+/**
+ * Generates a unique request ID for tracking related requests and errors
+ */
+function generateRequestId(): string {
+  return `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
 /**
@@ -39,64 +81,148 @@ export interface ApiRequest {
  * @throws ApiError with enhanced metadata on request failure
  */
 async function apiRequest<T>(
-  method: string, 
+  method: HttpMethod, 
   url: string, 
   data?: unknown, 
   options: { 
-    headers?: Record<string, string>,
-    timeout?: number
+    headers?: Record<string, string>;
+    timeout?: number;
+    retryConfig?: {
+      maxRetries: number;
+      retryableStatuses: number[];
+    };
+    cache?: RequestCache;
+    signal?: AbortSignal;
   } = {}
 ): Promise<T> {
-  const startTime = performance.now();
-  const { headers = {}, timeout = 30000 } = options;
+  const requestId = generateRequestId();
+  const metadata: RequestMetadata = {
+    startTime: performance.now(),
+    url,
+    method,
+    requestId
+  };
   
-  // Create abort controller for timeout handling
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  const { 
+    headers = {}, 
+    timeout = 30000, 
+    retryConfig = { maxRetries: 0, retryableStatuses: [] },
+    cache = 'default',
+    signal
+  } = options;
+  
+  // Create abort controller for timeout handling unless signal already provided
+  let controller: AbortController | undefined;
+  let timeoutId: NodeJS.Timeout | undefined;
+  
+  if (!signal) {
+    controller = new AbortController();
+    timeoutId = setTimeout(() => {
+      console.warn(`Request timeout for ${method} ${url} (ID: ${requestId})`);
+      controller?.abort('timeout');
+    }, timeout);
+  }
   
   try {
     const response = await fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json',
+        'X-Request-ID': requestId,
         ...headers,
       },
       body: data ? JSON.stringify(data) : undefined,
-      signal: controller.signal,
+      signal: signal || controller?.signal,
+      cache
     });
 
     // Clear timeout since request completed
-    clearTimeout(timeoutId);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
 
-    // Parse response data safely
+    // Extract server timing headers for performance monitoring if present
+    const serverTiming: Record<string, number> = {};
+    const timingHeader = response.headers.get('Server-Timing');
+    if (timingHeader) {
+      const timings = timingHeader.split(',');
+      timings.forEach(timing => {
+        const [name, durationStr] = timing.trim().split(';dur=');
+        if (name && durationStr) {
+          const duration = parseFloat(durationStr);
+          if (!isNaN(duration)) {
+            serverTiming[name] = duration;
+          }
+        }
+      });
+    }
+
+    // Parse response data safely with improved error handling
     let responseData: any;
     try {
-      // Try to parse as JSON first
-      responseData = await response.json();
+      // Check content type to determine how to parse the response
+      const contentType = response.headers.get('Content-Type') || '';
+      
+      if (contentType.includes('application/json')) {
+        responseData = await response.json();
+      } else if (response.status === 204 || response.headers.get('Content-Length') === '0') {
+        // No content responses
+        responseData = null;
+      } else if (contentType.includes('text/')) {
+        // Handle text responses
+        const text = await response.text();
+        // Try to parse as JSON if it looks like JSON
+        if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+          try {
+            responseData = JSON.parse(text);
+          } catch {
+            responseData = text;
+          }
+        } else {
+          responseData = text;
+        }
+      } else {
+        // For other content types, return empty object but log content type
+        console.warn(`Unhandled content type: ${contentType} for ${url}`);
+        responseData = {};
+      }
     } catch (parseError) {
-      // If JSON parsing fails but response is OK, return empty object
+      // Special handling for parsing errors
       if (response.ok) {
+        // If response is OK but parsing failed, return empty object
         responseData = {};
       } else {
-        // Otherwise try to get response text for better error context
+        // For error responses with parsing issues, try to get text
         try {
           const text = await response.text();
           throw Object.assign(new Error(`Failed to parse response: ${(parseError as Error).message}`), {
             status: response.status,
             responseText: text,
-            parseError
+            parseError,
+            url,
+            method,
+            timestamp: new Date().toISOString(),
+            operationId: requestId
           });
         } catch (textError) {
-          // If even text extraction fails, create minimal error
+          // Create error with available context if everything fails
           throw Object.assign(new Error(`Request failed with status ${response.status}`), {
             status: response.status,
-            parseError
+            parseError,
+            url,
+            method,
+            timestamp: new Date().toISOString(),
+            operationId: requestId
           });
         }
       }
     }
     
     if (!response.ok) {
+      // Check if we should retry based on status code
+      const shouldRetry = retryConfig.maxRetries > 0 && 
+                         retryConfig.retryableStatuses.includes(response.status);
+                        
       // Create structured error with comprehensive metadata
       const errorMessage = 
         responseData?.message || 
@@ -106,21 +232,42 @@ async function apiRequest<T>(
         
       const apiError = new Error(`API Error: ${errorMessage}`) as ApiError;
       
-      // Enhance error with metadata for better debugging
+      // Enhanced error with rich metadata
       apiError.status = response.status;
       apiError.data = responseData;
       apiError.url = url;
       apiError.method = method;
       apiError.timestamp = new Date().toISOString();
       apiError.requestData = data;
+      apiError.retryable = shouldRetry;
+      apiError.operationId = requestId;
+      
+      // Determine error type based on status code
+      apiError.errorType = response.status === 401 ? ErrorType.AUTHENTICATION :
+                         response.status === 403 ? ErrorType.AUTHORIZATION :
+                         response.status === 404 ? ErrorType.NOT_FOUND :
+                         response.status === 408 ? ErrorType.TIMEOUT :
+                         response.status >= 400 && response.status < 500 ? ErrorType.VALIDATION :
+                         response.status >= 500 ? ErrorType.SERVER :
+                         ErrorType.UNKNOWN;
       
       throw apiError;
+    }
+
+    // Log performance metrics for successful requests
+    const endTime = performance.now();
+    const duration = endTime - metadata.startTime;
+    
+    if (duration > 1000) {
+      console.warn(`Slow API request: ${method} ${url} took ${duration.toFixed(2)}ms (ID: ${requestId})`);
     }
 
     return responseData as T;
   } catch (error) {
     // Always clear timeout to prevent memory leaks
-    clearTimeout(timeoutId);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
     
     // Handle abort/timeout errors
     if (error instanceof DOMException && error.name === 'AbortError') {
@@ -130,19 +277,40 @@ async function apiRequest<T>(
       timeoutError.method = method;
       timeoutError.timestamp = new Date().toISOString();
       timeoutError.requestData = data;
+      timeoutError.operationId = requestId;
+      timeoutError.errorType = ErrorType.TIMEOUT;
       throw timeoutError;
     }
     
-    // If error is already a structured API error, just rethrow it
+    // If error is already a structured API error, add request ID if missing
     if (error instanceof Error && 'status' in error) {
-      throw error;
+      const apiError = error as ApiError;
+      if (!apiError.operationId) {
+        apiError.operationId = requestId;
+      }
+      throw apiError;
+    }
+    
+    // For network errors, create a properly typed network error
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      const networkError = new Error('Network connection issue') as ApiError;
+      networkError.status = 0;
+      networkError.url = url;
+      networkError.method = method;
+      networkError.timestamp = new Date().toISOString();
+      networkError.requestData = data;
+      networkError.originalError = error;
+      networkError.operationId = requestId;
+      networkError.errorType = ErrorType.NETWORK;
+      networkError.retryable = true;
+      throw networkError;
     }
     
     // Otherwise, create a new structured error with available context
     const enhancedError = new Error(
       error instanceof Error 
         ? error.message 
-        : 'Network or unexpected error'
+        : 'Unexpected API error'
     ) as ApiError;
     
     // Add metadata for better debugging
@@ -151,15 +319,17 @@ async function apiRequest<T>(
     enhancedError.method = method;
     enhancedError.timestamp = new Date().toISOString();
     enhancedError.requestData = data;
+    enhancedError.operationId = requestId;
+    enhancedError.errorType = ErrorType.UNKNOWN;
     
     throw enhancedError;
   } finally {
     const endTime = performance.now();
-    const duration = endTime - startTime;
+    const duration = endTime - metadata.startTime;
     
-    // Log long-running requests for performance monitoring
-    if (duration > 1000) {
-      console.warn(`Slow API request: ${method} ${url} took ${duration.toFixed(2)}ms`);
+    // Performance monitoring for all requests (success or failure)
+    if (process.env.NODE_ENV === 'development' || duration > 1000) {
+      console.debug(`API ${method} ${url} completed in ${duration.toFixed(2)}ms (ID: ${requestId})`);
     }
   }
 }
@@ -176,6 +346,8 @@ export function useBatchMutation<TData = unknown[]>() {
 
   return useMutation<TData, Error, ApiRequest[]>({
     mutationFn: async (requests: ApiRequest[]) => {
+      const batchId = generateRequestId();
+      
       try {
         // Type assertion to allow returning the Promise.all result
         return await Promise.all(
@@ -186,7 +358,10 @@ export function useBatchMutation<TData = unknown[]>() {
               req.data, 
               { 
                 headers: req.headers,
-                timeout: req.timeout
+                timeout: req.timeout,
+                retryConfig: req.retryConfig,
+                cache: req.cache,
+                signal: req.signal
               }
             )
           )
@@ -195,24 +370,39 @@ export function useBatchMutation<TData = unknown[]>() {
         // Add batch context to error with improved type safety
         if (error instanceof Error) {
           const apiError = error as ApiError;
-          apiError.data = {
-            ...(apiError.data || {}),
+          
+          // Create properly structured error data
+          const errorData: ErrorData = {
+            ...(typeof apiError.data === 'object' ? apiError.data as object : {}),
+            batchId,
             batchSize: requests.length,
-            batchUrls: requests.map(r => r.url)
+            batchUrls: requests.map(r => r.url),
+            failedRequestIndex: requests.findIndex(req => 
+              req.url === apiError.url && req.method === apiError.method
+            )
           };
+          
+          apiError.data = errorData;
         }
         throw error;
       }
     },
     onError: (error: Error) => {
-      // Log structured error with batch context and better type safety
-      const apiError = error as ApiError;
-      console.error("Batch mutation error:", {
-        message: error.message,
-        status: apiError.status || 'unknown',
-        data: apiError.data || {},
-        timestamp: apiError.timestamp || new Date().toISOString()
-      });
+      // More structured error logging with better type safety
+      if (error instanceof Error) {
+        const apiError = error as ApiError;
+        
+        console.error("Batch mutation error:", {
+          operationId: apiError.operationId || 'unknown',
+          message: error.message,
+          errorType: apiError.errorType || 'unknown',
+          status: apiError.status || 'unknown',
+          url: apiError.url || 'unknown',
+          method: apiError.method || 'unknown',
+          timestamp: apiError.timestamp || new Date().toISOString(),
+          data: apiError.data || {}
+        });
+      }
       
       // Forward to global error handler
       handleApiError(error);
@@ -222,6 +412,35 @@ export function useBatchMutation<TData = unknown[]>() {
       queryClient.invalidateQueries();
     },
   });
+}
+
+/**
+ * Interface for API mutation options with improved type safety
+ */
+export interface ApiMutationOptions<TData = unknown, TVariables = unknown> {
+  /** Success callback with the API response */
+  onSuccess?: (data: TData) => void;
+  
+  /** Error callback with the enhanced API error */
+  onError?: (error: ApiError) => void;
+  
+  /** Query keys to invalidate after successful mutation */
+  invalidateQueries?: Array<string | QueryKey | { queryKey: string | QueryKey, exact?: boolean }>;
+  
+  /** Custom headers to include with the request */
+  headers?: Record<string, string>;
+  
+  /** Timeout in milliseconds */
+  timeout?: number;
+  
+  /** Whether to retry the request on certain failures */
+  retry?: boolean | number | {
+    maxRetries: number;
+    retryableStatuses: number[];
+  };
+  
+  /** Cache behavior for the request */
+  cache?: RequestCache;
 }
 
 /**
@@ -235,14 +454,8 @@ export function useBatchMutation<TData = unknown[]>() {
  */
 export function useApiMutation<TData = unknown, TVariables = unknown>(
   url: string,
-  method: ApiRequest['method'] = 'POST',
-  options: {
-    onSuccess?: (data: TData) => void;
-    onError?: (error: ApiError) => void;
-    invalidateQueries?: Array<string | { queryKey: string, exact?: boolean }>;
-    headers?: Record<string, string>;
-    timeout?: number;
-  } = {}
+  method: HttpMethod = 'POST',
+  options: ApiMutationOptions<TData, TVariables> = {}
 ) {
   const queryClient = useQueryClient();
   const { 
@@ -250,12 +463,31 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
     onError, 
     invalidateQueries, 
     headers, 
-    timeout 
+    timeout,
+    retry,
+    cache
   } = options;
+
+  // Convert retry options to standardized format
+  const retryConfig = typeof retry === 'boolean' ? 
+    (retry ? { maxRetries: 3, retryableStatuses: [408, 429, 500, 502, 503, 504] } : { maxRetries: 0, retryableStatuses: [] }) :
+    typeof retry === 'number' ? 
+    { maxRetries: retry, retryableStatuses: [408, 429, 500, 502, 503, 504] } : 
+    retry || { maxRetries: 0, retryableStatuses: [] };
 
   return useMutation<TData, Error, TVariables>({
     mutationFn: async (variables: TVariables) => {
-      return await apiRequest<TData>(method, url, variables, { headers, timeout });
+      return await apiRequest<TData>(
+        method, 
+        url, 
+        variables, 
+        { 
+          headers, 
+          timeout,
+          retryConfig,
+          cache
+        }
+      );
     },
     onSuccess: (data) => {
       // Execute success callback if provided
@@ -267,10 +499,16 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
       if (invalidateQueries && Array.isArray(invalidateQueries)) {
         invalidateQueries.forEach(queryKey => {
           if (typeof queryKey === 'string') {
+            // Single string key
             queryClient.invalidateQueries({ queryKey: [queryKey] });
+          } else if (Array.isArray(queryKey)) {
+            // Array query key
+            queryClient.invalidateQueries({ queryKey });
           } else if (queryKey && typeof queryKey === 'object' && 'queryKey' in queryKey) {
+            // Object with queryKey property
+            const key = queryKey.queryKey;
             queryClient.invalidateQueries({ 
-              queryKey: [queryKey.queryKey],
+              queryKey: typeof key === 'string' ? [key] : key,
               exact: queryKey.exact 
             });
           }
@@ -278,31 +516,37 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
       }
     },
     onError: (error: Error) => {
-      // Log structured error information with safer type checking
-      const apiError = error as ApiError;
+      // Convert to ApiError with better type safety
+      let apiError: ApiError;
+      
+      if ('status' in error) {
+        apiError = error as ApiError;
+      } else {
+        // Create properly typed ApiError with operation context
+        apiError = new Error(error.message) as ApiError;
+        apiError.originalError = error;
+        apiError.url = url;
+        apiError.method = method;
+        apiError.timestamp = new Date().toISOString();
+        apiError.operationId = generateRequestId();
+      }
+      
+      // Enhanced structured error logging
       console.error(`API Mutation error (${url}):`, {
+        operationId: apiError.operationId || 'unknown',
         message: apiError.message,
+        errorType: apiError.errorType || 'unknown',
         status: apiError.status || 'unknown',
         timestamp: apiError.timestamp || new Date().toISOString(),
         data: apiError.data || {}
       });
       
-      // Execute error callback if provided with proper type handling
+      // Execute error callback if provided
       if (onError) {
-        if ('status' in error) {
-          onError(error as ApiError);
-        } else {
-          // Create minimal ApiError if the error isn't already one
-          const enhancedError = new Error(error.message) as ApiError;
-          enhancedError.originalError = error;
-          enhancedError.url = url;
-          enhancedError.method = method;
-          enhancedError.timestamp = new Date().toISOString();
-          onError(enhancedError);
-        }
+        onError(apiError);
       }
       
-      // Forward to global error handler
+      // Forward to global error handler for consistent error processing
       handleApiError(error);
     }
   });

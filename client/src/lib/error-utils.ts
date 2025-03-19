@@ -14,7 +14,29 @@ export enum ErrorType {
   SERVER = 'server',
   TIMEOUT = 'timeout',
   CLIENT = 'client',
-  UNKNOWN = 'unknown'
+  UNKNOWN = 'unknown',
+  BUSINESS_LOGIC = 'business_logic'  // Added for domain-specific errors
+}
+
+/**
+ * Error severity levels for prioritizing error handling
+ */
+export enum ErrorSeverity {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical'
+}
+
+/**
+ * Structured error data interface for better type safety
+ */
+export interface ErrorData {
+  message?: string;
+  code?: string;
+  details?: Record<string, unknown>;
+  validationErrors?: Record<string, string[]>;
+  [key: string]: unknown;
 }
 
 /**
@@ -22,14 +44,17 @@ export enum ErrorType {
  */
 export interface EnhancedError extends Error {
   type: ErrorType;
+  severity?: ErrorSeverity;
   status?: number;
-  data?: any;
+  data?: ErrorData;
   url?: string;
   method?: string;
-  timestamp?: string;
-  recoverable?: boolean;
+  timestamp: string;
+  recoverable: boolean;
   retryCount?: number;
-  recoverySuggestion?: string;
+  recoverySuggestion: string;
+  preventDuplication?: boolean;
+  operationId?: string;
   originalError?: unknown;
   requestData?: unknown;
 }
@@ -47,10 +72,37 @@ export function getErrorTypeFromStatus(status?: number): ErrorType {
   if (status === 403) return ErrorType.AUTHORIZATION;
   if (status === 404) return ErrorType.NOT_FOUND;
   if (status === 408) return ErrorType.TIMEOUT;
+  if (status === 422) return ErrorType.VALIDATION;
   if (status >= 400 && status < 500) return ErrorType.VALIDATION;
   if (status >= 500) return ErrorType.SERVER;
   
   return ErrorType.UNKNOWN;
+}
+
+/**
+ * Maps error types to severity levels for prioritizing error handling
+ * 
+ * @param errorType Type of error
+ * @returns Appropriate severity level
+ */
+export function getSeverityFromErrorType(errorType: ErrorType): ErrorSeverity {
+  switch (errorType) {
+    case ErrorType.AUTHENTICATION:
+    case ErrorType.AUTHORIZATION:
+      return ErrorSeverity.HIGH;
+    case ErrorType.SERVER:
+      return ErrorSeverity.HIGH;
+    case ErrorType.NETWORK:
+    case ErrorType.TIMEOUT:
+      return ErrorSeverity.MEDIUM;
+    case ErrorType.VALIDATION:
+    case ErrorType.BUSINESS_LOGIC:
+      return ErrorSeverity.MEDIUM;
+    case ErrorType.NOT_FOUND:
+      return ErrorSeverity.LOW;
+    default:
+      return ErrorSeverity.MEDIUM;
+  }
 }
 
 /**
@@ -65,11 +117,12 @@ export function isRecoverableError(errorType: ErrorType): boolean {
     case ErrorType.NETWORK:
     case ErrorType.TIMEOUT:
     case ErrorType.AUTHENTICATION:
-      return true;
     case ErrorType.VALIDATION:
+    case ErrorType.BUSINESS_LOGIC:
       return true;
     case ErrorType.SERVER:
     case ErrorType.UNKNOWN:
+    case ErrorType.NOT_FOUND:
       return false;
     default:
       return false;
@@ -98,9 +151,30 @@ export function getRecoverySuggestion(errorType: ErrorType): string {
       return 'The requested resource could not be found.';
     case ErrorType.SERVER:
       return 'There was a problem with the server. Please try again later.';
+    case ErrorType.BUSINESS_LOGIC:
+      return 'There was a problem processing your request. Please check the details and try again.';
     default:
       return 'An unexpected error occurred. Please try again.';
   }
+}
+
+/**
+ * Safely extracts a value from an object with type checking
+ * 
+ * @param obj The object to extract from
+ * @param key The key to extract
+ * @param defaultValue Default value if key doesn't exist or is wrong type
+ * @returns The extracted value with correct type
+ */
+function safeExtract<T>(obj: unknown, key: string, defaultValue: T): T {
+  if (obj && typeof obj === 'object' && key in obj) {
+    const value = (obj as Record<string, unknown>)[key];
+    // Type checking to ensure we only return values of the correct type
+    if (typeof value === typeof defaultValue) {
+      return value as T;
+    }
+  }
+  return defaultValue;
 }
 
 /**
@@ -133,17 +207,49 @@ export function extractErrorMessage(error: unknown): string {
     // Extract structured error data if available
     if (enhancedError.data) {
       if (typeof enhancedError.data === 'object' && enhancedError.data !== null) {
-        // Handle common API error response formats
-        if (enhancedError.data.message) {
-          return String(enhancedError.data.message);
+        // Handle common API error response formats with type safety
+        const errorData = enhancedError.data;
+        
+        // Try various common message properties
+        if (errorData.message && typeof errorData.message === 'string') {
+          return errorData.message;
         }
-        if (enhancedError.data.error) {
-          return String(enhancedError.data.error);
+        
+        if (errorData.error && typeof errorData.error === 'string') {
+          return errorData.error;
         }
-        if (enhancedError.data.errors && Array.isArray(enhancedError.data.errors)) {
-          return enhancedError.data.errors.map((e: any) => 
-            typeof e === 'string' ? e : (e.message || e.error || JSON.stringify(e))
-          ).join('. ');
+        
+        // Handle validation errors
+        if (errorData.validationErrors && typeof errorData.validationErrors === 'object') {
+          const validationErrors = errorData.validationErrors;
+          const errorMessages: string[] = [];
+          
+          // Type-safe extraction of validation errors
+          Object.entries(validationErrors).forEach(([field, errors]) => {
+            if (Array.isArray(errors)) {
+              errors.forEach(error => {
+                if (typeof error === 'string') {
+                  errorMessages.push(`${field}: ${error}`);
+                }
+              });
+            }
+          });
+          
+          if (errorMessages.length > 0) {
+            return errorMessages.join('. ');
+          }
+        }
+        
+        // Handle arrays of errors
+        if ('errors' in errorData && Array.isArray(errorData.errors)) {
+          const errors = errorData.errors as unknown[];
+          return errors.map((e) => 
+            typeof e === 'string' ? e : (
+              safeExtract(e, 'message', '') || 
+              safeExtract(e, 'error', '') || 
+              JSON.stringify(e)
+            )
+          ).filter(Boolean).join('. ');
         }
       }
     }
@@ -173,23 +279,36 @@ export function extractErrorMessage(error: unknown): string {
     return error;
   }
   
-  // Handle objects with message property
-  if (typeof error === 'object' && error !== null) {
-    if ('message' in error) {
-      return String(error.message);
+  // Handle objects with message property, with type safety
+  if (error !== null && typeof error === 'object') {
+    const errorObj = error as Record<string, unknown>;
+    
+    // Try common error properties with type checking
+    if ('message' in errorObj && typeof errorObj.message === 'string') {
+      return errorObj.message;
     }
     
-    // Handle other common properties
-    if ('error' in error) {
-      return String(error.error);
+    if ('error' in errorObj && typeof errorObj.error === 'string') {
+      return errorObj.error;
     }
-    if ('errorMessage' in error) {
-      return String(error.errorMessage);
+    
+    if ('errorMessage' in errorObj && typeof errorObj.errorMessage === 'string') {
+      return errorObj.errorMessage;
     }
     
     try {
-      // Try to stringify the object, but handle circular references
-      return JSON.stringify(error);
+      // Try to stringify the object, with circular reference handling
+      return JSON.stringify(error, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+          // Handle circular references in JSON serialization
+          const seen = new WeakSet();
+          if (seen.has(value)) {
+            return '[Circular Reference]';
+          }
+          seen.add(value);
+        }
+        return value;
+      });
     } catch (e) {
       return 'An error occurred (details cannot be displayed)';
     }
@@ -197,6 +316,13 @@ export function extractErrorMessage(error: unknown): string {
   
   // Default fallback
   return 'An unexpected error occurred';
+}
+
+/**
+ * Generates a unique operation ID for tracking related errors
+ */
+function generateOperationId(): string {
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
 /**
@@ -214,6 +340,8 @@ export function enhanceError(
   let message = '';
   let type = ErrorType.UNKNOWN;
   let status: number | undefined = undefined;
+  const timestamp = additionalInfo.timestamp || new Date().toISOString();
+  const operationId = additionalInfo.operationId || generateOperationId();
   
   // Process API errors
   if (error instanceof Error && 'status' in error) {
@@ -226,15 +354,20 @@ export function enhanceError(
   else if (error instanceof Error) {
     message = error.message;
     
-    // Detect network errors
+    // Detect network errors with improved pattern matching
     if (message.includes('Failed to fetch') || 
         message.includes('Network error') ||
-        message.includes('NetworkError')) {
+        message.includes('NetworkError') ||
+        message.includes('net::ERR_') ||
+        message.includes('xhr error')) {
       type = ErrorType.NETWORK;
     }
     
-    // Detect timeout errors
-    if (message.includes('timeout') || message.includes('Timeout')) {
+    // Detect timeout errors with improved pattern matching
+    if (message.includes('timeout') || 
+        message.includes('Timeout') ||
+        message.includes('timed out') ||
+        message.includes('ETIMEDOUT')) {
       type = ErrorType.TIMEOUT;
     }
   } 
@@ -243,21 +376,63 @@ export function enhanceError(
     message = extractErrorMessage(error);
   }
 
+  // Override with explicit type if provided
+  type = additionalInfo.type || type;
+  
   // Create enhanced error with all metadata
   const enhancedError = new Error(message) as EnhancedError;
-  enhancedError.type = additionalInfo.type || type;
+  enhancedError.type = type;
   enhancedError.status = additionalInfo.status || status;
   enhancedError.originalError = error;
-  enhancedError.timestamp = additionalInfo.timestamp || new Date().toISOString();
-  enhancedError.recoverable = additionalInfo.recoverable ?? isRecoverableError(enhancedError.type);
-  enhancedError.recoverySuggestion = additionalInfo.recoverySuggestion || getRecoverySuggestion(enhancedError.type);
+  enhancedError.timestamp = timestamp;
+  enhancedError.operationId = operationId;
+  enhancedError.recoverable = additionalInfo.recoverable ?? isRecoverableError(type);
+  enhancedError.recoverySuggestion = additionalInfo.recoverySuggestion || getRecoverySuggestion(type);
+  enhancedError.severity = additionalInfo.severity || getSeverityFromErrorType(type);
+  
+  // Add structured error data
+  if (additionalInfo.data) {
+    enhancedError.data = additionalInfo.data;
+  } else if (error instanceof Error && 'data' in error) {
+    // Safely convert to our typed ErrorData structure
+    const sourceData = (error as ApiError).data;
+    if (sourceData && typeof sourceData === 'object') {
+      const errorData: ErrorData = {};
+      
+      // Safely extract common fields with type checking
+      if ('message' in sourceData && typeof sourceData.message === 'string') {
+        errorData.message = sourceData.message;
+      }
+      
+      if ('code' in sourceData && typeof sourceData.code === 'string') {
+        errorData.code = sourceData.code;
+      }
+      
+      if ('details' in sourceData && typeof sourceData.details === 'object') {
+        errorData.details = sourceData.details as Record<string, unknown>;
+      }
+      
+      if ('validationErrors' in sourceData && typeof sourceData.validationErrors === 'object') {
+        errorData.validationErrors = sourceData.validationErrors as Record<string, string[]>;
+      }
+      
+      // Copy any other properties
+      Object.entries(sourceData).forEach(([key, value]) => {
+        if (!['message', 'code', 'details', 'validationErrors'].includes(key)) {
+          errorData[key] = value;
+        }
+      });
+      
+      enhancedError.data = errorData;
+    }
+  }
   
   // Add any additional context
-  if (additionalInfo.data) enhancedError.data = additionalInfo.data;
   if (additionalInfo.url) enhancedError.url = additionalInfo.url;
   if (additionalInfo.method) enhancedError.method = additionalInfo.method;
   if (additionalInfo.requestData) enhancedError.requestData = additionalInfo.requestData;
   if (additionalInfo.retryCount !== undefined) enhancedError.retryCount = additionalInfo.retryCount;
+  if (additionalInfo.preventDuplication !== undefined) enhancedError.preventDuplication = additionalInfo.preventDuplication;
   
   return enhancedError;
 }
@@ -290,15 +465,21 @@ export function useErrorHandler() {
       case ErrorType.AUTHENTICATION:
         errorTitle = title || "Authentication Required";
         break;
+      case ErrorType.AUTHORIZATION:
+        errorTitle = title || "Access Denied";
+        break;
       case ErrorType.VALIDATION:
         errorTitle = title || "Validation Error";
         break;
       case ErrorType.SERVER:
         errorTitle = title || "Server Error";
         break;
+      case ErrorType.BUSINESS_LOGIC:
+        errorTitle = title || "Application Error";
+        break;
     }
     
-    // Show simple toast notification without JSX (for TypeScript compatibility)
+    // Show toast notification
     toast({
       title: errorTitle,
       description: enhancedError.recoverable 
@@ -307,17 +488,31 @@ export function useErrorHandler() {
       variant
     });
     
-    // Log detailed error for debugging
-    console.error('[Error]:', { 
+    // Enhanced error logging with better context
+    console.error(`[Error ${enhancedError.operationId}]:`, { 
       title: errorTitle,
       message, 
       type: enhancedError.type,
+      severity: enhancedError.severity,
       status: enhancedError.status,
       timestamp: enhancedError.timestamp,
       recoverable: enhancedError.recoverable,
+      data: enhancedError.data,
+      url: enhancedError.url,
       originalError: enhancedError.originalError
     });
   }, [toast]);
+}
+
+// Type for retry options with improved typings
+export interface ErrorRetryOptions<T> {
+  maxRetries?: number;
+  initialDelay?: number;
+  maxDelay?: number;
+  retryableTypes?: ErrorType[];
+  onRetry?: (attempt: number, error: EnhancedError) => void;
+  retryCondition?: (error: EnhancedError, attempt: number) => boolean;
+  onSuccess?: (data: T) => void;
 }
 
 /**
@@ -326,18 +521,16 @@ export function useErrorHandler() {
  */
 export function useErrorRetry<T>(
   fn: () => Promise<T>,
-  options: {
-    maxRetries?: number;
-    initialDelay?: number;
-    maxDelay?: number;
-    retryableTypes?: ErrorType[];
-  } = {}
+  options: ErrorRetryOptions<T> = {}
 ) {
   const { 
     maxRetries = 3, 
     initialDelay = 1000, 
     maxDelay = 10000,
-    retryableTypes = [ErrorType.NETWORK, ErrorType.TIMEOUT, ErrorType.SERVER]
+    retryableTypes = [ErrorType.NETWORK, ErrorType.TIMEOUT, ErrorType.SERVER],
+    onRetry,
+    retryCondition,
+    onSuccess
   } = options;
   
   const [attempt, setAttempt] = useState(0);
@@ -345,7 +538,7 @@ export function useErrorRetry<T>(
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<T | null>(null);
   
-  const executeWithRetry = useCallback(async () => {
+  const executeWithRetry = useCallback(async (): Promise<T> => {
     setIsLoading(true);
     setError(null);
     
@@ -353,24 +546,54 @@ export function useErrorRetry<T>(
       const data = await fn();
       setResult(data);
       setAttempt(0);
+      if (onSuccess) {
+        onSuccess(data);
+      }
       return data;
     } catch (err) {
-      const enhancedErr = enhanceError(err, { retryCount: attempt + 1 });
+      const enhancedErr = enhanceError(err, { 
+        retryCount: attempt + 1,
+        operationId: error?.operationId // Preserve operation ID across retries
+      });
       
-      // Only retry for specific error types
-      const shouldRetry = 
-        attempt < maxRetries && 
-        retryableTypes.includes(enhancedErr.type);
+      // Determine if we should retry
+      let shouldRetry = attempt < maxRetries && retryableTypes.includes(enhancedErr.type);
+      
+      // Allow custom retry condition to override default logic
+      if (retryCondition) {
+        shouldRetry = retryCondition(enhancedErr, attempt);
+      }
       
       if (shouldRetry) {
         setAttempt(prev => prev + 1);
-        // Calculate exponential backoff delay
-        const delay = Math.min(initialDelay * Math.pow(2, attempt), maxDelay);
+        // Calculate exponential backoff delay with jitter for better distributed retries
+        const baseDelay = initialDelay * Math.pow(2, attempt);
+        const jitter = Math.random() * 0.3 * baseDelay; // Add up to 30% jitter
+        const delay = Math.min(baseDelay + jitter, maxDelay);
         
-        // Schedule retry
-        setTimeout(() => {
-          executeWithRetry();
+        // Optional callback for monitoring retries
+        if (onRetry) {
+          onRetry(attempt + 1, enhancedErr);
+        }
+        
+        // Schedule retry with improved error handling
+        const retryTimeout = setTimeout(() => {
+          executeWithRetry().catch(e => {
+            // This should only happen if the promise rejection isn't handled elsewhere
+            console.error("Unhandled retry error:", e);
+          });
         }, delay);
+        
+        // Clean up timeout if component unmounts
+        return new Promise<T>((_, reject) => {
+          const cleanup = () => {
+            clearTimeout(retryTimeout);
+            reject(enhancedErr);
+          };
+          
+          // Assign cleanup to a property so it can be called externally if needed
+          Object.assign(enhancedErr, { cancelRetry: cleanup });
+        });
       } else {
         setError(enhancedErr);
       }
@@ -379,7 +602,7 @@ export function useErrorRetry<T>(
     } finally {
       setIsLoading(false);
     }
-  }, [fn, attempt, maxRetries, initialDelay, maxDelay, retryableTypes]);
+  }, [fn, attempt, maxRetries, initialDelay, maxDelay, retryableTypes, onRetry, retryCondition, onSuccess, error?.operationId]);
   
   // Reset state when function changes
   useEffect(() => {
@@ -397,7 +620,9 @@ export function useErrorRetry<T>(
     },
     retry: () => {
       if (attempt < maxRetries) {
-        executeWithRetry();
+        executeWithRetry().catch(e => {
+          console.error("Error during manual retry:", e);
+        });
       }
     },
     error,
@@ -434,7 +659,7 @@ export function handleApiError(error: unknown): never {
       url: apiError.url,
       method: apiError.method,
       requestData: apiError.requestData,
-      timestamp: apiError.timestamp
+      timestamp: apiError.timestamp || new Date().toISOString()
     });
     
     throw enhancedError;

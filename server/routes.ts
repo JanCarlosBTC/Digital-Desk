@@ -26,7 +26,10 @@ function parseAndValidateId(id: string | undefined, res: Response): number | und
     return undefined;
   }
   
-  const parsedId = parseInt(id);
+  // Ensure id is a string before parsing
+  const idStr = String(id);
+  const parsedId = parseInt(idStr);
+  
   if (isNaN(parsedId)) {
     res.status(400).json({ message: "Invalid ID format" });
     return undefined;
@@ -349,24 +352,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const data = req.body;
       
-      const updatedClarityLab = await storage.updateClarityLab(parseInt(id), data);
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
+      }
+      
+      const updatedClarityLab = await storage.updateClarityLab(parsedId, data);
       if (!updatedClarityLab) {
         return res.status(404).json({ message: "Clarity lab entry not found" });
       }
       
-      res.json(updatedClarityLab);
+      return res.json(updatedClarityLab);
     } catch (error) {
-      res.status(500).json({ message: "Error updating clarity lab entry" });
+      return res.status(500).json({ message: "Error updating clarity lab entry" });
     }
   });
 
   app.delete('/api/clarity-labs/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      // Ensure we have a valid ID by parsing and checking for NaN
-      const parsedId = parseInt(id);
-      if (isNaN(parsedId)) {
-        return res.status(400).json({ message: "Invalid ID format" });
+      
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
       }
       
       const deleted = await storage.deleteClarityLab(parsedId);
@@ -394,15 +404,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/weekly-reflections/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const weeklyReflection = await storage.getWeeklyReflection(parseInt(id));
+      
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
+      }
+      
+      const weeklyReflection = await storage.getWeeklyReflection(parsedId);
       
       if (!weeklyReflection) {
         return res.status(404).json({ message: "Weekly reflection not found" });
       }
       
-      res.json(weeklyReflection);
+      return res.json(weeklyReflection);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching weekly reflection" });
+      return res.status(500).json({ message: "Error fetching weekly reflection" });
     }
   });
 
@@ -434,14 +451,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const data = req.body;
       
-      const updatedWeeklyReflection = await storage.updateWeeklyReflection(parseInt(id), data);
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
+      }
+      
+      const updatedWeeklyReflection = await storage.updateWeeklyReflection(parsedId, data);
       if (!updatedWeeklyReflection) {
         return res.status(404).json({ message: "Weekly reflection not found" });
       }
       
-      res.json(updatedWeeklyReflection);
+      return res.json(updatedWeeklyReflection);
     } catch (error) {
-      res.status(500).json({ message: "Error updating weekly reflection" });
+      return res.status(500).json({ message: "Error updating weekly reflection" });
     }
   });
 
@@ -449,28 +472,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/monthly-check-ins', async (req: Request, res: Response) => {
     try {
       const monthlyCheckIns = await storage.getMonthlyCheckIns(DEMO_USER_ID);
-      res.json(monthlyCheckIns);
+      return res.json(monthlyCheckIns);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching monthly check-ins" });
+      return res.status(500).json({ message: "Error fetching monthly check-ins" });
     }
   });
 
   app.get('/api/monthly-check-ins/:month/:year', async (req: Request, res: Response) => {
     try {
       const { month, year } = req.params;
+      
+      // Validate month and year
+      const parsedMonth = parseInt(String(month));
+      const parsedYear = parseInt(String(year));
+      
+      if (isNaN(parsedMonth) || parsedMonth < 1 || parsedMonth > 12) {
+        return res.status(400).json({ message: "Invalid month format. Month must be between 1 and 12." });
+      }
+      
+      if (isNaN(parsedYear) || parsedYear < 2000 || parsedYear > 2100) {
+        return res.status(400).json({ message: "Invalid year format. Year must be between 2000 and 2100." });
+      }
+      
       const monthlyCheckIn = await storage.getMonthlyCheckInByMonthYear(
         DEMO_USER_ID, 
-        parseInt(month), 
-        parseInt(year)
+        parsedMonth, 
+        parsedYear
       );
       
       if (!monthlyCheckIn) {
         return res.status(404).json({ message: "Monthly check-in not found" });
       }
       
-      res.json(monthlyCheckIn);
+      return res.json(monthlyCheckIn);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching monthly check-in" });
+      return res.status(500).json({ message: "Error fetching monthly check-in" });
     }
   });
 
@@ -484,9 +520,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertMonthlyCheckInSchema.parse(data);
       const monthlyCheckIn = await storage.createMonthlyCheckIn(validatedData);
       
-      res.status(201).json(monthlyCheckIn);
+      return res.status(201).json(monthlyCheckIn);
     } catch (error) {
-      handleZodError(error, res);
+      return handleZodError(error, res);
     }
   });
 
@@ -495,14 +531,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const data = req.body;
       
-      const updatedMonthlyCheckIn = await storage.updateMonthlyCheckIn(parseInt(id), data);
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
+      }
+      
+      const updatedMonthlyCheckIn = await storage.updateMonthlyCheckIn(parsedId, data);
       if (!updatedMonthlyCheckIn) {
         return res.status(404).json({ message: "Monthly check-in not found" });
       }
       
-      res.json(updatedMonthlyCheckIn);
+      return res.json(updatedMonthlyCheckIn);
     } catch (error) {
-      res.status(500).json({ message: "Error updating monthly check-in" });
+      return res.status(500).json({ message: "Error updating monthly check-in" });
     }
   });
 
@@ -510,9 +552,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/priorities', async (req: Request, res: Response) => {
     try {
       const priorities = await storage.getPriorities(DEMO_USER_ID);
-      res.json(priorities);
+      return res.json(priorities);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching priorities" });
+      return res.status(500).json({ message: "Error fetching priorities" });
     }
   });
 
@@ -526,9 +568,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertPrioritySchema.parse(data);
       const priority = await storage.createPriority(validatedData);
       
-      res.status(201).json(priority);
+      return res.status(201).json(priority);
     } catch (error) {
-      handleZodError(error, res);
+      return handleZodError(error, res);
     }
   });
 
@@ -537,29 +579,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const data = req.body;
       
-      const updatedPriority = await storage.updatePriority(parseInt(id), data);
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
+      }
+      
+      const updatedPriority = await storage.updatePriority(parsedId, data);
       if (!updatedPriority) {
         return res.status(404).json({ message: "Priority not found" });
       }
       
-      res.json(updatedPriority);
+      return res.json(updatedPriority);
     } catch (error) {
-      res.status(500).json({ message: "Error updating priority" });
+      return res.status(500).json({ message: "Error updating priority" });
     }
   });
 
   app.delete('/api/priorities/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const deleted = await storage.deletePriority(parseInt(id));
+      
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
+      }
+      
+      const deleted = await storage.deletePriority(parsedId);
       
       if (!deleted) {
         return res.status(404).json({ message: "Priority not found" });
       }
       
-      res.status(204).end();
+      return res.status(204).end();
     } catch (error) {
-      res.status(500).json({ message: "Error deleting priority" });
+      return res.status(500).json({ message: "Error deleting priority" });
     }
   });
 
@@ -567,24 +622,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/decisions', cacheMiddleware('decisions', 300), async (req: Request, res: Response) => {
     try {
       const decisions = await storage.getDecisions(DEMO_USER_ID);
-      res.json(decisions);
+      return res.json(decisions);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching decisions" });
+      return res.status(500).json({ message: "Error fetching decisions" });
     }
   });
 
   app.get('/api/decisions/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const decision = await storage.getDecision(parseInt(id));
+      
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
+      }
+      
+      const decision = await storage.getDecision(parsedId);
       
       if (!decision) {
         return res.status(404).json({ message: "Decision not found" });
       }
       
-      res.json(decision);
+      return res.json(decision);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching decision" });
+      return res.status(500).json({ message: "Error fetching decision" });
     }
   });
 
@@ -598,11 +660,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertDecisionSchema.parse(data);
       const decision = await storage.createDecision(validatedData);
       
-
-      
-      res.status(201).json(decision);
+      return res.status(201).json(decision);
     } catch (error) {
-      handleZodError(error, res);
+      return handleZodError(error, res);
     }
   });
 
@@ -610,7 +670,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const data = req.body;
-      const parsedId = parseInt(id);
+      
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
+      }
       
       // Get existing decision to detect status changes
       const existingDecision = await storage.getDecision(parsedId);
@@ -623,18 +688,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Decision not found after update" });
       }
       
-
-      
-      res.json(updatedDecision);
+      return res.json(updatedDecision);
     } catch (error) {
-      res.status(500).json({ message: "Error updating decision" });
+      return res.status(500).json({ message: "Error updating decision" });
     }
   });
 
   app.delete('/api/decisions/:id', clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const parsedId = parseInt(id);
+      
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
+      }
       
       // Get the decision before deleting for validation
       const decision = await storage.getDecision(parsedId);
@@ -647,11 +715,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Decision not found after delete attempt" });
       }
       
-
-      
-      res.status(204).end();
+      return res.status(204).end();
     } catch (error) {
-      res.status(500).json({ message: "Error deleting decision" });
+      return res.status(500).json({ message: "Error deleting decision" });
     }
   });
 
@@ -659,24 +725,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/offers', async (req: Request, res: Response) => {
     try {
       const offers = await storage.getOffers(DEMO_USER_ID);
-      res.json(offers);
+      return res.json(offers);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching offers" });
+      return res.status(500).json({ message: "Error fetching offers" });
     }
   });
 
   app.get('/api/offers/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const offer = await storage.getOffer(parseInt(id));
+      
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
+      }
+      
+      const offer = await storage.getOffer(parsedId);
       
       if (!offer) {
         return res.status(404).json({ message: "Offer not found" });
       }
       
-      res.json(offer);
+      return res.json(offer);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching offer" });
+      return res.status(500).json({ message: "Error fetching offer" });
     }
   });
 
@@ -690,11 +763,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertOfferSchema.parse(data);
       const offer = await storage.createOffer(validatedData);
       
-
-      
-      res.status(201).json(offer);
+      return res.status(201).json(offer);
     } catch (error) {
-      handleZodError(error, res);
+      return handleZodError(error, res);
     }
   });
 
@@ -702,7 +773,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const data = req.body;
-      const parsedId = parseInt(id);
+      
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
+      }
       
       // Get existing offer to detect status changes
       const existingOffer = await storage.getOffer(parsedId);
@@ -715,18 +791,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Offer not found after update" });
       }
       
-
-      
-      res.json(updatedOffer);
+      return res.json(updatedOffer);
     } catch (error) {
-      res.status(500).json({ message: "Error updating offer" });
+      return res.status(500).json({ message: "Error updating offer" });
     }
   });
 
   app.delete('/api/offers/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const parsedId = parseInt(id);
+      
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
+      }
       
       // Get the offer before deleting for validation
       const offer = await storage.getOffer(parsedId);
@@ -739,11 +818,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Offer not found after delete attempt" });
       }
       
-
-      
-      res.status(204).end();
+      return res.status(204).end();
     } catch (error) {
-      res.status(500).json({ message: "Error deleting offer" });
+      return res.status(500).json({ message: "Error deleting offer" });
     }
   });
 
@@ -761,9 +838,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         offerNotes = [newNote];
       }
       
-      res.json(offerNotes);
+      return res.json(offerNotes);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching offer notes" });
+      return res.status(500).json({ message: "Error fetching offer notes" });
     }
   });
 
@@ -772,14 +849,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { content } = req.body;
       
-      const updatedOfferNote = await storage.updateOfferNote(parseInt(id), content);
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
+      }
+      
+      // Validate content
+      if (content === undefined || content === null) {
+        return res.status(400).json({ message: "Content is required" });
+      }
+      
+      const updatedOfferNote = await storage.updateOfferNote(parsedId, content);
       if (!updatedOfferNote) {
         return res.status(404).json({ message: "Offer notes not found" });
       }
       
-      res.json(updatedOfferNote);
+      return res.json(updatedOfferNote);
     } catch (error) {
-      res.status(500).json({ message: "Error updating offer notes" });
+      return res.status(500).json({ message: "Error updating offer notes" });
     }
   });
 
