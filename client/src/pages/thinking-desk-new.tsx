@@ -12,6 +12,8 @@ import { DraftedPlans } from "@/components/thinking-desk/drafted-plans-new";
 import ClarityLab from "@/components/thinking-desk/clarity-lab";
 import { PageHeader } from "@/components/ui/page-header";
 import { FixedProblemTrees } from "@/components/thinking-desk-new/fixed-problem-trees";
+// Import MinimalProblemTrees as a fallback in case FixedProblemTrees fails
+import { MinimalProblemTrees } from "@/components/thinking-desk-new/minimal-problem-trees";
 
 // Create context for ThinkingDesk 
 interface ThinkingDeskContextType {
