@@ -817,7 +817,8 @@ export class MemStorage implements IStorage {
     const now = new Date();
     const offerNote: OfferNote = { 
       ...insertOfferNote, 
-      id, 
+      id,
+      content: insertOfferNote.content || null,
       createdAt: now, 
       updatedAt: now 
     };

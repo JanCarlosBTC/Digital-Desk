@@ -11,11 +11,7 @@ import {
   ArrowDown,
   Lightbulb,
   ListTodo,
-  Calendar,
   SearchIcon,
-  FilterIcon,
-  SortAscIcon,
-  TagIcon,
   LayoutGridIcon,
   LayoutListIcon
 } from "lucide-react";
@@ -33,7 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -154,6 +150,35 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
   const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
   const handleError = useErrorHandler();
 
+  const { data: problemTrees = [], isLoading } = useQuery<ProblemTree[]>({
+    queryKey: queryKeys.problemTrees,
+    ...defaultQueryConfig,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest('DELETE', `/api/problem-trees/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(queryKeys.problemTrees);
+      toast({
+        title: "Problem tree deleted",
+        description: "The problem tree has been successfully deleted.",
+      });
+    },
+    onError: (error) => {
+      handleError(error);
+    },
+  });
+
+  const handleDelete = useCallback(async (id: number) => {
+    try {
+      await deleteMutation.mutateAsync(id);
+    } catch (error) {
+      handleError(error);
+    }
+  }, [deleteMutation, handleError]);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -166,55 +191,8 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
     },
   });
 
-  const { data: trees, isLoading } = useQuery<ProblemTree[]>({
-    queryKey: queryKeys.problemTrees,
-    ...defaultQueryConfig,
-  });
-
-  const deleteMutation = useApiMutation<void, { id: number }>(
-    '/api/problem-trees/delete',
-    'DELETE',
-    {
-      invalidateQueries: ['problem-trees'],
-    }
-  );
-
-  const handleDelete = useCallback(async (id: number) => {
-    try {
-      await deleteMutation.mutateAsync({ id });
-    } catch (error) {
-      handleError(error);
-    }
-  }, [deleteMutation, handleError]);
-
-  const handleSort = useCallback((field: keyof ProblemTree) => {
-    setSortField(current => {
-      if (current === field) {
-        setSortDirection(dir => dir === 'asc' ? 'desc' : 'asc');
-        return field;
-      }
-      setSortDirection('asc');
-      return field;
-    });
-  }, []);
-
-  const sortedTrees = useCallback((trees: ProblemTree[] | undefined) => {
-    if (!trees) return [];
-    return [...trees].sort((a, b) => {
-      const aValue = a[sortField];
-      const bValue = b[sortField];
-      const modifier = sortDirection === 'asc' ? 1 : -1;
-      
-      if (aValue < bValue) return -1 * modifier;
-      if (aValue > bValue) return 1 * modifier;
-      return 0;
-    });
-  }, [sortField, sortDirection]);
-
-  // Create problem tree
   const createMutation = useMutation({
     mutationFn: async (data: FormValues) => {
-      // Convert line-separated strings to arrays
       const formattedData = {
         title: data.title,
         mainProblem: data.mainProblem,
@@ -223,7 +201,6 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
         potentialSolutions: data.potentialSolutions.split('\n').filter(Boolean),
         nextActions: data.nextActions.split('\n').filter(Boolean),
       };
-      
       return apiRequest('POST', '/api/problem-trees', formattedData);
     },
     onSuccess: () => {
@@ -244,31 +221,8 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
     }
   });
 
-  // Delete problem tree
-  const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      return apiRequest('DELETE', `/api/problem-trees/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
-      toast({
-        title: "Problem tree deleted",
-        description: "Your problem tree has been deleted successfully.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error deleting problem tree",
-        description: error.message || "Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
-
-  // Update problem tree mutation
   const updateMutation = useMutation({
     mutationFn: async (data: { id: number; problemTree: any }) => {
-      // Convert form values to the proper format
       const formattedData = {
         title: data.problemTree.title,
         mainProblem: data.problemTree.mainProblem,
@@ -299,7 +253,6 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
 
   const onSubmit = (data: FormValues) => {
     if (selectedProblemTree) {
-      // For update, pass the form data directly
       updateMutation.mutate({ id: selectedProblemTree.id, problemTree: data });
     } else {
       createMutation.mutate(data);
@@ -346,20 +299,45 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
     }
   };
 
-  // Listen for showNewProblemTree prop changes
+  const handleSort = useCallback((field: keyof ProblemTree) => {
+    setSortField(current => {
+      if (current === field) {
+        setSortDirection(dir => dir === 'asc' ? 'desc' : 'asc');
+        return field;
+      }
+      setSortDirection('asc');
+      return field;
+    });
+  }, []);
+
+  const sortedTrees = useCallback((trees: ProblemTree[] | undefined) => {
+    if (!trees) return [];
+    return [...trees].sort((a, b) => {
+      const aValue = a[sortField];
+      const bValue = b[sortField];
+      const modifier = sortDirection === 'asc' ? 1 : -1;
+      
+      if (aValue < bValue) return -1 * modifier;
+      if (aValue > bValue) return 1 * modifier;
+      return 0;
+    });
+  }, [sortField, sortDirection]);
+
   useEffect(() => {
     if (showNewProblemTree) {
       handleNewProblemTree();
     }
   }, [showNewProblemTree]);
   
-  // Handle dialog close
   const handleDialogClose = (open: boolean) => {
     setIsOpen(open);
     if (!open && onDialogClose) {
       onDialogClose();
     }
   };
+
+  const [sortOption, setSortOption] = useState<"newest" | "oldest" | "alphabetical">("newest");
+
 
   return (
     <Card className="shadow-lg border-0">
@@ -391,7 +369,6 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
           </div>
         ) : problemTrees && problemTrees.length > 0 ? (
           <>
-            {/* Featured Problem Tree */}
             <Card className="bg-gradient-to-b from-white to-gray-50 shadow-sm border">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-center">
@@ -428,21 +405,17 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
               </CardHeader>
               
               <CardContent className="pb-2 pt-0">
-                {/* Problem Tree Visualization */}
                 <div className="bg-white rounded-lg p-6 shadow-inner border border-gray-100 mb-6">
                   <div className="flex flex-col items-center">
-                    {/* Main Problem */}
                     <div className="relative bg-gradient-to-r from-red-50 to-red-100 shadow-sm border border-red-200 rounded-lg p-4 w-full sm:w-4/5 lg:w-3/5 text-center mb-4">
                       <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-500 text-white text-xs font-bold py-1 px-2 rounded-full">PROBLEM</div>
                       <p className="font-medium text-gray-800 mt-1">{problemTrees[0].mainProblem}</p>
                     </div>
                     
-                    {/* Arrow down */}
                     <div className="flex items-center justify-center w-full mb-2">
                       <ArrowDown className="h-6 w-6 text-gray-400" />
                     </div>
                     
-                    {/* Sub Problems (Level 1) */}
                     <div className="grid grid-cols-1 gap-3 w-full max-w-3xl mx-auto mb-4">
                       {problemTrees[0].subProblems.slice(0, 3).map((subProblem: string, index: number) => (
                         <div key={index} className="bg-gradient-to-r from-orange-50 to-orange-100 shadow-sm border border-orange-200 rounded-lg p-3 text-center flex flex-col items-center">
@@ -452,12 +425,10 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
                       ))}
                     </div>
                     
-                    {/* Arrow down */}
                     <div className="flex items-center justify-center w-full mb-2">
                       <ArrowDown className="h-6 w-6 text-gray-400" />
                     </div>
                     
-                    {/* Root Causes (Level 2) */}
                     <div className="grid grid-cols-1 gap-3 w-full max-w-2xl mx-auto mb-1">
                       {problemTrees[0].rootCauses.slice(0, 2).map((rootCause: string, index: number) => (
                         <div key={index} className="bg-gradient-to-r from-yellow-50 to-yellow-100 shadow-sm border border-yellow-200 rounded-lg p-3 text-center flex flex-col items-center">
@@ -511,7 +482,6 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
               </CardContent>
             </Card>
             
-            {/* Problem Tree Search and Filters */}
             {problemTrees.length > 1 && (
               <div className="mt-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -523,7 +493,6 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    {/* Search */}
                     <div className="relative">
                       <Input 
                         placeholder="Search trees..." 
@@ -534,7 +503,6 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
                       <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
                     </div>
                     
-                    {/* Sort Dropdown */}
                     <Select value={sortOption} onValueChange={(value: any) => setSortOption(value)}>
                       <SelectTrigger className="h-9 w-[130px] text-sm">
                         <SortAscIcon className="h-3.5 w-3.5 mr-1" />
@@ -547,7 +515,6 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
                       </SelectContent>
                     </Select>
                     
-                    {/* View Mode Toggle */}
                     <div className="bg-gray-100 rounded-md p-0.5 flex items-center">
                       <Button
                         variant={viewMode === "grid" ? "default" : "ghost"}
@@ -569,11 +536,9 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
                   </div>
                 </div>
                 
-                {/* Filter & Process Trees */}
                 {(() => {
                   let filteredTrees = problemTrees.slice(1);
                   
-                  // Apply search filter
                   if (searchTerm) {
                     filteredTrees = filteredTrees.filter(tree => 
                       tree.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -583,7 +548,6 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
                     );
                   }
                   
-                  // Apply sorting
                   if (sortOption === "newest") {
                     filteredTrees.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
                   } else if (sortOption === "oldest") {
@@ -592,7 +556,6 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
                     filteredTrees.sort((a, b) => a.title.localeCompare(b.title));
                   }
                   
-                  // Display empty state for filtered results
                   if (filteredTrees.length === 0) {
                     return (
                       <div className="text-center p-8 border border-dashed border-gray-200 rounded-lg bg-gray-50/50">
@@ -610,7 +573,6 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
                     );
                   }
                   
-                  // Return appropriate view
                   return viewMode === "grid" ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {filteredTrees.map((tree) => (
@@ -636,15 +598,12 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
                                 size="icon"
                                 className="h-8 w-8 text-gray-400 hover:text-primary hover:bg-primary/10"
                                 onClick={() => {
-                                  // Find current featured tree index
                                   const currentIndex = problemTrees.findIndex(t => t.id === tree.id);
-                                  // Create new array with selected tree first
                                   const reorderedTrees = [
                                     tree,
                                     ...problemTrees.slice(0, currentIndex),
                                     ...problemTrees.slice(currentIndex + 1)
                                   ];
-                                  // Update query data
                                   queryClient.setQueryData(['/api/problem-trees'], reorderedTrees);
                                 }}
                               >
@@ -687,15 +646,12 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
                               size="icon"
                               className="h-8 w-8 text-gray-400 hover:text-primary hover:bg-primary/10"
                               onClick={() => {
-                                // Find current featured tree index
                                 const currentIndex = problemTrees.findIndex(t => t.id === tree.id);
-                                // Create new array with selected tree first
                                 const reorderedTrees = [
                                   tree,
                                   ...problemTrees.slice(0, currentIndex),
                                   ...problemTrees.slice(currentIndex + 1)
                                 ];
-                                // Update query data
                                 queryClient.setQueryData(['/api/problem-trees'], reorderedTrees);
                               }}
                             >
@@ -746,7 +702,6 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
         )}
       </CardContent>
 
-      {/* New Problem Tree Dialog */}
       <DialogForm
         title={selectedProblemTree ? 'Edit Problem Tree' : 'Create New Problem Tree'}
         description="Break down complex problems into manageable parts to identify root causes and solutions."
@@ -755,7 +710,7 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
         size="full"
         submitLabel="Save Problem Tree"
         cancelLabel="Cancel"
-        isSubmitting={createMutation.isPending}
+        isSubmitting={createMutation.isPending || updateMutation.isPending}
         onSubmit={form.handleSubmit(onSubmit)}
       >
         <Form {...form}>
@@ -785,9 +740,7 @@ export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = fa
                       </FormControl>
                     </FormItem>
                   )}
-                />
-                
-                <FormField
+                />                <FormField
                   control={form.control}
                   name="mainProblem"
                   render={({ field }) => (
@@ -937,6 +890,6 @@ Create A/B test plan for homepage"
       </DialogForm>
     </Card>
   );
-};
+});
 
 export default ProblemTrees;
