@@ -237,7 +237,7 @@ const MonthlyCheckIns = () => {
               <div>
                 <h4 className="font-medium mb-2">Achievements</h4>
                 <ul className="list-disc pl-4 space-y-1">
-                  {selectedCheckIn?.achievements.map((achievement: string, i: number) => (
+                  {(selectedCheckIn?.achievements || []).map((achievement: string, i: number) => (
                     <li key={i} className="text-gray-700">{achievement}</li>
                   ))}
                 </ul>
@@ -245,7 +245,7 @@ const MonthlyCheckIns = () => {
               <div>
                 <h4 className="font-medium mb-2">Challenges</h4>
                 <ul className="list-disc pl-4 space-y-1">
-                  {selectedCheckIn?.challenges.map((challenge: string, i: number) => (
+                  {(selectedCheckIn?.challenges || []).map((challenge: string, i: number) => (
                     <li key={i} className="text-gray-700">{challenge}</li>
                   ))}
                 </ul>
@@ -253,7 +253,7 @@ const MonthlyCheckIns = () => {
               <div>
                 <h4 className="font-medium mb-2">Next Month Priorities</h4>
                 <ul className="list-disc pl-4 space-y-1">
-                  {selectedCheckIn?.nextMonthPriorities.map((priority: string, i: number) => (
+                  {(selectedCheckIn?.nextMonthPriorities || []).map((priority: string, i: number) => (
                     <li key={i} className="text-gray-700">{priority}</li>
                   ))}
                 </ul>
