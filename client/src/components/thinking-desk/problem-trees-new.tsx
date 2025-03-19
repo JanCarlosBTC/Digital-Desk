@@ -65,15 +65,43 @@ const ProblemTreeItem = memo(function ProblemTreeItem({
     onDelete(tree.id);
   }, [tree.id, onDelete]);
 
+  // Function to render nodes with connecting lines
+  const renderConnectedItems = (items: string[], nodeColor: string, lineColor: string) => {
+    if (!items || items.length === 0) return null;
+    
+    return (
+      <div className="flex flex-col items-center">
+        {items.map((item, index) => (
+          <div key={index} className="relative flex flex-col items-center w-full">
+            {index > 0 && (
+              <div 
+                className="absolute top-0 h-4 border-l-2 z-0" 
+                style={{ borderColor: lineColor }}
+              />
+            )}
+            <div 
+              className={`relative z-10 px-4 py-2 mb-2 rounded-md shadow-md w-full max-w-sm text-white text-sm font-medium`}
+              style={{ backgroundColor: nodeColor }}
+            >
+              {item}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <div className="p-4 bg-white rounded-lg shadow">
-      <div className="flex justify-between items-start">
+    <div className="p-6 bg-white rounded-lg shadow-lg border border-gray-100">
+      <div className="flex justify-between items-start mb-4">
         <div>
-          <h3 className="text-lg font-semibold">{tree.title}</h3>
-          <p className="text-sm text-gray-600 mt-2">{tree.mainProblem}</p>
+          <h3 className="text-xl font-bold text-primary">{tree.title}</h3>
+          <div className="mt-1 text-sm text-gray-500">
+            {new Date(tree.updatedAt).toLocaleDateString()} • Problem Tree
+          </div>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm" onClick={handleEdit}>
+          <Button variant="outline" size="sm" onClick={handleEdit} className="text-primary">
             Edit
           </Button>
           <Button variant="destructive" size="sm" onClick={handleDelete}>
@@ -82,41 +110,51 @@ const ProblemTreeItem = memo(function ProblemTreeItem({
         </div>
       </div>
       
-      <div className="mt-4 space-y-4">
-        <div>
-          <h4 className="text-sm font-medium text-gray-700">Sub Problems</h4>
-          <ul className="mt-1 space-y-1">
-            {tree.subProblems && tree.subProblems.map((problem, index) => (
-              <li key={index} className="text-sm text-gray-600">{problem}</li>
-            ))}
-          </ul>
+      {/* Tree Visualization */}
+      <div className="mt-6 relative">
+        {/* Main Problem (Tree Trunk) */}
+        <div className="flex justify-center mb-4">
+          <div className="relative w-full max-w-md">
+            <div className="bg-primary text-white p-4 rounded-lg shadow-md text-center font-semibold">
+              {tree.mainProblem}
+            </div>
+            {/* Vertical connector line down to root causes */}
+            {tree.rootCauses && tree.rootCauses.length > 0 && (
+              <div className="absolute left-1/2 -ml-px h-6 border-l-2 border-amber-500"></div>
+            )}
+            {/* Vertical connector line up to sub problems */}
+            {tree.subProblems && tree.subProblems.length > 0 && (
+              <div className="absolute left-1/2 -ml-px -top-6 h-6 border-l-2 border-blue-500"></div>
+            )}
+          </div>
         </div>
         
-        <div>
-          <h4 className="text-sm font-medium text-gray-700">Root Causes</h4>
-          <ul className="mt-1 space-y-1">
-            {tree.rootCauses && tree.rootCauses.map((cause, index) => (
-              <li key={index} className="text-sm text-gray-600">{cause}</li>
-            ))}
-          </ul>
-        </div>
-        
-        <div>
-          <h4 className="text-sm font-medium text-gray-700">Potential Solutions</h4>
-          <ul className="mt-1 space-y-1">
-            {tree.potentialSolutions && tree.potentialSolutions.map((solution, index) => (
-              <li key={index} className="text-sm text-gray-600">{solution}</li>
-            ))}
-          </ul>
-        </div>
-        
-        <div>
-          <h4 className="text-sm font-medium text-gray-700">Next Actions</h4>
-          <ul className="mt-1 space-y-1">
-            {tree.nextActions && tree.nextActions.map((action, index) => (
-              <li key={index} className="text-sm text-gray-600">{action}</li>
-            ))}
-          </ul>
+        {/* Tree Structure */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Left Branch - Sub Problems */}
+          <div className="flex flex-col items-center">
+            <h4 className="font-semibold text-blue-600 mb-3 text-center">Sub Problems</h4>
+            {renderConnectedItems(tree.subProblems, '#3b82f6', '#93c5fd')}
+          </div>
+          
+          {/* Middle Branch - Root Causes */}
+          <div className="flex flex-col items-center">
+            <h4 className="font-semibold text-amber-600 mb-3 text-center">Root Causes</h4>
+            {renderConnectedItems(tree.rootCauses, '#d97706', '#fcd34d')}
+          </div>
+          
+          {/* Right Branch - Solutions */}
+          <div className="flex flex-col items-center">
+            <div>
+              <h4 className="font-semibold text-emerald-600 mb-3 text-center">Potential Solutions</h4>
+              {renderConnectedItems(tree.potentialSolutions, '#059669', '#6ee7b7')}
+            </div>
+            
+            <div className="mt-6">
+              <h4 className="font-semibold text-purple-600 mb-3 text-center">Next Actions</h4>
+              {renderConnectedItems(tree.nextActions, '#7c3aed', '#c4b5fd')}
+            </div>
+          </div>
         </div>
       </div>
     </div>
