@@ -10,7 +10,7 @@ import {
 import TabNavigation from "@/components/tab-navigation";
 import BrainDump from "@/components/thinking-desk/brain-dump";
 import ProblemTrees from "@/components/thinking-desk/problem-trees";
-import DraftedPlans from "@/components/thinking-desk/drafted-plans-new";
+import { DraftedPlans } from "@/components/thinking-desk/drafted-plans-new";
 import ClarityLab from "@/components/thinking-desk/clarity-lab";
 import { PageHeader } from "@/components/ui/page-header";
 
@@ -123,6 +123,7 @@ const ThinkingDesk = () => {
             <ProblemTrees 
               showNewProblemTree={showNewProblemTree}
               onDialogClose={() => setShowNewProblemTree(false)}
+              onEdit={(tree) => console.log('Edit problem tree', tree)}
             />
           </div>
           
@@ -130,6 +131,7 @@ const ThinkingDesk = () => {
             <DraftedPlans 
               showNewPlan={showNewPlan}
               onDialogClose={() => setShowNewPlan(false)}
+              onEdit={(id) => console.log('Edit drafted plan', id)}
             />
           </div>
           

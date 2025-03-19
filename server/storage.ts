@@ -734,7 +734,7 @@ export class MemStorage implements IStorage {
       description: data.description,
       status: data.status || 'active',
       price: data.price,
-      category: data.category,
+      category: data.category || 'Service',
       duration: data.duration || null,
       format: data.format || null,
       clientCount: data.clientCount || null,
