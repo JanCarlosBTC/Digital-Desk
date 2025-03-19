@@ -134,10 +134,7 @@ export const ProblemTrees = ({
         open={dialogOpen}
         onOpenChange={handleDialogClose}
         size="lg"
-        onSubmit={(e) => {
-          e.preventDefault();
-          // The form will handle its own submission through ProblemTreeForm
-        }}
+        // Remove onSubmit to prevent double submission handling
       >
         <ProblemTreeForm
           onSuccess={() => setDialogOpen(false)}
@@ -151,9 +148,7 @@ export const ProblemTrees = ({
         open={viewDialogOpen}
         onOpenChange={setViewDialogOpen}
         size="xl"
-        onSubmit={(e) => {
-          e.preventDefault();
-        }}
+        // Remove unnecessary onSubmit
         submitLabel=""
         cancelLabel="Close"
       >
