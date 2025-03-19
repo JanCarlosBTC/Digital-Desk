@@ -1,5 +1,4 @@
 import { useQuery, useMutation, UseQueryOptions } from "@tanstack/react-query";
-import { ProblemTree } from "@shared/prisma-schema";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useErrorHandler } from "@/lib/error-utils";
@@ -7,6 +6,20 @@ import { useApiMutation } from "@/lib/api-utils";
 import { queryKeys, defaultQueryConfig, getQueryKey } from "@/lib/query-keys";
 import { memo, useCallback, useState, useMemo } from "react";
 import { useToast } from "@/components/ui/use-toast";
+
+// Define the ProblemTree interface locally
+interface ProblemTree {
+  id: number;
+  userId: number;
+  title: string;
+  mainProblem: string;
+  subProblems: string[];
+  rootCauses: string[];
+  potentialSolutions: string[];
+  nextActions: string[];
+  createdAt: string | Date;
+  updatedAt: string | Date;
+};
 
 interface ProblemTreesProps {
   showNewProblemTree?: boolean;
@@ -105,7 +118,7 @@ export const ProblemTrees = memo(function ProblemTrees({
   } as UseQueryOptions<ProblemTree[], Error>);
 
   const deleteMutation = useApiMutation<void, { id: number }>(
-    '/api/problem-trees/delete',
+    `/api/problem-trees`,
     'DELETE',
     {
       invalidateQueries: ['problem-trees'],
