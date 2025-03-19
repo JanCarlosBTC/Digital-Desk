@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 /**
  * Type definitions for the Problem Tree visualization component
@@ -12,21 +12,42 @@ interface ProblemTreeVisualizationProps {
 }
 
 /**
+ * Validates and filters out empty entries from an array of strings
+ * Safely handles null/undefined arrays by returning an empty array
+ */
+function filterEmptyStrings(items: string[] | null | undefined): string[] {
+  if (!items || !Array.isArray(items)) return [];
+  return items.filter(item => item && typeof item === 'string' && item.trim() !== '');
+}
+
+/**
  * A TypeScript-friendly, accessible problem tree visualization component
  * Presents a hierarchical view of problems, causes, solutions, and actions
+ * Optimized with memoization for better performance
  */
-export const ProblemTreeVisualization: React.FC<ProblemTreeVisualizationProps> = ({
-  mainProblem,
-  subProblems = [],
-  rootCauses = [],
-  potentialSolutions = [],
-  nextActions = []
-}) => {
-  // Filter out empty entries to avoid displaying empty items
-  const filteredSubProblems = subProblems.filter(p => p && p.trim() !== '');
-  const filteredRootCauses = rootCauses.filter(c => c && c.trim() !== '');
-  const filteredSolutions = potentialSolutions.filter(s => s && s.trim() !== '');
-  const filteredActions = nextActions.filter(a => a && a.trim() !== '');
+const ProblemTreeVisualization = React.memo(function ProblemTreeVisualization(
+  props: ProblemTreeVisualizationProps
+) {
+  const {
+    mainProblem,
+    subProblems = [],
+    rootCauses = [],
+    potentialSolutions = [],
+    nextActions = []
+  } = props;
+  
+  // Memoize the filtered arrays to prevent unnecessary re-filtering on re-renders
+  const filteredSubProblems = useMemo(() => 
+    filterEmptyStrings(subProblems), [subProblems]);
+    
+  const filteredRootCauses = useMemo(() => 
+    filterEmptyStrings(rootCauses), [rootCauses]);
+    
+  const filteredSolutions = useMemo(() => 
+    filterEmptyStrings(potentialSolutions), [potentialSolutions]);
+    
+  const filteredActions = useMemo(() => 
+    filterEmptyStrings(nextActions), [nextActions]);
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-lg">
@@ -354,4 +375,6 @@ export const ProblemTreeVisualization: React.FC<ProblemTreeVisualizationProps> =
       </div>
     </div>
   );
-};
+});
+
+export { ProblemTreeVisualization };
