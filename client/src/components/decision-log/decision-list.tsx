@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Decision } from "@shared/prisma-schema";
+import { Decision } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   FilterIcon, 

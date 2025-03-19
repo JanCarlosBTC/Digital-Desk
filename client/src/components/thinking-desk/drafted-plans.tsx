@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DraftedPlan } from "@shared/prisma-schema";
+import { DraftedPlan } from "@shared/schema";
 import { 
   ArrowRightIcon, 
   ChevronDownIcon, 

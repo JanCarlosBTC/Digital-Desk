@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Priority } from "@shared/prisma-schema";
+import { Priority } from "@shared/schema";
 import "@/components/ui/clipboard.css"; // Added import for clipboard styles
 
 const formSchema = z.object({
