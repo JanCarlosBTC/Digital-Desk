@@ -156,7 +156,7 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
 
   // Function to handle array fields (subProblems, rootCauses, etc.)
   const handleArrayField = (field: "subProblems" | "rootCauses" | "potentialSolutions" | "nextActions", action: "add" | "remove", index?: number) => {
-    const currentValues = form.getValues(field);
+    const currentValues = form.getValues(field) || [];
     
     if (action === "add") {
       form.setValue(field, [...currentValues, ""], { shouldValidate: true });
@@ -209,7 +209,7 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
               <FormItem>
                 <FormLabel>Sub-Problems</FormLabel>
                 <div className="space-y-2">
-                  {form.getValues("subProblems").map((_, index) => (
+                  {(form.getValues("subProblems") || []).map((_, index) => (
                     <div key={index} className="flex items-center space-x-2">
                       <FormField
                         control={form.control}
@@ -231,7 +231,7 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
                         variant="outline"
                         size="sm"
                         onClick={() => handleArrayField("subProblems", "remove", index)}
-                        disabled={form.getValues("subProblems").length <= 1}
+                        disabled={(form.getValues("subProblems") || []).length <= 1}
                       >
                         Remove
                       </Button>
@@ -260,7 +260,7 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
               <FormItem>
                 <FormLabel>Root Causes</FormLabel>
                 <div className="space-y-2">
-                  {form.getValues("rootCauses").map((_, index) => (
+                  {(form.getValues("rootCauses") || []).map((_, index) => (
                     <div key={index} className="flex items-center space-x-2">
                       <FormField
                         control={form.control}
@@ -282,7 +282,7 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
                         variant="outline"
                         size="sm"
                         onClick={() => handleArrayField("rootCauses", "remove", index)}
-                        disabled={form.getValues("rootCauses").length <= 1}
+                        disabled={(form.getValues("rootCauses") || []).length <= 1}
                       >
                         Remove
                       </Button>
@@ -311,7 +311,7 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
               <FormItem>
                 <FormLabel>Potential Solutions</FormLabel>
                 <div className="space-y-2">
-                  {form.getValues("potentialSolutions").map((_, index) => (
+                  {(form.getValues("potentialSolutions") || []).map((_, index) => (
                     <div key={index} className="flex items-center space-x-2">
                       <FormField
                         control={form.control}
@@ -333,7 +333,7 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
                         variant="outline"
                         size="sm"
                         onClick={() => handleArrayField("potentialSolutions", "remove", index)}
-                        disabled={form.getValues("potentialSolutions").length <= 1}
+                        disabled={(form.getValues("potentialSolutions") || []).length <= 1}
                       >
                         Remove
                       </Button>
@@ -362,7 +362,7 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
               <FormItem>
                 <FormLabel>Next Actions (Optional)</FormLabel>
                 <div className="space-y-2">
-                  {form.getValues("nextActions").map((_, index) => (
+                  {(form.getValues("nextActions") || []).map((_, index) => (
                     <div key={index} className="flex items-center space-x-2">
                       <FormField
                         control={form.control}
@@ -384,7 +384,7 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
                         variant="outline"
                         size="sm"
                         onClick={() => handleArrayField("nextActions", "remove", index)}
-                        disabled={form.getValues("nextActions").length <= 1}
+                        disabled={(form.getValues("nextActions") || []).length <= 1}
                       >
                         Remove
                       </Button>
