@@ -7,7 +7,7 @@ import { PlusIcon, NetworkIcon, EditIcon, TrashIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest } from '@/lib/api-utils';
 import { LoadingState } from '@/components/ui/loading-state';
 
 // Type definitions
