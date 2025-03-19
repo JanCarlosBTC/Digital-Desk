@@ -680,7 +680,7 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
               </DialogHeader>
               
               {/* Visual Problem Tree View */}
-              <div className="border border-gray-200 rounded-lg bg-white flex-grow overflow-auto">
+              <div className="border-2 border-gray-200 rounded-xl shadow-inner bg-white flex-grow overflow-auto">
                 <ProblemTreeVisualization 
                   mainProblem={selectedTree.mainProblem}
                   subProblems={selectedTree.subProblems || []}
