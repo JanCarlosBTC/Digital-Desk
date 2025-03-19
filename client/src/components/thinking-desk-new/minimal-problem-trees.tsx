@@ -72,9 +72,19 @@ export function MinimalProblemTrees({
     refetchOnWindowFocus: false
   });
   
-  // Create mutation
-  const createMutation = useMutation({
-    mutationFn: async (formData: any) => {
+  // Type definition for problem tree form data
+  interface ProblemTreeFormData {
+    title: string;
+    mainProblem: string;
+    subProblems: string[];
+    rootCauses: string[];
+    potentialSolutions: string[];
+    nextActions: string[];
+  }
+
+  // Create mutation with proper type safety
+  const createMutation = useMutation<ProblemTree, Error, ProblemTreeFormData>({
+    mutationFn: async (formData: ProblemTreeFormData) => {
       console.log('Creating with data:', formData);
       const response = await fetch('/api/problem-trees', {
         method: 'POST',
@@ -101,130 +111,155 @@ export function MinimalProblemTrees({
       resetForm();
       refetch();
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Error creating problem tree:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to create problem tree',
+        description: error.message || 'Failed to create problem tree',
         variant: 'destructive'
       });
-      setError(error instanceof Error ? error.message : 'An error occurred');
+      setError(error.message || 'An error occurred');
     }
   });
   
-  // Add or remove array items
-  const addArrayItem = (type: 'subProblems' | 'rootCauses' | 'potentialSolutions' | 'nextActions') => {
+  // Define a type for array field types
+  type ArrayFieldType = 'subProblems' | 'rootCauses' | 'potentialSolutions' | 'nextActions';
+  
+  // Generic type-safe getter for array state
+  const getArrayState = (type: ArrayFieldType): string[] => {
     switch (type) {
       case 'subProblems':
-        setSubProblems([...subProblems, '']);
-        break;
+        return subProblems;
       case 'rootCauses':
-        setRootCauses([...rootCauses, '']);
-        break;
+        return rootCauses;
       case 'potentialSolutions':
-        setPotentialSolutions([...potentialSolutions, '']);
-        break;
+        return potentialSolutions;
       case 'nextActions':
-        setNextActions([...nextActions, '']);
-        break;
+        return nextActions;
+      default:
+        // This should never happen due to TypeScript's type checking
+        throw new Error(`Invalid array field type: ${type}`);
     }
   };
   
-  const updateArrayItem = (type: 'subProblems' | 'rootCauses' | 'potentialSolutions' | 'nextActions', index: number, value: string) => {
+  // Generic type-safe setter for array state
+  const setArrayState = (type: ArrayFieldType, value: string[]): void => {
     switch (type) {
       case 'subProblems':
-        const newSubProblems = [...subProblems];
-        newSubProblems[index] = value;
-        setSubProblems(newSubProblems);
+        setSubProblems(value);
         break;
       case 'rootCauses':
-        const newRootCauses = [...rootCauses];
-        newRootCauses[index] = value;
-        setRootCauses(newRootCauses);
+        setRootCauses(value);
         break;
       case 'potentialSolutions':
-        const newSolutions = [...potentialSolutions];
-        newSolutions[index] = value;
-        setPotentialSolutions(newSolutions);
+        setPotentialSolutions(value);
         break;
       case 'nextActions':
-        const newActions = [...nextActions];
-        newActions[index] = value;
-        setNextActions(newActions);
+        setNextActions(value);
         break;
+      default:
+        // This should never happen due to TypeScript's type checking
+        throw new Error(`Invalid array field type: ${type}`);
     }
   };
   
-  const removeArrayItem = (type: 'subProblems' | 'rootCauses' | 'potentialSolutions' | 'nextActions', index: number) => {
-    switch (type) {
-      case 'subProblems':
-        if (subProblems.length > 1) {
-          setSubProblems(subProblems.filter((_, i) => i !== index));
-        }
-        break;
-      case 'rootCauses':
-        if (rootCauses.length > 1) {
-          setRootCauses(rootCauses.filter((_, i) => i !== index));
-        }
-        break;
-      case 'potentialSolutions':
-        if (potentialSolutions.length > 1) {
-          setPotentialSolutions(potentialSolutions.filter((_, i) => i !== index));
-        }
-        break;
-      case 'nextActions':
-        if (nextActions.length > 1) {
-          setNextActions(nextActions.filter((_, i) => i !== index));
-        }
-        break;
+  // Add a new empty item to an array
+  const addArrayItem = (type: ArrayFieldType): void => {
+    const currentArray = getArrayState(type);
+    setArrayState(type, [...currentArray, '']);
+  };
+  
+  // Update an item in an array
+  const updateArrayItem = (type: ArrayFieldType, index: number, value: string): void => {
+    const currentArray = getArrayState(type);
+    
+    if (index >= 0 && index < currentArray.length) {
+      const newArray = [...currentArray];
+      newArray[index] = value;
+      setArrayState(type, newArray);
     }
   };
   
-  // Handle form submission
-  const handleSubmit = () => {
-    // Validate form
+  // Remove an item from an array
+  const removeArrayItem = (type: ArrayFieldType, index: number): void => {
+    const currentArray = getArrayState(type);
+    
+    if (currentArray.length > 1 && index >= 0 && index < currentArray.length) {
+      const newArray = currentArray.filter((_, i) => i !== index);
+      setArrayState(type, newArray);
+    }
+  };
+  
+  // Define validation error type
+  interface ValidationErrors {
+    title?: string;
+    mainProblem?: string;
+    subProblems?: string;
+    rootCauses?: string;
+    potentialSolutions?: string;
+    nextActions?: string;
+  }
+  
+  // Type-safe form validation
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {};
+    
+    // Required field validations
     if (!title.trim()) {
-      setError('Title is required');
-      return;
+      newErrors.title = 'Title is required';
     }
     
     if (!mainProblem.trim()) {
-      setError('Main problem is required');
-      return;
+      newErrors.mainProblem = 'Main problem is required';
     }
     
-    // Filter out empty fields
+    // Array field validations - require at least one non-empty item
     const filteredSubProblems = subProblems.filter(item => item.trim());
     if (filteredSubProblems.length === 0) {
-      setError('At least one sub-problem is required');
-      return;
+      newErrors.subProblems = 'At least one sub-problem is required';
     }
     
     const filteredRootCauses = rootCauses.filter(item => item.trim());
     if (filteredRootCauses.length === 0) {
-      setError('At least one root cause is required');
-      return;
+      newErrors.rootCauses = 'At least one root cause is required';
     }
     
     const filteredSolutions = potentialSolutions.filter(item => item.trim());
     if (filteredSolutions.length === 0) {
-      setError('At least one potential solution is required');
+      newErrors.potentialSolutions = 'At least one potential solution is required';
+    }
+    
+    // If there are errors, set the first one to display and return false
+    if (Object.keys(newErrors).length > 0) {
+      const errorValues = Object.values(newErrors);
+      const firstError = errorValues.length > 0 ? errorValues[0] : "Validation error";
+      setError(firstError);
+      return false;
+    }
+    
+    return true;
+  };
+  
+  // Handle form submission
+  const handleSubmit = (): void => {
+    // Validate form
+    if (!validateForm()) {
       return;
     }
     
-    // Create data object
-    const formData = {
+    // Create data object with filtered values
+    const formData: ProblemTreeFormData = {
       title,
       mainProblem,
-      subProblems: filteredSubProblems,
-      rootCauses: filteredRootCauses,
-      potentialSolutions: filteredSolutions,
+      subProblems: subProblems.filter(item => item.trim()),
+      rootCauses: rootCauses.filter(item => item.trim()),
+      potentialSolutions: potentialSolutions.filter(item => item.trim()),
       nextActions: nextActions.filter(item => item.trim())
     };
     
     console.log('Submitting data:', formData);
     
-    // Submit data
+    // Submit data with proper typing
     createMutation.mutate(formData);
   };
   
