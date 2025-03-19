@@ -112,7 +112,7 @@ export const DraftedPlans = memo(function DraftedPlans({
   const [sortField, setSortField] = useState<keyof DraftedPlan>('updatedAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const handleError = useErrorHandler();
-  
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -124,14 +124,14 @@ export const DraftedPlans = memo(function DraftedPlans({
       expectedOutcomes: [],
     },
   });
-  
+
   // Listen for showNewPlan prop changes
   useEffect(() => {
     if (showNewPlan) {
       handleNewPlan();
     }
   }, [showNewPlan]);
-  
+
   // Handle dialog close
   const handleDialogClose = (open: boolean) => {
     setIsOpen(open);
@@ -139,7 +139,7 @@ export const DraftedPlans = memo(function DraftedPlans({
       onDialogClose();
     }
   };
-  
+
   // Fetch drafted plans
   const { data: plans = [], isLoading } = useQuery({
     queryKey: getQueryKey('draftedPlans'),
@@ -182,7 +182,7 @@ export const DraftedPlans = memo(function DraftedPlans({
       const aValue = a[sortField];
       const bValue = b[sortField];
       const modifier = sortDirection === 'asc' ? 1 : -1;
-      
+
       if (aValue < bValue) return -1 * modifier;
       if (aValue > bValue) return 1 * modifier;
       return 0;
@@ -203,7 +203,7 @@ export const DraftedPlans = memo(function DraftedPlans({
         comments: 0,
         attachments: 0,
       };
-      
+
       return apiRequest('POST', '/api/drafted-plans', formattedData);
     },
     onSuccess: () => {
@@ -275,7 +275,7 @@ export const DraftedPlans = memo(function DraftedPlans({
           </Button>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         <div className="flex justify-end space-x-2">
           <Button
@@ -334,7 +334,7 @@ export const DraftedPlans = memo(function DraftedPlans({
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="description"
@@ -351,7 +351,7 @@ export const DraftedPlans = memo(function DraftedPlans({
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="status"
@@ -377,7 +377,7 @@ export const DraftedPlans = memo(function DraftedPlans({
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="components"
@@ -398,7 +398,7 @@ Email nurture sequence optimization"
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="resourcesNeeded"
@@ -419,7 +419,7 @@ Designer for lead magnets"
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="expectedOutcomes"

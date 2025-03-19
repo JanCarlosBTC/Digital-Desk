@@ -17,65 +17,65 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   // Brain Dump methods
   getBrainDumpByUserId(userId: number): Promise<BrainDump | undefined>;
   createBrainDump(brainDump: InsertBrainDump): Promise<BrainDump>;
   updateBrainDump(id: number, content: string): Promise<BrainDump | undefined>;
-  
+
   // Problem Tree methods
   getProblemTrees(userId: number): Promise<ProblemTree[]>;
   getProblemTree(id: number): Promise<ProblemTree | undefined>;
   createProblemTree(problemTree: InsertProblemTree): Promise<ProblemTree>;
   updateProblemTree(id: number, problemTree: Partial<InsertProblemTree>): Promise<ProblemTree | undefined>;
   deleteProblemTree(id: number): Promise<boolean>;
-  
+
   // Drafted Plans methods
   getDraftedPlans(userId: number): Promise<DraftedPlan[]>;
   getDraftedPlan(id: number): Promise<DraftedPlan | undefined>;
   createDraftedPlan(draftedPlan: InsertDraftedPlan): Promise<DraftedPlan>;
   updateDraftedPlan(id: number, draftedPlan: Partial<InsertDraftedPlan>): Promise<DraftedPlan | undefined>;
   deleteDraftedPlan(id: number): Promise<boolean>;
-  
+
   // Clarity Lab methods
   getClarityLabs(userId: number, category?: string): Promise<ClarityLab[]>;
   getClarityLab(id: number): Promise<ClarityLab | undefined>;
   createClarityLab(clarityLab: InsertClarityLab): Promise<ClarityLab>;
   updateClarityLab(id: number, clarityLab: Partial<InsertClarityLab>): Promise<ClarityLab | undefined>;
   deleteClarityLab(id: number): Promise<boolean>;
-  
+
   // Weekly Reflections methods
   getWeeklyReflections(userId: number): Promise<WeeklyReflection[]>;
   getWeeklyReflection(id: number): Promise<WeeklyReflection | undefined>;
   createWeeklyReflection(weeklyReflection: InsertWeeklyReflection): Promise<WeeklyReflection>;
   updateWeeklyReflection(id: number, weeklyReflection: Partial<InsertWeeklyReflection>): Promise<WeeklyReflection | undefined>;
-  
+
   // Monthly Check-in methods
   getMonthlyCheckIns(userId: number): Promise<MonthlyCheckIn[]>;
   getMonthlyCheckInByMonthYear(userId: number, month: number, year: number): Promise<MonthlyCheckIn | undefined>;
   createMonthlyCheckIn(monthlyCheckIn: InsertMonthlyCheckIn): Promise<MonthlyCheckIn>;
   updateMonthlyCheckIn(id: number, monthlyCheckIn: Partial<InsertMonthlyCheckIn>): Promise<MonthlyCheckIn | undefined>;
-  
+
   // Priorities methods
   getPriorities(userId: number): Promise<Priority[]>;
   createPriority(priority: InsertPriority): Promise<Priority>;
   updatePriority(id: number, priority: Partial<InsertPriority>): Promise<Priority | undefined>;
   deletePriority(id: number): Promise<boolean>;
-  
+
   // Decision methods
   getDecisions(userId: number): Promise<Decision[]>;
   getDecision(id: number): Promise<Decision | undefined>;
   createDecision(decision: InsertDecision): Promise<Decision>;
   updateDecision(id: number, decision: Partial<InsertDecision>): Promise<Decision | undefined>;
   deleteDecision(id: number): Promise<boolean>;
-  
+
   // Offer methods
   getOffers(userId: number): Promise<Offer[]>;
   getOffer(id: number): Promise<Offer | undefined>;
   createOffer(offer: InsertOffer): Promise<Offer>;
   updateOffer(id: number, offer: Partial<InsertOffer>): Promise<Offer | undefined>;
   deleteOffer(id: number): Promise<boolean>;
-  
+
   // Offer Notes methods
   getOfferNotesByUserId(userId: number): Promise<OfferNote[]>;
   createOfferNote(offerNote: InsertOfferNote): Promise<OfferNote>;
@@ -96,7 +96,7 @@ export class MemStorage implements IStorage {
   private offerNotes: Map<number, OfferNote>;
 
   private nextId: number;
-  
+
   // No-op implementation of logActivity (deprecated method)
   private async logActivity(params: { 
     userId: number, 
@@ -176,14 +176,14 @@ export class MemStorage implements IStorage {
   async updateBrainDump(id: number, content: string): Promise<BrainDump | undefined> {
     const brainDump = this.brainDumps.get(id);
     if (!brainDump) return undefined;
-    
+
     const updated: BrainDump = { 
       ...brainDump, 
       content: content ?? null, 
       updatedAt: new Date() 
     };
     this.brainDumps.set(id, updated);
-    
+
     return updated;
   }
 
@@ -210,14 +210,14 @@ export class MemStorage implements IStorage {
       updatedAt: now 
     };
     this.problemTrees.set(id, problemTree);
-    
+
     return problemTree;
   }
 
   async updateProblemTree(id: number, data: Partial<InsertProblemTree>): Promise<ProblemTree | undefined> {
     const existing = this.problemTrees.get(id);
     if (!existing) return undefined;
-    
+
     const updated: ProblemTree = { 
       ...existing, 
       ...data, 
@@ -228,7 +228,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date() 
     };
     this.problemTrees.set(id, updated);
-    
+
     await this.logActivity({
       userId: existing.userId,
       type: "update",
@@ -239,16 +239,16 @@ export class MemStorage implements IStorage {
         content: updated.mainProblem || undefined,
       }
     });
-    
+
     return updated;
   }
 
   async deleteProblemTree(id: number): Promise<boolean> {
     const existing = this.problemTrees.get(id);
     if (!existing) return false;
-    
+
     const deleted = this.problemTrees.delete(id);
-    
+
     if (deleted) {
       await this.logActivity({
         userId: existing.userId,
@@ -258,7 +258,7 @@ export class MemStorage implements IStorage {
         metadata: {}
       });
     }
-    
+
     return deleted;
   }
 
@@ -287,14 +287,14 @@ export class MemStorage implements IStorage {
       updatedAt: now 
     };
     this.draftedPlans.set(id, draftedPlan);
-    
+
     return draftedPlan;
   }
 
   async updateDraftedPlan(id: number, data: Partial<InsertDraftedPlan>): Promise<DraftedPlan | undefined> {
     const existing = this.draftedPlans.get(id);
     if (!existing) return undefined;
-    
+
     const updated: DraftedPlan = { 
       ...existing, 
       ...data, 
@@ -307,7 +307,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date() 
     };
     this.draftedPlans.set(id, updated);
-    
+
     await this.logActivity({
       userId: existing.userId,
       type: "update",
@@ -317,16 +317,16 @@ export class MemStorage implements IStorage {
         status: updated.status,
       }
     });
-    
+
     return updated;
   }
 
   async deleteDraftedPlan(id: number): Promise<boolean> {
     const existing = this.draftedPlans.get(id);
     if (!existing) return false;
-    
+
     const deleted = this.draftedPlans.delete(id);
-    
+
     if (deleted) {
       await this.logActivity({
         userId: existing.userId,
@@ -336,7 +336,7 @@ export class MemStorage implements IStorage {
         metadata: {}
       });
     }
-    
+
     return deleted;
   }
 
@@ -363,21 +363,21 @@ export class MemStorage implements IStorage {
       updatedAt: now 
     };
     this.clarityLabs.set(id, clarityLab);
-    
+
     return clarityLab;
   }
 
   async updateClarityLab(id: number, data: Partial<InsertClarityLab>): Promise<ClarityLab | undefined> {
     const existing = this.clarityLabs.get(id);
     if (!existing) return undefined;
-    
+
     const updated: ClarityLab = { 
       ...existing, 
       ...data, 
       updatedAt: new Date() 
     };
     this.clarityLabs.set(id, updated);
-    
+
     await this.logActivity({
       userId: existing.userId,
       type: "update",
@@ -387,16 +387,16 @@ export class MemStorage implements IStorage {
         category: updated.category,
       }
     });
-    
+
     return updated;
   }
 
   async deleteClarityLab(id: number): Promise<boolean> {
     const existing = this.clarityLabs.get(id);
     if (!existing) return false;
-    
+
     const deleted = this.clarityLabs.delete(id);
-    
+
     if (deleted) {
       await this.logActivity({
         userId: existing.userId,
@@ -406,7 +406,7 @@ export class MemStorage implements IStorage {
         metadata: {}
       });
     }
-    
+
     return deleted;
   }
 
@@ -451,7 +451,7 @@ export class MemStorage implements IStorage {
   async updateWeeklyReflection(id: number, data: Partial<InsertWeeklyReflection>): Promise<WeeklyReflection | undefined> {
     const existing = this.weeklyReflections.get(id);
     if (!existing) return undefined;
-    
+
     const updated: WeeklyReflection = { 
       ...existing, 
       ...data, 
@@ -462,7 +462,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date() 
     };
     this.weeklyReflections.set(id, updated);
-    
+
     await this.logActivity({
       userId: existing.userId,
       type: "update",
@@ -472,7 +472,7 @@ export class MemStorage implements IStorage {
         isDraft: updated.isDraft,
       }
     });
-    
+
     return updated;
   }
 
@@ -524,7 +524,7 @@ export class MemStorage implements IStorage {
   async updateMonthlyCheckIn(id: number, data: Partial<InsertMonthlyCheckIn>): Promise<MonthlyCheckIn | undefined> {
     const existing = this.monthlyCheckIns.get(id);
     if (!existing) return undefined;
-    
+
     const updated: MonthlyCheckIn = { 
       ...existing, 
       ...data, 
@@ -536,7 +536,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date() 
     };
     this.monthlyCheckIns.set(id, updated);
-    
+
     await this.logActivity({
       userId: existing.userId,
       type: "update",
@@ -546,7 +546,7 @@ export class MemStorage implements IStorage {
         completedOn: updated.completedOn instanceof Date ? updated.completedOn : undefined,
       }
     });
-    
+
     return updated;
   }
 
@@ -567,21 +567,21 @@ export class MemStorage implements IStorage {
       updatedAt: now 
     };
     this.priorities.set(id, priority);
-    
+
     return priority;
   }
 
   async updatePriority(id: number, data: Partial<InsertPriority>): Promise<Priority | undefined> {
     const existing = this.priorities.get(id);
     if (!existing) return undefined;
-    
+
     const updated: Priority = { 
       ...existing, 
       ...data, 
       updatedAt: new Date() 
     };
     this.priorities.set(id, updated);
-    
+
     await this.logActivity({
       userId: existing.userId,
       type: "update",
@@ -591,16 +591,16 @@ export class MemStorage implements IStorage {
         order: updated.order,
       }
     });
-    
+
     return updated;
   }
 
   async deletePriority(id: number): Promise<boolean> {
     const existing = this.priorities.get(id);
     if (!existing) return false;
-    
+
     const deleted = this.priorities.delete(id);
-    
+
     if (deleted) {
       await this.logActivity({
         userId: existing.userId,
@@ -610,7 +610,7 @@ export class MemStorage implements IStorage {
         metadata: {}
       });
     }
-    
+
     return deleted;
   }
 
@@ -647,7 +647,7 @@ export class MemStorage implements IStorage {
       updatedAt: now 
     };
     this.decisions.set(id, decision);
-    
+
     await this.logActivity({
       userId: insertDecision.userId,
       type: "create",
@@ -658,14 +658,14 @@ export class MemStorage implements IStorage {
         status: decision.status,
       }
     });
-    
+
     return decision;
   }
 
   async updateDecision(id: number, data: Partial<InsertDecision>): Promise<Decision | undefined> {
     const existing = this.decisions.get(id);
     if (!existing) return undefined;
-    
+
     const updated: Decision = { 
       ...existing, 
       ...data, 
@@ -676,7 +676,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date() 
     };
     this.decisions.set(id, updated);
-    
+
     await this.logActivity({
       userId: existing.userId,
       type: "update",
@@ -687,14 +687,14 @@ export class MemStorage implements IStorage {
         status: updated.status
       }
     });
-    
+
     return updated;
   }
 
   async deleteDecision(id: number): Promise<boolean> {
     const decision = this.decisions.get(id);
     if (!decision) return false;
-    
+
     await this.logActivity({
       userId: decision.userId,
       type: "delete",
@@ -702,7 +702,7 @@ export class MemStorage implements IStorage {
       entityName: decision.title,
       metadata: {}
     });
-    
+
     return this.decisions.delete(id);
   }
 
@@ -743,7 +743,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date(),
     };
     this.offers.set(offer.id, offer);
-    
+
     await this.logActivity({
       userId: data.userId,
       type: "create",
@@ -755,14 +755,14 @@ export class MemStorage implements IStorage {
         category: offer.category
       }
     });
-    
+
     return offer;
   }
 
   async updateOffer(id: number, data: Partial<InsertOffer>): Promise<Offer | undefined> {
     const existing = this.offers.get(id);
     if (!existing) return undefined;
-    
+
     const updated: Offer = { 
       ...existing, 
       ...data, 
@@ -774,7 +774,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date() 
     };
     this.offers.set(id, updated);
-    
+
     await this.logActivity({
       userId: existing.userId,
       type: "update",
@@ -786,14 +786,14 @@ export class MemStorage implements IStorage {
         category: updated.category
       }
     });
-    
+
     return updated;
   }
 
   async deleteOffer(id: number): Promise<boolean> {
     const offer = this.offers.get(id);
     if (!offer) return false;
-    
+
     await this.logActivity({
       userId: offer.userId,
       type: "delete",
@@ -801,7 +801,7 @@ export class MemStorage implements IStorage {
       entityName: offer.title,
       metadata: {}
     });
-    
+
     return this.offers.delete(id);
   }
 
@@ -823,7 +823,7 @@ export class MemStorage implements IStorage {
       updatedAt: now 
     };
     this.offerNotes.set(id, offerNote);
-    
+
     await this.logActivity({
       userId: insertOfferNote.userId,
       type: "create",
@@ -835,21 +835,21 @@ export class MemStorage implements IStorage {
           : offerNote.content
       }
     });
-    
+
     return offerNote;
   }
 
   async updateOfferNote(id: number, content: string): Promise<OfferNote | undefined> {
     const existing = this.offerNotes.get(id);
     if (!existing) return undefined;
-    
+
     const updated: OfferNote = { 
       ...existing, 
       content, 
       updatedAt: new Date() 
     };
     this.offerNotes.set(id, updated);
-    
+
     await this.logActivity({
       userId: existing.userId,
       type: "update",
@@ -861,7 +861,7 @@ export class MemStorage implements IStorage {
           : updated.content
       }
     });
-    
+
     return updated;
   }
 }
