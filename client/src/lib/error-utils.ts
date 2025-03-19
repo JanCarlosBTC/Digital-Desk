@@ -298,32 +298,14 @@ export function useErrorHandler() {
         break;
     }
     
-    // Show toast notification without JSX actions (for TypeScript compatibility)
-    if (enhancedError.recoverable) {
-      // Show toast with retry action for recoverable errors
-      toast({
-        title: errorTitle,
-        description: message,
-        variant
-      });
-      
-      // Separate action to avoid JSX in TS files
-      setTimeout(() => {
-        const retryButton = document.querySelector('[data-retry-action]');
-        if (retryButton) {
-          retryButton.addEventListener('click', () => {
-            window.location.reload();
-          });
-        }
-      }, 100);
-    } else {
-      // Show simple toast for non-recoverable errors
-      toast({
-        title: errorTitle,
-        description: message,
-        variant
-      });
-    }
+    // Show simple toast notification without JSX (for TypeScript compatibility)
+    toast({
+      title: errorTitle,
+      description: enhancedError.recoverable 
+        ? `${message} (Click 'Retry' if the problem persists)` 
+        : message,
+      variant
+    });
     
     // Log detailed error for debugging
     console.error('[Error]:', { 

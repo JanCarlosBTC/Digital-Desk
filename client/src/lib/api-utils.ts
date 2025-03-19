@@ -36,6 +36,18 @@ export interface ApiRequest {
  * @param options Additional request options
  * @returns Promise resolving to the response data
  */
+/**
+ * Enhanced API request function with improved error handling and timeout support
+ * Provides comprehensive error information and better debugging context
+ * 
+ * @template T The expected return type of the API request
+ * @param method HTTP method to use
+ * @param url API endpoint URL
+ * @param data Optional request payload
+ * @param options Additional request options
+ * @returns Promise resolving to the response data of type T
+ * @throws ApiError with enhanced metadata on request failure
+ */
 async function apiRequest<T>(
   method: string, 
   url: string, 
@@ -63,23 +75,36 @@ async function apiRequest<T>(
       signal: controller.signal,
     });
 
-    // Parse response data safely
-    const responseData = await response.json().catch((parseError) => {
-      // If JSON parsing fails but response is OK, return empty object
-      if (response.ok) return {};
-      
-      // Otherwise create a structured error with the response text
-      return response.text().then(text => {
-        throw Object.assign(new Error(`Failed to parse response: ${parseError.message}`), {
-          status: response.status,
-          responseText: text,
-          parseError
-        });
-      }).catch(() => ({}));
-    });
-    
     // Clear timeout since request completed
     clearTimeout(timeoutId);
+
+    // Parse response data safely
+    let responseData: any;
+    try {
+      // Try to parse as JSON first
+      responseData = await response.json();
+    } catch (parseError) {
+      // If JSON parsing fails but response is OK, return empty object
+      if (response.ok) {
+        responseData = {};
+      } else {
+        // Otherwise try to get response text for better error context
+        try {
+          const text = await response.text();
+          throw Object.assign(new Error(`Failed to parse response: ${(parseError as Error).message}`), {
+            status: response.status,
+            responseText: text,
+            parseError
+          });
+        } catch (textError) {
+          // If even text extraction fails, create minimal error
+          throw Object.assign(new Error(`Request failed with status ${response.status}`), {
+            status: response.status,
+            parseError
+          });
+        }
+      }
+    }
     
     if (!response.ok) {
       // Create structured error with comprehensive metadata
@@ -102,7 +127,7 @@ async function apiRequest<T>(
       throw apiError;
     }
 
-    return responseData;
+    return responseData as T;
   } catch (error) {
     // Always clear timeout to prevent memory leaks
     clearTimeout(timeoutId);
@@ -119,7 +144,7 @@ async function apiRequest<T>(
     }
     
     // If error is already a structured API error, just rethrow it
-    if (error instanceof Error && (error as ApiError).status !== undefined) {
+    if (error instanceof Error && 'status' in error) {
       throw error;
     }
     
@@ -153,14 +178,16 @@ async function apiRequest<T>(
  * Hook for batch mutations (multiple API requests in a single operation)
  * Provides optimized execution with consistent error handling
  * 
+ * @template TData The return type of the mutation (defaults to unknown[])
  * @returns Mutation object for executing multiple requests together
  */
-export function useBatchMutation() {
+export function useBatchMutation<TData = unknown[]>() {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useMutation<TData, Error, ApiRequest[]>({
     mutationFn: async (requests: ApiRequest[]) => {
       try {
+        // Type assertion to allow returning the Promise.all result
         return await Promise.all(
           requests.map(req => 
             apiRequest(
@@ -173,12 +200,13 @@ export function useBatchMutation() {
               }
             )
           )
-        );
+        ) as unknown as TData;
       } catch (error) {
-        // Add batch context to error
+        // Add batch context to error with improved type safety
         if (error instanceof Error) {
-          (error as ApiError).data = {
-            ...(error as ApiError).data,
+          const apiError = error as ApiError;
+          apiError.data = {
+            ...(apiError.data || {}),
             batchSize: requests.length,
             batchUrls: requests.map(r => r.url)
           };
@@ -186,14 +214,15 @@ export function useBatchMutation() {
         throw error;
       }
     },
-    onError: (error: unknown) => {
-      // Log structured error with batch context
-      console.error("Batch mutation error:", error instanceof Error ? {
+    onError: (error: Error) => {
+      // Log structured error with batch context and better type safety
+      const apiError = error as ApiError;
+      console.error("Batch mutation error:", {
         message: error.message,
-        status: (error as ApiError).status,
-        data: (error as ApiError).data,
-        timestamp: (error as ApiError).timestamp
-      } : error);
+        status: apiError.status || 'unknown',
+        data: apiError.data || {},
+        timestamp: apiError.timestamp || new Date().toISOString()
+      });
       
       // Forward to global error handler
       handleApiError(error);
@@ -220,7 +249,7 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
   options: {
     onSuccess?: (data: TData) => void;
     onError?: (error: ApiError) => void;
-    invalidateQueries?: string[] | { queryKey: string, exact?: boolean }[];
+    invalidateQueries?: Array<string | { queryKey: string, exact?: boolean }>;
     headers?: Record<string, string>;
     timeout?: number;
   } = {}
@@ -234,7 +263,7 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
     timeout 
   } = options;
 
-  return useMutation({
+  return useMutation<TData, Error, TVariables>({
     mutationFn: async (variables: TVariables) => {
       return await apiRequest<TData>(method, url, variables, { headers, timeout });
     },
@@ -244,36 +273,43 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
         onSuccess(data);
       }
       
-      // Invalidate relevant queries
-      if (invalidateQueries) {
-        if (Array.isArray(invalidateQueries)) {
-          // Handle legacy string array format
-          invalidateQueries.forEach(queryKey => {
-            if (typeof queryKey === 'string') {
-              queryClient.invalidateQueries({ queryKey: [queryKey] });
-            } else if (typeof queryKey === 'object') {
-              queryClient.invalidateQueries({ 
-                queryKey: [queryKey.queryKey],
-                exact: queryKey.exact 
-              });
-            }
-          });
-        }
+      // Invalidate relevant queries with improved type safety
+      if (invalidateQueries && Array.isArray(invalidateQueries)) {
+        invalidateQueries.forEach(queryKey => {
+          if (typeof queryKey === 'string') {
+            queryClient.invalidateQueries({ queryKey: [queryKey] });
+          } else if (queryKey && typeof queryKey === 'object' && 'queryKey' in queryKey) {
+            queryClient.invalidateQueries({ 
+              queryKey: [queryKey.queryKey],
+              exact: queryKey.exact 
+            });
+          }
+        });
       }
     },
-    onError: (error: unknown) => {
-      // Log structured error information
+    onError: (error: Error) => {
+      // Log structured error information with safer type checking
       const apiError = error as ApiError;
       console.error(`API Mutation error (${url}):`, {
         message: apiError.message,
-        status: apiError.status,
-        timestamp: apiError.timestamp,
-        data: apiError.data,
+        status: apiError.status || 'unknown',
+        timestamp: apiError.timestamp || new Date().toISOString(),
+        data: apiError.data || {}
       });
       
-      // Execute error callback if provided
-      if (onError && error instanceof Error) {
-        onError(error as ApiError);
+      // Execute error callback if provided with proper type handling
+      if (onError) {
+        if ('status' in error) {
+          onError(error as ApiError);
+        } else {
+          // Create minimal ApiError if the error isn't already one
+          const enhancedError = new Error(error.message) as ApiError;
+          enhancedError.originalError = error;
+          enhancedError.url = url;
+          enhancedError.method = method;
+          enhancedError.timestamp = new Date().toISOString();
+          onError(enhancedError);
+        }
       }
       
       // Forward to global error handler
