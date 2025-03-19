@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo, useCallback, useMemo } from "react";
-import { useQuery, useMutation, UseQueryOptions } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -45,7 +45,6 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useErrorHandler } from "@/lib/error-utils";
-import { queryKeys, defaultQueryConfig, getQueryKey } from "@/lib/query-keys";
 
 const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -154,17 +153,19 @@ export const DraftedPlans = memo(function DraftedPlans({
   };
 
   // Fetch drafted plans
-  const { data: plans = [], isLoading } = useQuery({
-    queryKey: getQueryKey('draftedPlans'),
-    ...defaultQueryConfig,
-  } as UseQueryOptions<DraftedPlan[], Error>);
+  const { data: plansData, isLoading } = useQuery({
+    queryKey: ['/api/drafted-plans']
+  });
+  
+  // Safely cast the data as DraftedPlan[] with a fallback to empty array
+  const plans = (plansData ? plansData as DraftedPlan[] : []);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       return apiRequest('DELETE', `/api/drafted-plans/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: getQueryKey('draftedPlans') });
+      queryClient.invalidateQueries({ queryKey: ['/api/drafted-plans'] });
       toast({
         title: "Success",
         description: "Plan deleted successfully",
@@ -228,7 +229,7 @@ export const DraftedPlans = memo(function DraftedPlans({
       return apiRequest('POST', '/api/drafted-plans', formattedData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: getQueryKey('draftedPlans') });
+      queryClient.invalidateQueries({ queryKey: ['/api/drafted-plans'] });
       toast({
         title: "Plan created",
         description: "Your drafted plan has been created successfully.",
