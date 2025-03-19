@@ -2,7 +2,7 @@ import React, { useState, useEffect, createContext, useContext } from "react";
 import OfferList from "@/components/offer-vault/offer-list";
 import OfferMetrics from "@/components/offer-vault/offer-metrics";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { OfferNote } from "@shared/prisma-schema";
+import { OfferNote } from "@shared/schema";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { apiRequest, queryClient } from "@/lib/queryClient";

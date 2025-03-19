@@ -1,5 +1,5 @@
 import { useQuery, UseQueryOptions } from "@tanstack/react-query";
-import { Offer } from "@shared/prisma-schema";
+import { Offer } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { LoadingState } from "@/components/ui/loading-state";
 import { useErrorHandler } from "@/lib/error-utils";
