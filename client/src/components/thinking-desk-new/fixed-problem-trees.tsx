@@ -342,7 +342,9 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
   
   // Edit a tree
   const editTree = (tree: ProblemTree) => {
-    setSelectedTree(tree);
+    if (!tree) return;
+    
+    setSelectedTree({...tree}); // Create a copy to avoid reference issues
     setIsEditing(true);
     setViewDialogOpen(false);
     setFormOpen(true);
@@ -653,11 +655,19 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
       </Dialog>
       
       {/* View Dialog */}
-      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-5xl">
+      <Dialog open={viewDialogOpen} onOpenChange={(open) => {
+        setViewDialogOpen(open);
+        if (!open) {
+          // Small delay to prevent UI glitches when closing
+          setTimeout(() => {
+            setSelectedTree(null);
+          }, 300);
+        }
+      }}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
           {selectedTree && (
             <>
-              <DialogHeader>
+              <DialogHeader className="flex-shrink-0">
                 <DialogTitle className="flex items-center gap-2">
                   <TreePine className="h-5 w-5 text-gray-600" />
                   {selectedTree.title}
@@ -669,17 +679,17 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
               </DialogHeader>
               
               {/* Visual Problem Tree View */}
-              <div className="border border-gray-200 rounded-lg bg-white">
+              <div className="border border-gray-200 rounded-lg bg-white flex-grow overflow-auto">
                 <ProblemTreeVisualization 
                   mainProblem={selectedTree.mainProblem}
-                  subProblems={selectedTree.subProblems}
-                  rootCauses={selectedTree.rootCauses}
-                  potentialSolutions={selectedTree.potentialSolutions}
-                  nextActions={selectedTree.nextActions}
+                  subProblems={selectedTree.subProblems || []}
+                  rootCauses={selectedTree.rootCauses || []}
+                  potentialSolutions={selectedTree.potentialSolutions || []}
+                  nextActions={selectedTree.nextActions || []}
                 />
               </div>
               
-              <DialogFooter className="space-x-2">
+              <DialogFooter className="space-x-2 flex-shrink-0 mt-4">
                 <Button 
                   variant="destructive" 
                   onClick={() => deleteTree(selectedTree.id)}
@@ -689,7 +699,13 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
                 </Button>
                 <Button 
                   variant="outline" 
-                  onClick={() => editTree(selectedTree)}
+                  onClick={() => {
+                    setViewDialogOpen(false);
+                    // Small delay to ensure dialog is closed before opening the edit dialog
+                    setTimeout(() => {
+                      editTree(selectedTree);
+                    }, 100);
+                  }}
                 >
                   <EditIcon className="h-4 w-4 mr-1" /> Edit
                 </Button>
