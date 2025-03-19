@@ -2,14 +2,30 @@ import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { useFormContext, FormProvider } from "react-hook-form";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+
+// Define the Decision interface based on Prisma model
+interface Decision {
+  id: number;
+  userId: number;
+  title: string;
+  category: string;
+  decisionDate: string | Date;
+  why: string;
+  alternatives?: string | null;
+  expectedOutcome?: string | null;
+  followUpDate?: string | Date | null;
+  status: string;
+  whatDifferent?: string | null;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
 import { format } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
@@ -223,8 +239,8 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
         </>
       )}
 
-      {/* Using only one form element to avoid nesting */}
-      <Form {...form} onSubmit={form.handleSubmit(onSubmit)}>
+      {/* Using Form from shadcn/ui, which is FormProvider under the hood */}
+      <Form {...form}>
           <div className="space-y-8">
             {/* Basic Information Section */}
             <div>
