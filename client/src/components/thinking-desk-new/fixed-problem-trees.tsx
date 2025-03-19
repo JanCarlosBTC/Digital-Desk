@@ -97,9 +97,19 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
     refetchOnWindowFocus: false
   });
   
-  // Create mutation
-  const createMutation = useMutation({
-    mutationFn: async (data: any) => {
+  // Type definition for problem tree form data
+  interface ProblemTreeFormData {
+    title: string;
+    mainProblem: string;
+    subProblems: string[];
+    rootCauses: string[];
+    potentialSolutions: string[];
+    nextActions: string[];
+  }
+
+  // Create mutation with proper type safety
+  const createMutation = useMutation<ProblemTree, Error, ProblemTreeFormData>({
+    mutationFn: async (data: ProblemTreeFormData) => {
       console.log('Creating tree with data:', data);
       const response = await fetch('/api/problem-trees', {
         method: 'POST',
@@ -125,26 +135,25 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
       setFormOpen(false);
       refetch();
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Creation error:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to create problem tree',
+        description: error.message || 'Failed to create problem tree',
         variant: 'destructive'
       });
-      setError(error instanceof Error ? error.message : 'An error occurred');
+      setError(error.message || 'An error occurred');
     }
   });
   
-  // Update mutation
-  const updateMutation = useMutation({
-    mutationFn: async ({
-      id,
-      data
-    }: {
-      id: number;
-      data: any;
-    }) => {
+  // Update mutation with proper type safety
+  interface UpdateProblemTreeParams {
+    id: number;
+    data: ProblemTreeFormData;
+  }
+  
+  const updateMutation = useMutation<ProblemTree, Error, UpdateProblemTreeParams>({
+    mutationFn: async ({ id, data }: UpdateProblemTreeParams) => {
       const response = await fetch(`/api/problem-trees/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -178,8 +187,8 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
     }
   });
   
-  // Delete mutation
-  const deleteMutation = useMutation({
+  // Delete mutation with proper type safety
+  const deleteMutation = useMutation<number, Error, number>({
     mutationFn: async (id: number) => {
       const response = await fetch(`/api/problem-trees/${id}`, {
         method: 'DELETE'
@@ -201,87 +210,98 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
       setViewDialogOpen(false);
       refetch();
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to delete problem tree',
+        description: error.message || 'Failed to delete problem tree',
         variant: 'destructive'
       });
     }
   });
   
-  // Add or remove array items
-  const addArrayItem = (type: 'subProblems' | 'rootCauses' | 'potentialSolutions' | 'nextActions') => {
+  // Define a type for array field types
+  type ArrayFieldType = 'subProblems' | 'rootCauses' | 'potentialSolutions' | 'nextActions';
+  
+  // Generic type-safe getter for array state
+  const getArrayState = (type: ArrayFieldType): string[] => {
     switch (type) {
       case 'subProblems':
-        setSubProblems([...subProblems, '']);
-        break;
+        return subProblems;
       case 'rootCauses':
-        setRootCauses([...rootCauses, '']);
-        break;
+        return rootCauses;
       case 'potentialSolutions':
-        setPotentialSolutions([...potentialSolutions, '']);
-        break;
+        return potentialSolutions;
       case 'nextActions':
-        setNextActions([...nextActions, '']);
-        break;
+        return nextActions;
+      default:
+        // This should never happen due to TypeScript's type checking
+        throw new Error(`Invalid array field type: ${type}`);
     }
   };
   
-  const updateArrayItem = (type: 'subProblems' | 'rootCauses' | 'potentialSolutions' | 'nextActions', index: number, value: string) => {
+  // Generic type-safe setter for array state
+  const setArrayState = (type: ArrayFieldType, value: string[]): void => {
     switch (type) {
       case 'subProblems':
-        const newSubProblems = [...subProblems];
-        newSubProblems[index] = value;
-        setSubProblems(newSubProblems);
+        setSubProblems(value);
         break;
       case 'rootCauses':
-        const newRootCauses = [...rootCauses];
-        newRootCauses[index] = value;
-        setRootCauses(newRootCauses);
+        setRootCauses(value);
         break;
       case 'potentialSolutions':
-        const newSolutions = [...potentialSolutions];
-        newSolutions[index] = value;
-        setPotentialSolutions(newSolutions);
+        setPotentialSolutions(value);
         break;
       case 'nextActions':
-        const newActions = [...nextActions];
-        newActions[index] = value;
-        setNextActions(newActions);
+        setNextActions(value);
         break;
+      default:
+        // This should never happen due to TypeScript's type checking
+        throw new Error(`Invalid array field type: ${type}`);
     }
   };
   
-  const removeArrayItem = (type: 'subProblems' | 'rootCauses' | 'potentialSolutions' | 'nextActions', index: number) => {
-    switch (type) {
-      case 'subProblems':
-        if (subProblems.length > 1) {
-          setSubProblems(subProblems.filter((_, i) => i !== index));
-        }
-        break;
-      case 'rootCauses':
-        if (rootCauses.length > 1) {
-          setRootCauses(rootCauses.filter((_, i) => i !== index));
-        }
-        break;
-      case 'potentialSolutions':
-        if (potentialSolutions.length > 1) {
-          setPotentialSolutions(potentialSolutions.filter((_, i) => i !== index));
-        }
-        break;
-      case 'nextActions':
-        if (nextActions.length > 1) {
-          setNextActions(nextActions.filter((_, i) => i !== index));
-        }
-        break;
-    }
+  // Add a new empty item to an array
+  const addArrayItem = (type: ArrayFieldType): void => {
+    const currentArray = getArrayState(type);
+    setArrayState(type, [...currentArray, '']);
   };
   
-  // Form validation
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+  // Update an item in an array
+  const updateArrayItem = (type: ArrayFieldType, index: number, value: string): void => {
+    const currentArray = getArrayState(type);
+    const newArray = [...currentArray];
     
+    if (index >= 0 && index < newArray.length) {
+      newArray[index] = value;
+      setArrayState(type, newArray);
+    }
+  };
+  
+  // Remove an item from an array
+  const removeArrayItem = (type: ArrayFieldType, index: number): void => {
+    const currentArray = getArrayState(type);
+    
+    if (currentArray.length > 1 && index >= 0 && index < currentArray.length) {
+      const newArray = currentArray.filter((_, i) => i !== index);
+      setArrayState(type, newArray);
+    }
+  };
+  
+  // Define validation error type
+  interface ValidationErrors {
+    title?: string;
+    mainProblem?: string;
+    subProblems?: string;
+    rootCauses?: string;
+    potentialSolutions?: string;
+    nextActions?: string;
+  }
+  
+  // Type-safe form validation
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {};
+    
+    // Required field validations
     if (!title.trim()) {
       newErrors.title = 'Title is required';
     }
@@ -290,6 +310,7 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
       newErrors.mainProblem = 'Main problem is required';
     }
     
+    // Array field validations - require at least one non-empty item
     if (!subProblems.some(sp => sp.trim() !== '')) {
       newErrors.subProblems = 'At least one sub-problem is required';
     }
@@ -302,9 +323,11 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
       newErrors.potentialSolutions = 'At least one potential solution is required';
     }
     
+    // If there are errors, set the first one to display and return false
     if (Object.keys(newErrors).length > 0) {
-      const firstError = Object.values(newErrors)[0];
-      setError(firstError !== undefined ? firstError : "Validation error");
+      const errorValues = Object.values(newErrors);
+      const firstError = errorValues.length > 0 ? errorValues[0] : "Validation error";
+      setError(firstError);
       return false;
     }
     
