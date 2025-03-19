@@ -1,14 +1,7 @@
 import React from 'react';
 
-interface ItemProps {
-  id: string;
-  title: string;
-  content: string;
-  type: 'problem' | 'subproblem' | 'cause' | 'solution' | 'action';
-}
-
 /**
- * A completely redesigned problem tree visualization using a modern, clean approach
+ * A true mind map style visualization for problem trees
  */
 export const ProblemTreeVisualization: React.FC<{
   mainProblem: string;
@@ -29,289 +22,206 @@ export const ProblemTreeVisualization: React.FC<{
   const filteredSolutions = potentialSolutions.filter(s => s && s.trim() !== '');
   const filteredActions = nextActions.filter(a => a && a.trim() !== '');
 
-  // Generate items for visualization
-  const items: ItemProps[] = [
-    { id: 'main', title: 'Main Problem', content: mainProblem || 'No problem defined', type: 'problem' },
-    ...filteredSubProblems.map((content, i) => ({ 
-      id: `sub-${i}`, 
-      title: `Sub-Problem ${i + 1}`, 
-      content, 
-      type: 'subproblem' 
-    })),
-    ...filteredRootCauses.map((content, i) => ({ 
-      id: `cause-${i}`, 
-      title: `Root Cause ${i + 1}`, 
-      content, 
-      type: 'cause' 
-    })),
-    ...filteredSolutions.map((content, i) => ({ 
-      id: `solution-${i}`, 
-      title: `Solution ${i + 1}`, 
-      content, 
-      type: 'solution' 
-    })),
-    ...filteredActions.map((content, i) => ({ 
-      id: `action-${i}`, 
-      title: `Action ${i + 1}`, 
-      content, 
-      type: 'action' 
-    })),
-  ];
-
-  // Type-based styling
-  const getTypeStyles = (type: ItemProps['type']) => {
-    switch(type) {
-      case 'problem': 
-        return {
-          container: 'bg-red-50 border-red-400 shadow-red-200',
-          title: 'text-red-800 bg-red-100',
-          icon: 'bg-red-500'
-        };
-      case 'subproblem': 
-        return {
-          container: 'bg-orange-50 border-orange-400 shadow-orange-200',
-          title: 'text-orange-800 bg-orange-100',
-          icon: 'bg-orange-500'
-        };
-      case 'cause': 
-        return {
-          container: 'bg-yellow-50 border-yellow-400 shadow-yellow-200',
-          title: 'text-yellow-800 bg-yellow-100',
-          icon: 'bg-yellow-500'
-        };
-      case 'solution': 
-        return {
-          container: 'bg-green-50 border-green-400 shadow-green-200',
-          title: 'text-green-800 bg-green-100',
-          icon: 'bg-green-500'
-        };
-      case 'action': 
-        return {
-          container: 'bg-blue-50 border-blue-400 shadow-blue-200',
-          title: 'text-blue-800 bg-blue-100',
-          icon: 'bg-blue-500'
-        };
-    }
+  // Function to truncate text for display
+  const truncate = (text: string, maxLength = 100) => {
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
   return (
-    <div className="p-4 bg-white rounded-lg min-h-[500px]">
-      {/* Header with problem tree summary */}
-      <div className="mb-8 text-center">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Problem Tree</h2>
-        <div className="flex justify-center gap-2 flex-wrap">
-          <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
-            1 Problem
-          </span>
-          {filteredSubProblems.length > 0 && (
-            <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
-              {filteredSubProblems.length} Sub-Problems
-            </span>
-          )}
-          {filteredRootCauses.length > 0 && (
-            <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
-              {filteredRootCauses.length} Root Causes
-            </span>
-          )}
-          {filteredSolutions.length > 0 && (
-            <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-              {filteredSolutions.length} Solutions
-            </span>
-          )}
-          {filteredActions.length > 0 && (
-            <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-              {filteredActions.length} Actions
-            </span>
-          )}
+    <div className="relative p-6 bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-inner min-h-[600px] overflow-hidden">
+      {/* Beautiful background patterns */}
+      <div className="absolute inset-0 overflow-hidden opacity-10 pointer-events-none">
+        <div className="absolute top-0 left-0 w-full h-full bg-white">
+          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <path d="M0,0 L100,0 L100,100 L0,100 Z" fill="none" stroke="#5b9bd5" strokeWidth="0.5"></path>
+            <path d="M25,0 L25,100" stroke="#5b9bd5" strokeWidth="0.2" strokeDasharray="1,2"></path>
+            <path d="M50,0 L50,100" stroke="#5b9bd5" strokeWidth="0.2" strokeDasharray="1,2"></path>
+            <path d="M75,0 L75,100" stroke="#5b9bd5" strokeWidth="0.2" strokeDasharray="1,2"></path>
+            <path d="M0,25 L100,25" stroke="#5b9bd5" strokeWidth="0.2" strokeDasharray="1,2"></path>
+            <path d="M0,50 L100,50" stroke="#5b9bd5" strokeWidth="0.2" strokeDasharray="1,2"></path>
+            <path d="M0,75 L100,75" stroke="#5b9bd5" strokeWidth="0.2" strokeDasharray="1,2"></path>
+          </svg>
         </div>
       </div>
 
-      {/* Main problem tree visualization */}
-      <div className="relative">
-        {/* Main problem (centered at the top) */}
-        <div className="flex justify-center mb-12">
-          <ProblemCard 
-            title="Main Problem" 
-            content={mainProblem} 
-            type="problem"
-            className="w-full max-w-lg z-10"
-          />
-        </div>
-
-        {/* The four quadrants */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative">
-          {/* Branching lines */}
-          <div className="absolute top-0 left-1/2 w-px h-full bg-gray-300 -translate-x-1/2 -mt-12"></div>
-          <div className="absolute top-1/2 left-0 w-full h-px bg-gray-300 -translate-y-1/2"></div>
-          
-          {/* Top left: Sub-Problems */}
-          <div className="p-4 relative">
-            <div className="absolute top-0 right-0 w-1/2 h-px bg-orange-300"></div>
-            <div className="absolute top-0 right-0 w-px h-1/2 bg-orange-300"></div>
-            
-            <h3 className="text-lg font-semibold text-orange-800 mb-4 flex items-center">
-              <span className="h-3 w-3 rounded-full bg-orange-500 mr-2"></span>
-              Sub-Problems
-            </h3>
-            
-            <div className="space-y-4">
-              {filteredSubProblems.length > 0 ? (
-                filteredSubProblems.map((content, index) => (
-                  <ProblemCard
-                    key={`sub-${index}`}
-                    title={`Sub-Problem ${index + 1}`}
-                    content={content}
-                    type="subproblem"
-                  />
-                ))
-              ) : (
-                <div className="text-gray-500 italic p-3 bg-orange-50 rounded-lg border border-orange-200">
-                  No sub-problems defined
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Top right: Root Causes */}
-          <div className="p-4 relative">
-            <div className="absolute top-0 left-0 w-1/2 h-px bg-yellow-300"></div>
-            <div className="absolute top-0 left-0 w-px h-1/2 bg-yellow-300"></div>
-            
-            <h3 className="text-lg font-semibold text-yellow-800 mb-4 flex items-center">
-              <span className="h-3 w-3 rounded-full bg-yellow-500 mr-2"></span>
-              Root Causes
-            </h3>
-            
-            <div className="space-y-4">
-              {filteredRootCauses.length > 0 ? (
-                filteredRootCauses.map((content, index) => (
-                  <ProblemCard
-                    key={`cause-${index}`}
-                    title={`Root Cause ${index + 1}`}
-                    content={content}
-                    type="cause"
-                  />
-                ))
-              ) : (
-                <div className="text-gray-500 italic p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                  No root causes defined
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Bottom left: Solutions */}
-          <div className="p-4 relative">
-            <div className="absolute bottom-0 right-0 w-1/2 h-px bg-green-300"></div>
-            <div className="absolute bottom-0 right-0 w-px h-1/2 bg-green-300"></div>
-            
-            <h3 className="text-lg font-semibold text-green-800 mb-4 flex items-center">
-              <span className="h-3 w-3 rounded-full bg-green-500 mr-2"></span>
-              Potential Solutions
-            </h3>
-            
-            <div className="space-y-4">
-              {filteredSolutions.length > 0 ? (
-                filteredSolutions.map((content, index) => (
-                  <ProblemCard
-                    key={`solution-${index}`}
-                    title={`Solution ${index + 1}`}
-                    content={content}
-                    type="solution"
-                  />
-                ))
-              ) : (
-                <div className="text-gray-500 italic p-3 bg-green-50 rounded-lg border border-green-200">
-                  No solutions defined
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Bottom right: Actions */}
-          <div className="p-4 relative">
-            <div className="absolute bottom-0 left-0 w-1/2 h-px bg-blue-300"></div>
-            <div className="absolute bottom-0 left-0 w-px h-1/2 bg-blue-300"></div>
-            
-            <h3 className="text-lg font-semibold text-blue-800 mb-4 flex items-center">
-              <span className="h-3 w-3 rounded-full bg-blue-500 mr-2"></span>
-              Next Actions
-            </h3>
-            
-            <div className="space-y-4">
-              {filteredActions.length > 0 ? (
-                filteredActions.map((content, index) => (
-                  <ProblemCard
-                    key={`action-${index}`}
-                    title={`Action ${index + 1}`}
-                    content={content}
-                    type="action"
-                  />
-                ))
-              ) : (
-                <div className="text-gray-500 italic p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  No actions defined
-                </div>
-              )}
+      {/* Mind map structure with main problem in center */}
+      <div className="h-full flex flex-col items-center justify-center">
+        {/* Main problem (center) */}
+        <div className="relative z-10 mb-8">
+          <div className="absolute inset-0 bg-red-500 rounded-full transform scale-125 opacity-30 animate-pulse"></div>
+          <div className="relative p-1 bg-white rounded-full shadow-xl">
+            <div className="bg-red-600 text-white px-6 py-4 rounded-full border-8 border-white shadow-inner flex flex-col items-center justify-center max-w-sm">
+              <h3 className="text-xl font-bold mb-2 text-center">Main Problem</h3>
+              <p className="text-sm opacity-90 text-center">{mainProblem || 'No problem defined'}</p>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
-};
 
-// Individual card component for problem tree items
-const ProblemCard: React.FC<{
-  title: string;
-  content: string;
-  type: 'problem' | 'subproblem' | 'cause' | 'solution' | 'action';
-  className?: string;
-}> = ({ title, content, type, className = '' }) => {
-  // Get styles based on item type
-  const styles = (() => {
-    switch(type) {
-      case 'problem': 
-        return {
-          container: 'border-red-400 bg-white shadow-red-100/50',
-          header: 'bg-red-100 text-red-800',
-          icon: 'bg-red-500'
-        };
-      case 'subproblem': 
-        return {
-          container: 'border-orange-400 bg-white shadow-orange-100/50',
-          header: 'bg-orange-100 text-orange-800',
-          icon: 'bg-orange-500'
-        };
-      case 'cause': 
-        return {
-          container: 'border-yellow-400 bg-white shadow-yellow-100/50',
-          header: 'bg-yellow-100 text-yellow-800',
-          icon: 'bg-yellow-500'
-        };
-      case 'solution': 
-        return {
-          container: 'border-green-400 bg-white shadow-green-100/50',
-          header: 'bg-green-100 text-green-800',
-          icon: 'bg-green-500'
-        };
-      case 'action': 
-        return {
-          container: 'border-blue-400 bg-white shadow-blue-100/50',
-          header: 'bg-blue-100 text-blue-800',
-          icon: 'bg-blue-500'
-        };
-    }
-  })();
-
-  return (
-    <div className={`rounded-lg border-2 shadow-lg overflow-hidden transform transition-all hover:shadow-xl hover:-translate-y-1 ${styles.container} ${className}`}>
-      <div className={`px-3 py-2 font-medium flex items-center ${styles.header}`}>
-        <span className={`h-3 w-3 rounded-full ${styles.icon} mr-2`}></span>
-        {title}
-      </div>
-      <div className="p-4 text-gray-700">
-        {content || 'Not specified'}
+        {/* Connection lines container */}
+        <div className="relative w-full max-w-5xl">
+          {/* Horizontal connection from main problem */}
+          <div className="absolute top-0 left-1/2 w-0.5 h-16 bg-gradient-to-b from-red-600 to-gray-400 transform -translate-x-1/2 -translate-y-16"></div>
+          
+          {/* The four branches */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16">
+            {/* Left Top: Sub-problems */}
+            <div className="relative p-4">
+              {/* Connection lines */}
+              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-8 w-20 h-8">
+                <svg className="w-full h-full" viewBox="0 0 80 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M40 0V8 C40 16, 0 16, 0 32" stroke="#ED8936" strokeWidth="2" />
+                </svg>
+              </div>
+              
+              <div>
+                <div className="bg-orange-100 border-l-4 border-orange-500 p-4 rounded-r-lg shadow-lg mb-4">
+                  <h3 className="text-orange-800 font-bold mb-2 flex items-center">
+                    <span className="w-3 h-3 bg-orange-500 rounded-full mr-2"></span>
+                    Sub-Problems
+                  </h3>
+                  
+                  <div className="space-y-3 mt-4">
+                    {filteredSubProblems.length > 0 ? (
+                      filteredSubProblems.map((content, index) => (
+                        <div 
+                          key={`sub-${index}`} 
+                          className="relative pl-6 before:absolute before:left-0 before:top-0 before:bottom-0 before:w-px before:bg-orange-300 group"
+                        >
+                          <div className="absolute left-0 top-[0.7em] w-2 h-2 rounded-full bg-orange-400 group-hover:bg-orange-600 transition-colors"></div>
+                          <div className="bg-white border border-orange-200 rounded-lg p-3 shadow-sm group-hover:shadow-md transition-shadow">
+                            <h4 className="font-medium text-orange-700 text-sm mb-1">Sub Problem {index + 1}</h4>
+                            <p className="text-gray-700 text-sm">{truncate(content)}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-gray-500 italic text-sm p-2">No sub-problems defined</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Right Top: Root Causes */}
+            <div className="relative p-4">
+              {/* Connection lines */}
+              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-8 w-20 h-8">
+                <svg className="w-full h-full" viewBox="0 0 80 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M40 0V8 C40 16, 80 16, 80 32" stroke="#ECC94B" strokeWidth="2" />
+                </svg>
+              </div>
+              
+              <div>
+                <div className="bg-yellow-100 border-r-4 border-yellow-500 p-4 rounded-l-lg shadow-lg mb-4">
+                  <h3 className="text-yellow-800 font-bold mb-2 flex items-center justify-end">
+                    Root Causes
+                    <span className="w-3 h-3 bg-yellow-500 rounded-full ml-2"></span>
+                  </h3>
+                  
+                  <div className="space-y-3 mt-4">
+                    {filteredRootCauses.length > 0 ? (
+                      filteredRootCauses.map((content, index) => (
+                        <div 
+                          key={`cause-${index}`} 
+                          className="relative pr-6 before:absolute before:right-0 before:top-0 before:bottom-0 before:w-px before:bg-yellow-300 group"
+                        >
+                          <div className="absolute right-0 top-[0.7em] w-2 h-2 rounded-full bg-yellow-400 group-hover:bg-yellow-600 transition-colors"></div>
+                          <div className="bg-white border border-yellow-200 rounded-lg p-3 shadow-sm group-hover:shadow-md transition-shadow">
+                            <h4 className="font-medium text-yellow-700 text-sm mb-1">Root Cause {index + 1}</h4>
+                            <p className="text-gray-700 text-sm">{truncate(content)}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-gray-500 italic text-sm p-2 text-right">No root causes defined</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Left Bottom: Solutions */}
+            <div className="relative p-4">
+              {/* Connection lines */}
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-8 w-20 h-8 rotate-180">
+                <svg className="w-full h-full" viewBox="0 0 80 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M40 0V8 C40 16, 0 16, 0 32" stroke="#48BB78" strokeWidth="2" />
+                </svg>
+              </div>
+              
+              <div>
+                <div className="bg-green-100 border-l-4 border-green-500 p-4 rounded-r-lg shadow-lg mb-4">
+                  <h3 className="text-green-800 font-bold mb-2 flex items-center">
+                    <span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
+                    Potential Solutions
+                  </h3>
+                  
+                  <div className="space-y-3 mt-4">
+                    {filteredSolutions.length > 0 ? (
+                      filteredSolutions.map((content, index) => (
+                        <div 
+                          key={`solution-${index}`} 
+                          className="relative pl-6 before:absolute before:left-0 before:top-0 before:bottom-0 before:w-px before:bg-green-300 group"
+                        >
+                          <div className="absolute left-0 top-[0.7em] w-2 h-2 rounded-full bg-green-400 group-hover:bg-green-600 transition-colors"></div>
+                          <div className="bg-white border border-green-200 rounded-lg p-3 shadow-sm group-hover:shadow-md transition-shadow">
+                            <h4 className="font-medium text-green-700 text-sm mb-1">Solution {index + 1}</h4>
+                            <p className="text-gray-700 text-sm">{truncate(content)}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-gray-500 italic text-sm p-2">No solutions defined</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Right Bottom: Actions */}
+            <div className="relative p-4">
+              {/* Connection lines */}
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-8 w-20 h-8 rotate-180">
+                <svg className="w-full h-full" viewBox="0 0 80 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M40 0V8 C40 16, 80 16, 80 32" stroke="#4299E1" strokeWidth="2" />
+                </svg>
+              </div>
+              
+              <div>
+                <div className="bg-blue-100 border-r-4 border-blue-500 p-4 rounded-l-lg shadow-lg mb-4">
+                  <h3 className="text-blue-800 font-bold mb-2 flex items-center justify-end">
+                    Next Actions
+                    <span className="w-3 h-3 bg-blue-500 rounded-full ml-2"></span>
+                  </h3>
+                  
+                  <div className="space-y-3 mt-4">
+                    {filteredActions.length > 0 ? (
+                      filteredActions.map((content, index) => (
+                        <div 
+                          key={`action-${index}`} 
+                          className="relative pr-6 before:absolute before:right-0 before:top-0 before:bottom-0 before:w-px before:bg-blue-300 group"
+                        >
+                          <div className="absolute right-0 top-[0.7em] w-2 h-2 rounded-full bg-blue-400 group-hover:bg-blue-600 transition-colors"></div>
+                          <div className="bg-white border border-blue-200 rounded-lg p-3 shadow-sm group-hover:shadow-md transition-shadow">
+                            <h4 className="font-medium text-blue-700 text-sm mb-1">Action {index + 1}</h4>
+                            <p className="text-gray-700 text-sm">{truncate(content)}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-gray-500 italic text-sm p-2 text-right">No actions defined</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Center circle connector (provides depth) */}
+          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-100 to-gray-300 shadow-lg border-4 border-white"></div>
+          </div>
+        </div>
       </div>
     </div>
   );
