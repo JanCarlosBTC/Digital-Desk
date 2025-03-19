@@ -475,9 +475,10 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
         setFormOpen(open);
         if (!open) {
           resetForm();
+          if (onDialogClose) onDialogClose();
         }
       }}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white">
           <DialogHeader>
             <DialogTitle>{isEditing ? 'Edit Problem Tree' : 'Create New Problem Tree'}</DialogTitle>
             <DialogDescription>
@@ -664,7 +665,7 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
           }, 300);
         }
       }}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto flex flex-col bg-white z-50 border-2 border-gray-300 shadow-2xl">
           {selectedTree && (
             <>
               <DialogHeader className="flex-shrink-0">
