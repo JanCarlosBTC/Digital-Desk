@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { LoadingState } from '@/components/ui/loading-state';
 
 // Type definitions
 interface ProblemTree {
@@ -41,7 +42,7 @@ export function BasicTrees({ showNewProblemTree = false, onDialogClose }: BasicT
   const [formOpen, setFormOpen] = useState(showNewProblemTree);
   const [selectedTree, setSelectedTree] = useState<ProblemTree | null>(null);
   const [viewOpen, setViewOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   
   // Hooks
   const { toast } = useToast();
@@ -61,7 +62,7 @@ export function BasicTrees({ showNewProblemTree = false, onDialogClose }: BasicT
     setPotentialSolutions(['']);
     setNextActions(['']);
     setSelectedTree(null);
-    setError(null);
+    setFormError(null);
   };
   
   // Fetch problem trees with improved error handling and caching
@@ -69,21 +70,12 @@ export function BasicTrees({ showNewProblemTree = false, onDialogClose }: BasicT
     data: problemTrees = [], 
     isLoading,
     isError,
-    error,
     refetch 
   } = useQuery<ProblemTree[]>({
     queryKey: ['/api/problem-trees'],
     refetchOnWindowFocus: false,
     staleTime: 60000, // 1 minute stale time for better performance
     retry: 2, // Retry failed queries twice
-    onError: (err: Error) => {
-      console.error('Error fetching problem trees:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to load problem trees. Please try again.',
-        variant: 'destructive',
-      });
-    }
   });
   
   // Type definition for problem tree form data
@@ -95,9 +87,8 @@ export function BasicTrees({ showNewProblemTree = false, onDialogClose }: BasicT
     potentialSolutions: string[];
     nextActions: string[];
   }
-
-  // Import apiRequest if not already imported
-  import { apiRequest } from '@/lib/queryClient';
+  
+  // Make sure we handle loading state properly with improved UI
 
   // Create mutation with proper type safety and using apiRequest utility
   const createMutation = useMutation<ProblemTree, Error, ProblemTreeFormData>({
@@ -131,7 +122,7 @@ export function BasicTrees({ showNewProblemTree = false, onDialogClose }: BasicT
         variant: 'destructive'
       });
       
-      setError(error.message || 'An error occurred');
+      setFormError(error.message || 'An error occurred');
     }
   });
   
@@ -289,7 +280,7 @@ export function BasicTrees({ showNewProblemTree = false, onDialogClose }: BasicT
     if (Object.keys(newErrors).length > 0) {
       const errorValues = Object.values(newErrors);
       const firstError = errorValues.length > 0 ? errorValues[0] : "Validation error";
-      setError(firstError);
+      setFormError(firstError);
       return false;
     }
     
@@ -400,7 +391,7 @@ export function BasicTrees({ showNewProblemTree = false, onDialogClose }: BasicT
         </div>
         
         {isLoading ? (
-          <div>Loading problem trees...</div>
+          <LoadingState type="list" count={3} />
         ) : (
           renderProblemTrees()
         )}
@@ -423,9 +414,9 @@ export function BasicTrees({ showNewProblemTree = false, onDialogClose }: BasicT
           </DialogHeader>
           
           <div className="space-y-4 py-4">
-            {error && (
+            {formError && (
               <div className="bg-red-50 text-red-700 p-3 rounded-md mb-4">
-                {error}
+                {formError}
               </div>
             )}
             
