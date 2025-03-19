@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, memo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -11,11 +11,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Offer } from "@shared/schema";
+import { Offer } from "@shared/prisma-schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlusIcon, ArrowUpDown, EditIcon, HistoryIcon } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FeatureCard, StatusBadge } from "@/components/ui/feature-card";
+import { LoadingState } from "@/components/ui/loading-state";
+import { useErrorHandler } from "@/lib/error-utils";
+import { useApiMutation } from "@/lib/api-utils";
+import { queryKeys, defaultQueryConfig } from "@/lib/query-keys";
+import { dateUtils } from "@/lib/date-utils";
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),

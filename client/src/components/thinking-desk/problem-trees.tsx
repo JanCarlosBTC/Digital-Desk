@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ProblemTree } from "@shared/schema";
+import { ProblemTree } from "@shared/prisma-schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +46,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LoadingState } from "@/components/ui/loading-state";
+import { useErrorHandler } from "@/lib/error-utils";
+import { useApiMutation } from "@/lib/api-utils";
+import { queryKeys, defaultQueryConfig } from "@/lib/query-keys";
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -61,17 +65,95 @@ type FormValues = z.infer<typeof formSchema>;
 interface ProblemTreesProps {
   showNewProblemTree?: boolean;
   onDialogClose?: () => void;
+  onEdit: (tree: ProblemTree) => void;
 }
 
-const ProblemTrees = ({ showNewProblemTree = false, onDialogClose }: ProblemTreesProps) => {
+const ProblemTreeItem = memo(function ProblemTreeItem({ 
+  tree, 
+  onEdit,
+  onDelete 
+}: { 
+  tree: ProblemTree; 
+  onEdit: (tree: ProblemTree) => void;
+  onDelete: (id: number) => void;
+}) {
+  const handleEdit = useCallback(() => {
+    onEdit(tree);
+  }, [tree, onEdit]);
+
+  const handleDelete = useCallback(() => {
+    onDelete(tree.id);
+  }, [tree.id, onDelete]);
+
+  return (
+    <div className="p-4 bg-white rounded-lg shadow">
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="text-lg font-semibold">{tree.title}</h3>
+          <p className="text-sm text-gray-600 mt-2">{tree.mainProblem}</p>
+        </div>
+        <div className="flex space-x-2">
+          <Button variant="outline" size="sm" onClick={handleEdit}>
+            Edit
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleDelete}>
+            Delete
+          </Button>
+        </div>
+      </div>
+      
+      <div className="mt-4 space-y-4">
+        <div>
+          <h4 className="text-sm font-medium text-gray-700">Sub Problems</h4>
+          <ul className="mt-1 space-y-1">
+            {tree.subProblems.map((problem, index) => (
+              <li key={index} className="text-sm text-gray-600">{problem}</li>
+            ))}
+          </ul>
+        </div>
+        
+        <div>
+          <h4 className="text-sm font-medium text-gray-700">Root Causes</h4>
+          <ul className="mt-1 space-y-1">
+            {tree.rootCauses.map((cause, index) => (
+              <li key={index} className="text-sm text-gray-600">{cause}</li>
+            ))}
+          </ul>
+        </div>
+        
+        <div>
+          <h4 className="text-sm font-medium text-gray-700">Potential Solutions</h4>
+          <ul className="mt-1 space-y-1">
+            {tree.potentialSolutions.map((solution, index) => (
+              <li key={index} className="text-sm text-gray-600">{solution}</li>
+            ))}
+          </ul>
+        </div>
+        
+        <div>
+          <h4 className="text-sm font-medium text-gray-700">Next Actions</h4>
+          <ul className="mt-1 space-y-1">
+            {tree.nextActions.map((action, index) => (
+              <li key={index} className="text-sm text-gray-600">{action}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+export const ProblemTrees = memo(function ProblemTrees({ showNewProblemTree = false, onDialogClose, onEdit }: ProblemTreesProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedProblemTree, setSelectedProblemTree] = useState<ProblemTree | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [sortOption, setSortOption] = useState<"newest" | "oldest" | "alphabetical">("newest");
+  const [sortField, setSortField] = useState<keyof ProblemTree>('updatedAt');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
-  
+  const handleError = useErrorHandler();
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -84,10 +166,50 @@ const ProblemTrees = ({ showNewProblemTree = false, onDialogClose }: ProblemTree
     },
   });
 
-  // Fetch problem trees
-  const { data: problemTrees, isLoading } = useQuery<ProblemTree[]>({
-    queryKey: ['/api/problem-trees'],
+  const { data: trees, isLoading } = useQuery<ProblemTree[]>({
+    queryKey: queryKeys.problemTrees,
+    ...defaultQueryConfig,
   });
+
+  const deleteMutation = useApiMutation<void, { id: number }>(
+    '/api/problem-trees/delete',
+    'DELETE',
+    {
+      invalidateQueries: ['problem-trees'],
+    }
+  );
+
+  const handleDelete = useCallback(async (id: number) => {
+    try {
+      await deleteMutation.mutateAsync({ id });
+    } catch (error) {
+      handleError(error);
+    }
+  }, [deleteMutation, handleError]);
+
+  const handleSort = useCallback((field: keyof ProblemTree) => {
+    setSortField(current => {
+      if (current === field) {
+        setSortDirection(dir => dir === 'asc' ? 'desc' : 'asc');
+        return field;
+      }
+      setSortDirection('asc');
+      return field;
+    });
+  }, []);
+
+  const sortedTrees = useCallback((trees: ProblemTree[] | undefined) => {
+    if (!trees) return [];
+    return [...trees].sort((a, b) => {
+      const aValue = a[sortField];
+      const bValue = b[sortField];
+      const modifier = sortDirection === 'asc' ? 1 : -1;
+      
+      if (aValue < bValue) return -1 * modifier;
+      if (aValue > bValue) return 1 * modifier;
+      return 0;
+    });
+  }, [sortField, sortDirection]);
 
   // Create problem tree
   const createMutation = useMutation({

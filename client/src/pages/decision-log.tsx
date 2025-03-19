@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import DecisionList from "@/components/decision-log/decision-list";
 import DecisionForm from "@/components/decision-log/decision-form";
 import { useQuery } from "@tanstack/react-query";
-import { Decision } from "@shared/schema";
+import { Decision } from "@shared/prisma-schema";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, ClipboardListIcon, CheckSquare } from "lucide-react";
 import { DialogForm } from "@/components/ui/dialog-form";

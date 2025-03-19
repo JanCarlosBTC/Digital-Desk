@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ClarityLab } from "@shared/schema";
+import { ClarityLab } from "@shared/prisma-schema";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlusIcon, FilterIcon, CheckCircleIcon, FlaskConicalIcon, LightbulbIcon, CalendarIcon } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
