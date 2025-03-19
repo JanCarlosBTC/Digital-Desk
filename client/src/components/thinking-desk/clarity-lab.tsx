@@ -239,6 +239,7 @@ const ClarityLabComponent = ({ showNewEntry = false, onDialogClose }: ClarityLab
       {/* New Entry Dialog */}
       <DialogForm
         title="Create New Entry"
+        description="Document a new lesson, workflow, or solution for your clarity lab."
         open={isOpen}
         onOpenChange={handleDialogClose}
         size="md"
