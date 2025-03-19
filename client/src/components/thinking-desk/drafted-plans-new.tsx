@@ -1,6 +1,6 @@
 import React, { useState, useEffect, memo, useCallback, useMemo } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DialogForm } from "@/components/ui/dialog-form";
@@ -119,6 +119,7 @@ export const DraftedPlans = memo(function DraftedPlans({
   onEdit 
 }: DraftedPlansProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [expandedPlans, setExpandedPlans] = useState<Record<number, boolean>>({});
   const [sortField, setSortField] = useState<keyof DraftedPlan>('updatedAt');
