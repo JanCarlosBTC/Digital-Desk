@@ -2,18 +2,24 @@ import React, { useMemo } from 'react';
 
 /**
  * Type definitions for the Problem Tree visualization component
+ * Strong typing with React.FC for better component typing
  */
-interface ProblemTreeVisualizationProps {
+export interface ProblemTreeVisualizationProps {
   mainProblem: string;
   subProblems: string[];
   rootCauses: string[];
   potentialSolutions: string[];
   nextActions: string[];
+  className?: string;
+  testId?: string; // For testing purposes
 }
 
 /**
  * Validates and filters out empty entries from an array of strings
  * Safely handles null/undefined arrays by returning an empty array
+ * 
+ * @param items Array of strings to filter
+ * @returns Filtered array with only non-empty strings
  */
 function filterEmptyStrings(items: string[] | null | undefined): string[] {
   if (!items || !Array.isArray(items)) return [];
@@ -24,6 +30,9 @@ function filterEmptyStrings(items: string[] | null | undefined): string[] {
  * A TypeScript-friendly, accessible problem tree visualization component
  * Presents a hierarchical view of problems, causes, solutions, and actions
  * Optimized with memoization for better performance
+ * 
+ * @param props Component props with problem tree data
+ * @returns Rendered problem tree visualization
  */
 const ProblemTreeVisualization = React.memo(function ProblemTreeVisualization(
   props: ProblemTreeVisualizationProps
@@ -33,7 +42,9 @@ const ProblemTreeVisualization = React.memo(function ProblemTreeVisualization(
     subProblems = [],
     rootCauses = [],
     potentialSolutions = [],
-    nextActions = []
+    nextActions = [],
+    className = '',
+    testId = 'problem-tree-visualization'
   } = props;
   
   // Memoize the filtered arrays to prevent unnecessary re-filtering on re-renders
@@ -49,8 +60,24 @@ const ProblemTreeVisualization = React.memo(function ProblemTreeVisualization(
   const filteredActions = useMemo(() => 
     filterEmptyStrings(nextActions), [nextActions]);
 
+  // Memoize the content flag for better rendering performance
+  const hasContent = useMemo(() => 
+    !!mainProblem || 
+    filteredSubProblems.length > 0 || 
+    filteredRootCauses.length > 0 || 
+    filteredSolutions.length > 0 || 
+    filteredActions.length > 0, 
+    [mainProblem, filteredSubProblems, filteredRootCauses, filteredSolutions, filteredActions]
+  );
+
   return (
-    <div className="bg-white p-4 rounded-lg shadow-lg">
+    <div 
+      className={`bg-white p-4 rounded-lg shadow-lg ${className}`}
+      data-testid={testId}
+      role="region"
+      aria-label="Problem Tree Visualization"
+      aria-busy={!hasContent}
+    >
       {/* CSS is defined inline with type-safe dangerouslySetInnerHTML */}
       <style dangerouslySetInnerHTML={{ __html: `
         .tree {
@@ -217,24 +244,36 @@ const ProblemTreeVisualization = React.memo(function ProblemTreeVisualization(
         }
       `}} />
 
-      <div className="tree mx-auto overflow-auto max-h-[500px] p-4">
-        <ul>
-          <li>
-            <div className="problem-node">
-              <div className="node-title problem-title">Main Problem</div>
-              <div className="node-content">{mainProblem || 'No problem defined'}</div>
+      {!hasContent && (
+        <div className="py-4 text-center text-gray-500" aria-live="polite">
+          Loading problem tree data...
+        </div>
+      )}
+      
+      <div 
+        className="tree mx-auto overflow-auto max-h-[500px] p-4"
+        aria-hidden={!hasContent}
+        tabIndex={hasContent ? 0 : -1}
+      >
+        <ul role="tree">
+          <li role="treeitem">
+            <div className="problem-node" tabIndex={0}>
+              <div className="node-title problem-title" id="main-problem-title">Main Problem</div>
+              <div className="node-content" aria-labelledby="main-problem-title">{mainProblem || 'No problem defined'}</div>
             </div>
             
             <ul>
               {/* Sub-problems */}
               {filteredSubProblems.length > 0 && (
-                <li>
-                  <div className="subproblem-node">
-                    <div className="node-title subproblem-title">Sub-Problems</div>
-                    <div className="node-content">
+                <li role="treeitem">
+                  <div className="subproblem-node" tabIndex={0}>
+                    <div className="node-title subproblem-title" id="subproblems-title">Sub-Problems</div>
+                    <div className="node-content" aria-labelledby="subproblems-title">
                       <ul className="list-disc pl-4 space-y-1">
                         {filteredSubProblems.map((problem, idx) => (
-                          <li key={`subp-${idx}`} className="text-left">{problem}</li>
+                          <li key={`subp-${idx}`} className="text-left">
+                            {problem}
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -244,13 +283,15 @@ const ProblemTreeVisualization = React.memo(function ProblemTreeVisualization(
               
               {/* Root Causes */}
               {filteredRootCauses.length > 0 && (
-                <li>
-                  <div className="cause-node">
-                    <div className="node-title cause-title">Root Causes</div>
-                    <div className="node-content">
+                <li role="treeitem">
+                  <div className="cause-node" tabIndex={0}>
+                    <div className="node-title cause-title" id="root-causes-title">Root Causes</div>
+                    <div className="node-content" aria-labelledby="root-causes-title">
                       <ul className="list-disc pl-4 space-y-1">
                         {filteredRootCauses.map((cause, idx) => (
-                          <li key={`cause-${idx}`} className="text-left">{cause}</li>
+                          <li key={`cause-${idx}`} className="text-left">
+                            {cause}
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -259,13 +300,15 @@ const ProblemTreeVisualization = React.memo(function ProblemTreeVisualization(
                   <ul>
                     {/* Solutions */}
                     {filteredSolutions.length > 0 && (
-                      <li>
-                        <div className="solution-node">
-                          <div className="node-title solution-title">Solutions</div>
-                          <div className="node-content">
+                      <li role="treeitem">
+                        <div className="solution-node" tabIndex={0}>
+                          <div className="node-title solution-title" id="solutions-title">Solutions</div>
+                          <div className="node-content" aria-labelledby="solutions-title">
                             <ul className="list-disc pl-4 space-y-1">
                               {filteredSolutions.map((solution, idx) => (
-                                <li key={`sol-${idx}`} className="text-left">{solution}</li>
+                                <li key={`sol-${idx}`} className="text-left">
+                                  {solution}
+                                </li>
                               ))}
                             </ul>
                           </div>

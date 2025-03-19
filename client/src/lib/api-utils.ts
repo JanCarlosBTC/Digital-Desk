@@ -30,16 +30,6 @@ export interface ApiRequest {
  * Enhanced API request function with improved error handling and timeout support
  * Provides comprehensive error information and better debugging context
  * 
- * @param method HTTP method to use
- * @param url API endpoint URL
- * @param data Optional request payload
- * @param options Additional request options
- * @returns Promise resolving to the response data
- */
-/**
- * Enhanced API request function with improved error handling and timeout support
- * Provides comprehensive error information and better debugging context
- * 
  * @template T The expected return type of the API request
  * @param method HTTP method to use
  * @param url API endpoint URL
