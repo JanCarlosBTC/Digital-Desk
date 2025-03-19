@@ -90,9 +90,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { content } = req.body;
       
       // Parse and validate ID
-      const parsedId = parseInt(id);
-      if (isNaN(parsedId)) {
-        return res.status(400).json({ message: "Invalid ID format" });
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
       }
       
       // Validate content
@@ -115,9 +115,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/problem-trees', cacheMiddleware('problem-trees', 300), async (req: Request, res: Response) => {
     try {
       const problemTrees = await storage.getProblemTrees(DEMO_USER_ID);
-      res.json(problemTrees);
+      return res.json(problemTrees);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching problem trees" });
+      return res.status(500).json({ message: "Error fetching problem trees" });
     }
   });
 
@@ -125,10 +125,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       
-      // Parse and validate ID
-      const parsedId = parseInt(id);
-      if (isNaN(parsedId)) {
-        return res.status(400).json({ message: "Invalid ID format" });
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
       }
       
       const problemTree = await storage.getProblemTree(parsedId);
@@ -164,10 +164,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const data = req.body;
       
-      // Parse and validate ID
-      const parsedId = parseInt(id);
-      if (isNaN(parsedId)) {
-        return res.status(400).json({ message: "Invalid ID format" });
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
       }
       
       const updatedProblemTree = await storage.updateProblemTree(parsedId, data);
@@ -185,10 +185,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       
-      // Parse and validate ID
-      const parsedId = parseInt(id);
-      if (isNaN(parsedId)) {
-        return res.status(400).json({ message: "Invalid ID format" });
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
       }
       
       const deleted = await storage.deleteProblemTree(parsedId);
@@ -216,15 +216,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/drafted-plans/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const draftedPlan = await storage.getDraftedPlan(parseInt(id));
+      
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
+      }
+      
+      const draftedPlan = await storage.getDraftedPlan(parsedId);
       
       if (!draftedPlan) {
         return res.status(404).json({ message: "Drafted plan not found" });
       }
       
-      res.json(draftedPlan);
+      return res.json(draftedPlan);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching drafted plan" });
+      return res.status(500).json({ message: "Error fetching drafted plan" });
     }
   });
 
@@ -249,29 +256,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const data = req.body;
       
-      const updatedDraftedPlan = await storage.updateDraftedPlan(parseInt(id), data);
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
+      }
+      
+      const updatedDraftedPlan = await storage.updateDraftedPlan(parsedId, data);
       if (!updatedDraftedPlan) {
         return res.status(404).json({ message: "Drafted plan not found" });
       }
       
-      res.json(updatedDraftedPlan);
+      return res.json(updatedDraftedPlan);
     } catch (error) {
-      res.status(500).json({ message: "Error updating drafted plan" });
+      return res.status(500).json({ message: "Error updating drafted plan" });
     }
   });
 
   app.delete('/api/drafted-plans/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const deleted = await storage.deleteDraftedPlan(parseInt(id));
+      
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
+      }
+      
+      const deleted = await storage.deleteDraftedPlan(parsedId);
       
       if (!deleted) {
         return res.status(404).json({ message: "Drafted plan not found" });
       }
       
-      res.status(204).end();
+      return res.status(204).end();
     } catch (error) {
-      res.status(500).json({ message: "Error deleting drafted plan" });
+      return res.status(500).json({ message: "Error deleting drafted plan" });
     }
   });
 
@@ -289,15 +309,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/clarity-labs/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const clarityLab = await storage.getClarityLab(parseInt(id));
+      
+      // Use helper function to parse and validate ID
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) {
+        return; // Error response already sent by the helper function
+      }
+      
+      const clarityLab = await storage.getClarityLab(parsedId);
       
       if (!clarityLab) {
         return res.status(404).json({ message: "Clarity lab entry not found" });
       }
       
-      res.json(clarityLab);
+      return res.json(clarityLab);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching clarity lab entry" });
+      return res.status(500).json({ message: "Error fetching clarity lab entry" });
     }
   });
 
