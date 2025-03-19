@@ -11,9 +11,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Offer } from "@shared/prisma-schema";
+import { Offer } from "@shared/schema";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PlusIcon, ArrowUpDown, EditIcon, HistoryIcon } from "lucide-react";
+import { PlusIcon, ArrowUpDown, EditIcon, HistoryIcon, Trash2Icon } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FeatureCard, StatusBadge } from "@/components/ui/feature-card";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -21,6 +21,17 @@ import { useErrorHandler } from "@/lib/error-utils";
 import { useApiMutation } from "@/lib/api-utils";
 import { queryKeys, defaultQueryConfig } from "@/lib/query-keys";
 import { dateUtils } from "@/lib/date-utils";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -175,6 +186,16 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
       clientCount: offer.clientCount || 0,
     });
     setIsEditOpen(true);
+  };
+  
+  // Handle delete offer
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
+  const handleDeleteOffer = () => {
+    if (selectedOffer) {
+      deleteMutation.mutate(selectedOffer.id);
+      setIsDeleteDialogOpen(false);
+    }
   };
 
   const sortOffers = (offers: Offer[]) => {
@@ -462,6 +483,37 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
           e.preventDefault();
           form.handleSubmit(onSubmit)(e);
         }}
+        footerContent={
+          <AlertDialog
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+          >
+            <AlertDialogTrigger asChild>
+              <Button
+                type="button"
+                variant="destructive"
+                className="mr-auto"
+                onClick={() => setIsDeleteDialogOpen(true)}
+              >
+                <Trash2Icon className="h-4 w-4 mr-2" /> Delete Offer
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Offer</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this offer? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteOffer}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        }
       >
         <Form {...form}>
           <div className="space-y-4">
