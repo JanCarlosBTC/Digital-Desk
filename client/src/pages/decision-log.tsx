@@ -2,12 +2,28 @@ import React, { useState } from "react";
 import DecisionList from "@/components/decision-log/decision-list";
 import DecisionForm from "@/components/decision-log/decision-form";
 import { useQuery } from "@tanstack/react-query";
-import { Decision } from "@shared/prisma-schema";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, ClipboardListIcon, CheckSquare } from "lucide-react";
 import { DialogForm } from "@/components/ui/dialog-form";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/feature-card";
+
+// Define the Decision interface here instead of importing it
+interface Decision {
+  id: number;
+  userId: number;
+  title: string;
+  category: string;
+  decisionDate: string | Date;
+  why: string;
+  alternatives?: string | null;
+  expectedOutcome?: string | null;
+  followUpDate?: string | Date | null;
+  status: string;
+  whatDifferent?: string | null;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+};
 
 const DecisionLog = () => {
   const [selectedDecision, setSelectedDecision] = useState<Decision | null>(null);
