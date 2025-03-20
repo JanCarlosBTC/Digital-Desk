@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { motion, MotionProps, Variant } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 // Types of micro-interactions available
 export type MicroInteractionType = 
@@ -12,65 +12,14 @@ export type MicroInteractionType =
   | 'pop'
   | 'none';
 
-interface MicroInteractionProps extends MotionProps {
+// Props for the MicroInteraction component
+interface MicroInteractionProps {
   children: ReactNode;
   type?: MicroInteractionType;
   delay?: number;
-  duration?: number;
+  duration?: number; 
   className?: string;
-  hover?: boolean;
-  whileInView?: boolean;
 }
-
-// Collection of animation variants for different micro-interactions
-const variants: Record<MicroInteractionType, { 
-  initial: Variant, 
-  animate: Variant, 
-  exit?: Variant,
-  whileHover?: Variant
-}> = {
-  'fade': {
-    initial: { opacity: 0 },
-    animate: { opacity: 1 },
-    exit: { opacity: 0 }
-  },
-  'slide-up': {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -20 }
-  },
-  'slide-down': {
-    initial: { opacity: 0, y: -20 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: 20 }
-  },
-  'slide-left': {
-    initial: { opacity: 0, x: 20 },
-    animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -20 }
-  },
-  'slide-right': {
-    initial: { opacity: 0, x: -20 },
-    animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: 20 }
-  },
-  'scale': {
-    initial: { opacity: 0, scale: 0.8 },
-    animate: { opacity: 1, scale: 1 },
-    exit: { opacity: 0, scale: 0.8 },
-    whileHover: { scale: 1.05 }
-  },
-  'pop': {
-    initial: { opacity: 0, scale: 0.5 },
-    animate: { opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 500 } },
-    exit: { opacity: 0, scale: 0.5 },
-    whileHover: { scale: 1.1, transition: { type: 'spring', stiffness: 400 } }
-  },
-  'none': {
-    initial: {},
-    animate: {}
-  }
-};
 
 /**
  * MicroInteraction component adds subtle animations to UI elements
@@ -82,12 +31,53 @@ export const MicroInteraction: React.FC<MicroInteractionProps> = ({
   delay = 0,
   duration = 0.3,
   className = '',
-  hover = false,
-  whileInView = false,
-  ...props
 }) => {
-  // Get the selected animation variant
-  const selectedVariant = variants[type];
+  // Define animation properties based on type
+  let initial = {};
+  let animate = {};
+  let exit = {};
+  
+  // Set animation properties based on the animation type
+  switch (type) {
+    case 'fade':
+      initial = { opacity: 0 };
+      animate = { opacity: 1 };
+      exit = { opacity: 0 };
+      break;
+    case 'slide-up':
+      initial = { opacity: 0, y: 20 };
+      animate = { opacity: 1, y: 0 };
+      exit = { opacity: 0, y: -20 };
+      break;
+    case 'slide-down':
+      initial = { opacity: 0, y: -20 };
+      animate = { opacity: 1, y: 0 };
+      exit = { opacity: 0, y: 20 };
+      break;
+    case 'slide-left':
+      initial = { opacity: 0, x: 20 };
+      animate = { opacity: 1, x: 0 };
+      exit = { opacity: 0, x: -20 };
+      break;
+    case 'slide-right':
+      initial = { opacity: 0, x: -20 };
+      animate = { opacity: 1, x: 0 };
+      exit = { opacity: 0, x: 20 };
+      break;
+    case 'scale':
+      initial = { opacity: 0, scale: 0.8 };
+      animate = { opacity: 1, scale: 1 };
+      exit = { opacity: 0, scale: 0.8 };
+      break;
+    case 'pop':
+      initial = { opacity: 0, scale: 0.5 };
+      animate = { opacity: 1, scale: 1 };
+      exit = { opacity: 0, scale: 0.5 };
+      break;
+    default:
+      // No animation for 'none' type
+      break;
+  }
   
   // Default transition configuration
   const transition = {
@@ -98,15 +88,11 @@ export const MicroInteraction: React.FC<MicroInteractionProps> = ({
 
   return (
     <motion.div
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      variants={selectedVariant}
+      initial={initial}
+      animate={animate}
+      exit={exit}
       transition={transition}
       className={className}
-      whileHover={hover ? selectedVariant.whileHover : undefined}
-      viewport={whileInView ? { once: true, amount: 0.3 } : undefined}
-      {...props}
     >
       {children}
     </motion.div>

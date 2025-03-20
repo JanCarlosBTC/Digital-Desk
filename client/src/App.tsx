@@ -1,5 +1,5 @@
 import React from "react";
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -10,18 +10,24 @@ import ThinkingDesk from "@/pages/thinking-desk-new"; // Using our completely ne
 import PersonalClaritySystem from "@/pages/personal-clarity-system";
 import DecisionLog from "@/pages/decision-log";
 import OfferVault from "@/pages/offer-vault";
+import { PageTransition } from "@/components/transitions/simple-page-transition";
 
+// Enhanced router with page transitions
 function Router() {
+  const [location] = useLocation();
+  
   return (
     <AppLayout>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/thinking-desk" component={ThinkingDesk} />
-        <Route path="/personal-clarity-system" component={PersonalClaritySystem} />
-        <Route path="/decision-log" component={DecisionLog} />
-        <Route path="/offer-vault" component={OfferVault} />
-        <Route component={NotFound} />
-      </Switch>
+      <PageTransition>
+        <Switch location={location}>
+          <Route path="/" component={Home} />
+          <Route path="/thinking-desk" component={ThinkingDesk} />
+          <Route path="/personal-clarity-system" component={PersonalClaritySystem} />
+          <Route path="/decision-log" component={DecisionLog} />
+          <Route path="/offer-vault" component={OfferVault} />
+          <Route component={NotFound} />
+        </Switch>
+      </PageTransition>
     </AppLayout>
   );
 }
