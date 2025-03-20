@@ -4,7 +4,6 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Edit as EditIcon, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { DialogForm } from "@/components/ui/dialog-form";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
@@ -13,7 +12,7 @@ import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Priority } from "@shared/schema";
-import "@/components/ui/clipboard.css"; // Added import for clipboard styles
+import "@/components/ui/clipboard.css";
 
 const formSchema = z.object({
   priority1: z.string().min(3, "Priority must be at least 3 characters"),
@@ -27,7 +26,7 @@ const PrioritiesTracker = () => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [newPriority, setNewPriority] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false); // Added state for submitting
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -157,56 +156,50 @@ const PrioritiesTracker = () => {
     deleteMutation.mutate(id);
   };
 
-  const handleEditPriorities = () => {
-    setIsOpen(true);
-  };
-
   const onSubmit = (data: FormValues) => {
     updateAllMutation.mutate(data);
   };
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 sticky top-6">
-      <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">What Matters Most</h2>
-          <Button 
-            variant="personalClarityOutline"
-            onClick={() => setIsOpen(true)}
-            className="flex items-center"
-          >
-            <EditIcon className="mr-2 h-4 w-4" /> Edit
-          </Button>
-        </div>
-        
-        <p className="text-gray-600 mb-4">Maintain focus by tracking your top 3 priorities.</p>
-        
-        {isLoading ? (
-          <Skeleton className="h-48 w-full" />
-        ) : priorities && priorities.length > 0 ? (
-          <ul className="space-y-3">
-            {priorities.sort((a, b) => a.order - b.order).map((priority) => (
-              <li 
-                key={priority.id} 
-                className="flex justify-between items-center p-3 bg-gray-50 border border-gray-100 rounded-lg"
-              >
-                <span className="font-medium text-gray-800">{priority.priority}</span>
-                <button 
-                  className="text-gray-400 hover:text-gray-600"
-                  onClick={() => handleDeletePriority(priority.id)}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="text-center py-4 bg-gray-50 rounded-md">
-            <p className="text-gray-600">No priorities set yet.</p>
-            <p className="text-sm text-gray-500">Add your first priority below!</p>
-          </div>
-        )}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold text-gray-800">What Matters Most</h2>
+        <Button 
+          variant="personalClarityOutline"
+          onClick={() => setIsOpen(true)}
+          className="flex items-center"
+        >
+          <EditIcon className="mr-2 h-4 w-4" /> Edit
+        </Button>
       </div>
+      
+      <p className="text-gray-600 mb-4">Maintain focus by tracking your top 3 priorities.</p>
+      
+      {isLoading ? (
+        <Skeleton className="h-48 w-full mb-6" />
+      ) : priorities && priorities.length > 0 ? (
+        <ul className="space-y-3 mb-6">
+          {priorities.sort((a, b) => a.order - b.order).map((priority) => (
+            <li 
+              key={priority.id} 
+              className="flex justify-between items-center p-3 bg-gray-50 border border-gray-100 rounded-lg"
+            >
+              <span className="font-medium text-gray-800">{priority.priority}</span>
+              <button 
+                className="text-gray-400 hover:text-gray-600"
+                onClick={() => handleDeletePriority(priority.id)}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="text-center py-4 bg-gray-50 rounded-md mb-6">
+          <p className="text-gray-600">No priorities set yet.</p>
+          <p className="text-sm text-gray-500">Add your first priority below!</p>
+        </div>
+      )}
 
       {/* Quote */}
       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
