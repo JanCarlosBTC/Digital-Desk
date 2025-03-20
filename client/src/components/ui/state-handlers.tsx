@@ -138,7 +138,7 @@ export function EmptyState({
       case 'warning':
         return <div className="rounded-full bg-warning/10 p-3"><AlertTriangleIcon className="h-6 w-6 text-warning" /></div>;
       case 'check':
-        return <div className="rounded-full bg-success/10 p-3"><CheckCircleIcon className="h-6 w-6 text-success" /></div>;
+        return <div className="rounded-full bg-success/10 p-3"><CheckCircle className="h-6 w-6 text-success" /></div>;
       case 'info':
       default:
         return <div className="rounded-full bg-muted p-3"><Info className="h-6 w-6 text-muted-foreground" /></div>;
@@ -249,26 +249,22 @@ export function DeleteConfirmationContent({
         </div>
       </div>
       
-      <div className="flex justify-end gap-2 mt-4">
-        <Button
-          variant="outline"
-          onClick={onCancel}
-          disabled={isDeleting}
-        >
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" onClick={onCancel} disabled={isDeleting}>
           Cancel
         </Button>
-        <Button
-          variant="destructive"
+        <Button 
+          variant="destructive" 
           onClick={onConfirm}
           disabled={isDeleting}
         >
           {isDeleting ? (
             <>
-              <span className="animate-spin mr-2">●</span>
+              <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
               Deleting...
             </>
           ) : (
-            "Delete"
+            'Delete'
           )}
         </Button>
       </div>

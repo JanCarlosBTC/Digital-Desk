@@ -1,32 +1,56 @@
+/**
+ * Media Query Hook
+ * 
+ * A hook that detects if a media query matches the current viewport.
+ * Useful for responsive design logic in React components.
+ */
+
 import { useState, useEffect } from 'react';
 
 /**
- * Custom hook for detecting if a media query matches
+ * Hook to detect if a media query matches
  * @param query The media query to check (e.g. "(min-width: 768px)")
- * @returns Boolean indicating if the media query matches
+ * @returns Whether the media query matches
  */
 export function useMediaQuery(query: string): boolean {
-  // Default to true for SSR
-  const [matches, setMatches] = useState(false);
+  // Initial state based on the current match
+  const getMatches = (): boolean => {
+    // SSR check - return false if window is not available
+    if (typeof window !== 'undefined') {
+      return window.matchMedia(query).matches;
+    }
+    return false;
+  };
+
+  const [matches, setMatches] = useState<boolean>(getMatches());
 
   useEffect(() => {
-    // Create a media query list
-    const mediaQuery = window.matchMedia(query);
-    
-    // Set initial match state
-    setMatches(mediaQuery.matches);
-    
-    // Create event listener
-    const handleChange = (event: MediaQueryListEvent) => {
-      setMatches(event.matches);
+    // Function to handle media query change
+    const handleChange = () => {
+      setMatches(getMatches());
     };
+
+    // Initial check
+    const matchMedia = window.matchMedia(query);
     
-    // Add event listener
-    mediaQuery.addEventListener('change', handleChange);
-    
+    // Set up the listener
+    if (matchMedia.addEventListener) {
+      // Modern browsers
+      matchMedia.addEventListener('change', handleChange);
+    } else {
+      // Older browsers
+      matchMedia.addListener(handleChange);
+    }
+
     // Clean up
     return () => {
-      mediaQuery.removeEventListener('change', handleChange);
+      if (matchMedia.removeEventListener) {
+        // Modern browsers
+        matchMedia.removeEventListener('change', handleChange);
+      } else {
+        // Older browsers
+        matchMedia.removeListener(handleChange);
+      }
     };
   }, [query]);
 
