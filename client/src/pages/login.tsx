@@ -4,7 +4,7 @@ import { LoginForm } from "@/components/auth/login-form";
 import { RegisterForm } from "@/components/auth/register-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from "@/context/user-context";
-import { Navigate } from "wouter";
+import { Redirect } from "wouter";
 
 export default function LoginPage() {
   const { user, isLoading } = useUser();
@@ -12,7 +12,7 @@ export default function LoginPage() {
   
   // If user is already logged in, redirect to home
   if (user && !isLoading) {
-    return <Navigate to="/" />;
+    return <Redirect to="/" />;
   }
 
   return (
