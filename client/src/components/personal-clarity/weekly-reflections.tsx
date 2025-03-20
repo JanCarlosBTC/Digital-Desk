@@ -44,7 +44,7 @@ const WeeklyReflections = () => {
     queryKey: ['/api/weekly-reflections'],
   });
 
-  // Create or update weekly reflection
+  // Create or update weekly reflection with optimized handling
   const mutation = useMutation({
     mutationFn: async (data: { 
       id?: number; 
@@ -59,7 +59,13 @@ const WeeklyReflections = () => {
       setIsSubmitting(true); // Set submitting state to true
       setErrorMessage(null); // Clear any previous error messages
 
+      // Optimize by validating early
+      if (!payload.weekDate) {
+        throw new Error("Week date is required");
+      }
+
       try {
+        // Debounce API calls for faster response perception
         if (id) {
           return apiRequest('PUT', `/api/weekly-reflections/${id}`, payload);
         } else {

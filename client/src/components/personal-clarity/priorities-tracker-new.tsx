@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, memo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Edit as EditIcon, X } from "lucide-react";
@@ -23,7 +23,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const PrioritiesTrackerComponent = () => {
+const PrioritiesTracker = () => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [newPriority, setNewPriority] = useState("");
@@ -188,13 +188,15 @@ const PrioritiesTrackerComponent = () => {
     <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 sticky top-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-gray-800">What Matters Most</h2>
-        <Button 
-          variant="personalClarityOutline"
-          onClick={() => setIsOpen(true)}
-          className="flex items-center"
-        >
-          <EditIcon className="mr-2 h-4 w-4" /> Edit
-        </Button>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Button 
+            variant="personalClarityOutline"
+            onClick={() => setIsOpen(true)}
+            className="flex items-center"
+          >
+            <EditIcon className="mr-2 h-4 w-4" /> Edit
+          </Button>
+        </motion.div>
       </div>
       
       <p className="text-gray-600 mb-4">Maintain focus by tracking your top 3 priorities.</p>
@@ -343,7 +345,4 @@ const PrioritiesTrackerComponent = () => {
   );
 };
 
-// Memoize the component for better performance
-const PrioritiesTracker = memo(PrioritiesTrackerComponent);
-
-export default PrioritiesTracker;
+export default React.memo(PrioritiesTracker);
