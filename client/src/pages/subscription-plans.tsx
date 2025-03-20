@@ -1,61 +1,30 @@
 import React, { useState } from 'react';
-import { Check, X, Sparkles } from 'lucide-react';
+import { Check, X, CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/context/user-context';
 import { subscriptionService, Plan, PLAN_FEATURES } from '@/services/subscription-service';
 import { toast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge';
-
-// Define type for plan features with optional savingsPercentage
-type PlanFeatureType = typeof PLAN_FEATURES[Plan] & {
-  savingsPercentage?: number;
-};
 
 export default function SubscriptionPlans() {
   const { user } = useUser();
+  const [isAnnual, setIsAnnual] = useState(false);
   const [loading, setLoading] = useState<Plan | null>(null);
   
+  // Default to trial plan
   const currentPlan = user?.plan as Plan || Plan.TRIAL;
   
-  // Display price with proper formatting
-  const getPrice = (plan: Plan) => {
-    const features = PLAN_FEATURES[plan] as PlanFeatureType;
-    
-    if (plan === Plan.TRIAL) {
-      return (
-        <div className="flex flex-col items-center">
-          <span className="text-2xl font-bold">Free</span>
-          <span className="text-sm text-muted-foreground">{features.trialDays}-day trial</span>
-        </div>
-      );
+  // Get appropriate price based on billing period
+  const getPrice = (planName: string, basePrice: number) => {
+    if (planName === Plan.TRIAL) {
+      return 'Free for 7 days';
     }
     
-    if (plan === Plan.ANNUAL) {
-      // The Annual plan has savingsPercentage in the PLAN_FEATURES
-      const annualFeatures = PLAN_FEATURES[Plan.ANNUAL] as any;
-      const savingsPercent = annualFeatures.savingsPercentage;
-      
-      return (
-        <div className="flex flex-col items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold">${(features.price / 12).toFixed(2)}</span>
-            <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-              Save {savingsPercent}%
-            </Badge>
-          </div>
-          <span className="text-sm text-muted-foreground">per month, billed annually</span>
-          <span className="text-sm text-muted-foreground">${features.price.toFixed(2)} total</span>
-        </div>
-      );
+    if (planName === Plan.ANNUAL) {
+      return `$${basePrice}/year`;
     }
     
-    return (
-      <div className="flex flex-col items-center">
-        <span className="text-2xl font-bold">${features.price.toFixed(2)}</span>
-        <span className="text-sm text-muted-foreground">per month</span>
-      </div>
-    );
+    return basePrice === 0 ? 'Free' : `$${basePrice}/month`;
   };
   
   const handleUpgrade = async (plan: Plan) => {
@@ -70,12 +39,12 @@ export default function SubscriptionPlans() {
     setLoading(plan);
     
     try {
-      // This will be replaced with actual payment processing
+      // This will redirect to Stripe checkout
       await subscriptionService.upgradePlan(plan);
       
       toast({
         title: 'Success!',
-        description: `Your plan has been updated to ${plan}.`,
+        description: `Redirecting to checkout for the ${plan} plan.`,
       });
     } catch (error) {
       toast({
@@ -92,37 +61,58 @@ export default function SubscriptionPlans() {
     <div className="container py-12 mx-auto">
       <div className="text-center mb-12">
         <h1 className="text-3xl font-bold mb-2">Choose Your Plan</h1>
-        <p className="text-gray-600 mb-6">Select the plan that best fits your needs</p>
+        <p className="text-gray-600 mb-6">Start with a 7-day trial, then choose your preferred billing</p>
+        
+        <div className="flex items-center justify-center mb-8">
+          <span className={`mr-3 ${!isAnnual ? 'font-semibold' : ''}`}>Monthly</span>
+          <button
+            className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200"
+            onClick={() => setIsAnnual(!isAnnual)}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                isAnnual ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+          <span className={`ml-3 ${isAnnual ? 'font-semibold' : ''}`}>
+            Annual <span className="text-green-600 text-xs font-medium">Save 15%</span>
+          </span>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        {Object.keys(PLAN_FEATURES).map((planName) => {
+        {Object.entries(PLAN_FEATURES).map(([planName, features]) => {
           const plan = planName as Plan;
-          const features = PLAN_FEATURES[plan];
           const isCurrent = plan === currentPlan;
-          const isPremium = plan !== Plan.TRIAL;
+          
+          // Skip showing annual plan if monthly is selected and vice versa
+          if ((isAnnual && plan === Plan.MONTHLY) || (!isAnnual && plan === Plan.ANNUAL)) {
+            return null;
+          }
           
           return (
             <Card 
               key={planName} 
-              className={`border-2 relative ${isCurrent ? 'border-primary shadow-lg' : isPremium ? 'border-gray-200 hover:border-primary/50 transition-colors' : 'border-gray-200'}`}
+              className={`border-2 ${isCurrent ? 'border-blue-500' : 'border-gray-200'}`}
             >
-              {plan === Plan.ANNUAL && (
-                <div className="absolute -top-3 left-0 right-0 flex justify-center">
-                  <Badge className="bg-primary text-white font-medium">
-                    <Sparkles className="h-3.5 w-3.5 mr-1" /> BEST VALUE
-                  </Badge>
-                </div>
-              )}
               <CardHeader>
-                <CardTitle className="flex justify-between items-center">
-                  {planName}
-                  {isCurrent && (
-                    <Badge variant="outline" className="border-primary text-primary">Current</Badge>
+                <div className="flex justify-between items-center">
+                  <CardTitle>{planName}</CardTitle>
+                  {plan === Plan.TRIAL && (
+                    <div className="bg-blue-100 text-blue-800 text-xs font-medium inline-flex items-center px-2 py-1 rounded">
+                      <CalendarClock size={14} className="mr-1" />
+                      7 days
+                    </div>
                   )}
-                </CardTitle>
-                <CardDescription className="mt-2 flex justify-center">
-                  {getPrice(plan)}
+                </div>
+                <CardDescription>
+                  <div className="mt-2 text-2xl font-bold">
+                    {getPrice(planName, features.price)}
+                  </div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    {features.description}
+                  </div>
                 </CardDescription>
               </CardHeader>
               <CardContent className="h-80 overflow-y-auto">
@@ -168,7 +158,9 @@ export default function SubscriptionPlans() {
                   disabled={isCurrent || loading === plan}
                   onClick={() => handleUpgrade(plan)}
                 >
-                  {loading === plan ? 'Processing...' : isCurrent ? 'Current Plan' : 'Upgrade'}
+                  {loading === plan ? 'Processing...' : 
+                   isCurrent ? 'Current Plan' : 
+                   plan === Plan.TRIAL ? 'Start Free Trial' : 'Upgrade'}
                 </Button>
               </CardFooter>
             </Card>

@@ -68,7 +68,7 @@ export function sanitizeInput(req: Request, _res: Response, next: NextFunction) 
     req.query = sanitize(req.query);
   }
   
-  return next();
+  next();
 }
 
 /**
@@ -79,7 +79,7 @@ export function bruteForceProtection(
   windowMs = 15 * 60 * 1000, // 15 minutes
   maxFailures = 5,
   blockDuration = 30 * 60 * 1000 // 30 minutes
-): (req: Request, res: Response, next: NextFunction) => void {
+) {
   // In-memory storage of failed attempts (should use Redis in production)
   const failedAttempts: Record<string, { count: number, blockedUntil?: number }> = {};
   
@@ -107,9 +107,10 @@ export function bruteForceProtection(
     // Check if IP is currently blocked
     if (attempt.blockedUntil && attempt.blockedUntil > now) {
       const remaining = Math.ceil((attempt.blockedUntil - now) / 1000 / 60);
-      return res.status(429).json({
+      res.status(429).json({
         message: `Too many failed attempts. Please try again after ${remaining} minutes.`
       });
+      return;
     }
     
     // Middleware to track failed responses for this request
@@ -128,6 +129,6 @@ export function bruteForceProtection(
       }
     });
     
-    return next();
+    next();
   };
 } 

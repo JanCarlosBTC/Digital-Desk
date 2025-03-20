@@ -44,16 +44,20 @@ export class PrismaStorage implements IStorage {
 
   async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
     try {
-      const updatedUser = await prisma.user.update({
+      const updateData: any = {};
+      
+      if (userData.username !== undefined) updateData.username = userData.username;
+      if (userData.password !== undefined) updateData.password = userData.password;
+      if (userData.name !== undefined) updateData.name = userData.name;
+      if (userData.initials !== undefined) updateData.initials = userData.initials;
+      if (userData.plan !== undefined) updateData.plan = userData.plan || undefined;
+      
+      return await prisma.user.update({
         where: { id },
-        data: {
-          ...userData
-          // Prisma automatically updates the updatedAt field
-        }
+        data: updateData
       });
-      return updatedUser;
     } catch (error) {
-      console.error("Error updating user:", error);
+      console.error('Error updating user:', error);
       return undefined;
     }
   }

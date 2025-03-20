@@ -11,7 +11,6 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
 import { authenticate } from "./middleware/auth.js";
-// Import controllers from their expected location after compilation
 import { register, login, getProfile, updateProfile } from "./controllers/auth.controller.js";
 import { createCheckoutSession, handleWebhook } from "./controllers/subscription.controller.js";
 import { checkSubscriptionLimits } from "./middleware/subscription.js";

@@ -16,7 +16,6 @@ export enum Plan {
 export const PLAN_FEATURES = {
   [Plan.TRIAL]: {
     price: 0,
-    trialDays: 7,
     offerLimit: 3,
     problemTreeLimit: 5,
     draftedPlanLimit: 3,
@@ -24,11 +23,12 @@ export const PLAN_FEATURES = {
     includesTemplates: false,
     includesCollaboration: false,
     includesAPI: false,
-    storageLimit: '500MB',
+    storageLimit: '100MB',
+    trialDays: 7,
+    description: '7-day free trial with limited features'
   },
   [Plan.MONTHLY]: {
     price: 28,
-    trialDays: 0,
     offerLimit: -1, // Unlimited
     problemTreeLimit: -1, // Unlimited
     draftedPlanLimit: -1, // Unlimited
@@ -36,12 +36,12 @@ export const PLAN_FEATURES = {
     includesTemplates: true,
     includesCollaboration: true,
     includesAPI: true,
-    storageLimit: '50GB',
+    storageLimit: '100GB',
+    trialDays: 0,
+    description: 'Full access with monthly billing'
   },
   [Plan.ANNUAL]: {
-    price: 285.60, // 28 * 12 * 0.85 (15% discount)
-    savingsPercentage: 15,
-    trialDays: 0,
+    price: Math.round(28 * 12 * 0.85), // 15% discount on annual plan
     offerLimit: -1, // Unlimited
     problemTreeLimit: -1, // Unlimited
     draftedPlanLimit: -1, // Unlimited
@@ -49,7 +49,9 @@ export const PLAN_FEATURES = {
     includesTemplates: true,
     includesCollaboration: true,
     includesAPI: true,
-    storageLimit: '50GB',
+    storageLimit: '100GB',
+    trialDays: 0,
+    description: 'Full access with annual billing (15% discount)'
   }
 };
 

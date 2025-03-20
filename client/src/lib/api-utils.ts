@@ -5,11 +5,11 @@
  * loading state tracking, and response type safety.
  */
 
-import { useEffect } from 'react';
-import { useMutation, useQuery, useQueryClient, QueryKey, UseMutationOptions, UseQueryOptions } from '@tanstack/react-query';
-import { useToast } from '@/components/ui/use-toast';
+import { useMutation, useQuery, UseMutationOptions, UseQueryOptions, QueryKey } from '@tanstack/react-query';
 import { queryClient } from './queryClient';
-import { ErrorType, ErrorData, EnhancedError } from "./error-utils";
+import { useToast } from '@/hooks/use-toast';
+import { ErrorType, ErrorData } from "./error-utils";
+import { useEffect } from 'react';
 
 /**
  * Structured API error with additional metadata
@@ -344,84 +344,112 @@ async function apiRequest<T>(
   }
 }
 
-/**
- * Hook for batch mutations (multiple API requests in a single operation)
- * Provides optimized execution with consistent error handling
- * 
- * @template TData The return type of the mutation (defaults to unknown[])
- * @returns Mutation object for executing multiple requests together
- */
-export function useBatchMutation<TData = unknown[]>() {
-  const queryClient = useQueryClient();
+// Standard error handling
+export function handleApiError(error: Error): string {
+  console.error('API Error:', error);
+  
+  // Extract more meaningful error messages when possible
+  if ('data' in error && (error as any).data) {
+    const apiError = error as ApiError;
+    
+    // Check for validation errors in the expected format
+    if (apiError.data?.errors && typeof apiError.data.errors === 'object') {
+      const errorMessages = Object.entries(apiError.data.errors)
+        .map(([field, messages]) => {
+          if (Array.isArray(messages)) {
+            return `${field}: ${messages.join(', ')}`;
+          } else {
+            return `${field}: ${String(messages)}`;
+          }
+        })
+        .join('. ');
+      
+      if (errorMessages) {
+        return errorMessages;
+      }
+    }
+    
+    // Check for direct message in data
+    if (apiError.data?.message) {
+      return apiError.data.message;
+    }
+  }
+  
+  // Fall back to error message
+  return error.message || 'An unexpected error occurred';
+}
 
-  return useMutation<TData, Error, ApiRequest[]>({
-    mutationFn: async (requests: ApiRequest[]) => {
-      const batchId = generateRequestId();
-      
-      try {
-        // Type assertion to allow returning the Promise.all result
-        return await Promise.all(
-          requests.map(req => 
-            apiRequest(
-              req.method, 
-              req.url, 
-              req.data, 
-              { 
-                headers: req.headers,
-                timeout: req.timeout,
-                retryConfig: req.retryConfig,
-                cache: req.cache,
-                signal: req.signal
-              }
-            )
-          )
-        ) as unknown as TData;
-      } catch (error) {
-        // Add batch context to error with improved type safety
-        if (error instanceof Error) {
-          const apiError = error as ApiError;
-          
-          // Create properly structured error data
-          const errorData: ErrorData = {
-            ...(typeof apiError.data === 'object' ? apiError.data as object : {}),
-            batchId,
-            batchSize: requests.length,
-            batchUrls: requests.map(r => r.url),
-            failedRequestIndex: requests.findIndex(req => 
-              req.url === apiError.url && req.method === apiError.method
-            )
-          };
-          
-          apiError.data = errorData;
-        }
-        throw error;
-      }
-    },
+/**
+ * API endpoint constants for consistent usage across the application
+ */
+export const API_ENDPOINTS = {
+  AUTH: {
+    LOGIN: '/api/auth/login',
+    REGISTER: '/api/auth/register',
+    PROFILE: '/api/auth/profile',
+  },
+  THINKING_DESK: {
+    BRAIN_DUMP: '/api/brain-dump',
+    PROBLEM_TREES: '/api/problem-trees',
+    DRAFTED_PLANS: '/api/drafted-plans',
+    CLARITY_LABS: '/api/clarity-labs',
+  },
+  REFLECTIONS: {
+    WEEKLY: '/api/weekly-reflections',
+    MONTHLY: '/api/monthly-check-ins',
+  },
+  DECISIONS: '/api/decisions',
+  OFFERS: '/api/offers',
+  OFFER_NOTES: '/api/offer-notes',
+  PRIORITIES: '/api/priorities',
+  SUBSCRIPTION: {
+    CREATE_SESSION: '/api/subscription/create-checkout-session',
+    STATUS: '/api/subscription/status',
+  }
+};
+
+/**
+ * Hook for enhanced API queries with standardized error handling
+ */
+export function useEnhancedApiQuery<T>(
+  queryKey: QueryKey,
+  url: string,
+  options?: Omit<UseQueryOptions<T, Error, T, QueryKey>, 'queryKey'>
+) {
+  const { toast } = useToast();
+  const query = useQuery<T, Error>({
+    queryKey,
+    queryFn: async () => apiRequest<T>('GET', url),
+    ...options,
     onError: (error: Error) => {
-      // More structured error logging with better type safety
-      if (error instanceof Error) {
-        const apiError = error as ApiError;
-        
-        console.error("Batch mutation error:", {
-          operationId: apiError.operationId || 'unknown',
-          message: error.message,
-          errorType: apiError.errorType || 'unknown',
-          status: apiError.status || 'unknown',
-          url: apiError.url || 'unknown',
-          method: apiError.method || 'unknown',
-          timestamp: apiError.timestamp || new Date().toISOString(),
-          data: apiError.data || {}
-        });
-      }
+      const errorMessage = handleApiError(error);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
       
-      // Forward to global error handler
-      handleApiError(error);
-    },
-    onSettled: () => {
-      // Invalidate affected queries - consider using more targeted invalidation
-      queryClient.invalidateQueries();
+      // Call the custom onError if provided
+      if (options?.onError) {
+        options.onError(error);
+      }
     },
   });
+  
+  // Add logging for slow queries in development
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && query.isFetching) {
+      const startTime = Date.now();
+      return () => {
+        const duration = Date.now() - startTime;
+        if (duration > 1000) {
+          console.warn(`Slow query for ${url}: ${duration}ms`);
+        }
+      };
+    }
+  }, [query.isFetching, url]);
+  
+  return query;
 }
 
 /**
@@ -465,8 +493,6 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
   method: HttpMethod = 'POST',
   options: ApiMutationOptions<TData, TVariables> = {}
 ) {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
   const { 
     onSuccess, 
     onError, 
@@ -501,113 +527,49 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
       if (onSuccess) {
         onSuccess(data);
       }
-
-      if (invalidateQueries && Array.isArray(invalidateQueries)) {
-        invalidateQueries.forEach(queryKey => {
-          if (typeof queryKey === 'string') {
-            queryClient.invalidateQueries({ queryKey: [queryKey] });
-          } else if (Array.isArray(queryKey)) {
-            queryClient.invalidateQueries({ queryKey });
-          } else if (queryKey && typeof queryKey === 'object' && 'queryKey' in queryKey) {
-            const key = queryKey.queryKey;
+      
+      // Invalidate specified queries
+      if (invalidateQueries && invalidateQueries.length > 0) {
+        invalidateQueries.forEach(query => {
+          if (typeof query === 'string') {
+            queryClient.invalidateQueries({ queryKey: [query] });
+          } else if (Array.isArray(query)) {
+            queryClient.invalidateQueries({ queryKey: query });
+          } else if (typeof query === 'object' && query.queryKey) {
+            const { queryKey, exact } = query;
             queryClient.invalidateQueries({ 
-              queryKey: typeof key === 'string' ? [key] : key,
-              exact: queryKey.exact 
+              queryKey: typeof queryKey === 'string' ? [queryKey] : queryKey,
+              exact
             });
           }
         });
       }
     },
     onError: (error: Error) => {
+      const { toast } = useToast();
       const errorMessage = handleApiError(error);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-
-      if (onError) {
-        onError(error as ApiError);
-      }
-    },
-  });
-}
-
-// API endpoint constants to avoid string literals
-export const API_ENDPOINTS = {
-  DECISIONS: '/api/decisions',
-  DECISION: (id: number) => `/api/decisions/${id}`,
-  OFFERS: '/api/offers',
-  OFFER: (id: number) => `/api/offers/${id}`,
-  DRAFTED_PLANS: '/api/drafted-plans',
-  DRAFTED_PLAN: (id: number) => `/api/drafted-plans/${id}`,
-};
-
-// Standard error handling
-export function handleApiError(error: Error): string {
-  console.error('API Error:', error);
-
-  if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-    return 'Network error. Please check your connection and try again.';
-  }
-
-  if (error.message.includes('404')) {
-    return 'The requested resource was not found.';
-  }
-
-  if (error.message.includes('401')) {
-    return 'You are not authorized to perform this action. Please log in again.';
-  }
-
-  if (error.message.includes('403')) {
-    return 'You do not have permission to access this resource.';
-  }
-
-  return error.message || 'An unexpected error occurred. Please try again.';
-}
-
-// Enhanced query hook with better error handling
-export function useEnhancedApiQuery<T>(
-  endpoint: string,
-  options?: Omit<UseQueryOptions<T, Error, T, QueryKey>, 'queryKey'> & { 
-    onCustomError?: (error: Error) => void 
-  }
-) {
-  const { toast } = useToast();
-  
-  // Create the query options without onCustomError
-  const { onCustomError, ...restOptions } = options || {};
-  
-  const result = useQuery<T>({
-    queryKey: [endpoint],
-    ...restOptions
-  });
-  
-  // Handle errors with effect
-  useEffect(() => {
-    if (result.error) {
-      const errorMessage = handleApiError(result.error);
+      
       toast({
         title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
       
-      // Call the custom error handler if provided
-      if (onCustomError) {
-        onCustomError(result.error);
+      // Call the custom onError if provided
+      if (onError && error instanceof Error) {
+        onError(error as ApiError);
       }
-    }
-  }, [result.error, toast, onCustomError]);
-  
-  return result;
+    },
+  });
 }
 
-// Enhanced mutation hook with better type safety
-export function useEnhancedApiMutation<TData, TVariables>(
-  method: HttpMethod,
+/**
+ * Reusable simplified mutation hook with standardized error handling
+ */
+export function useSimplifiedApiMutation<TData, TVariables>(
+  method: string,
   endpoint: string | ((variables: TVariables) => string),
-  options?: Omit<UseMutationOptions<TData, Error, TVariables>, 'mutationFn'>
+  options?: UseMutationOptions<TData, Error, TVariables>
 ) {
   const { toast } = useToast();
   
@@ -618,7 +580,7 @@ export function useEnhancedApiMutation<TData, TVariables>(
         : endpoint;
         
       return apiRequest<TData>(
-        method,
+        method as HttpMethod,
         finalEndpoint,
         variables
       );
@@ -640,45 +602,52 @@ export function useEnhancedApiMutation<TData, TVariables>(
   });
 }
 
-
-// Reusable query hook with standardized error handling
-export function useApiQuery<T>(
-  endpoint: string,
-  options?: Omit<UseQueryOptions<T, Error, T, QueryKey>, 'queryKey'> & { 
-    onCustomError?: (error: Error) => void 
+/**
+ * Enhanced API mutation hook with improved error handling
+ * This provides a simplified interface for mutations with consistent error handling
+ */
+export function useEnhancedApiMutation<TData = unknown, TVariables = unknown>(
+  method: HttpMethod,
+  url: string,
+  options?: {
+    onSuccess?: (data: TData) => void;
+    onError?: (error: Error) => void;
+    invalidateQueries?: Array<string | QueryKey>;
   }
 ) {
   const { toast } = useToast();
   
-  // Create the query options without onCustomError
-  const { onCustomError, ...restOptions } = options || {};
-  
-  const result = useQuery<T>({
-    queryKey: [endpoint],
-    ...restOptions
-  });
-  
-  // Handle errors with effect
-  useEffect(() => {
-    if (result.error) {
-      const errorMessage = handleApiError(result.error);
+  return useMutation<TData, Error, TVariables>({
+    mutationFn: async (variables: TVariables) => {
+      return await apiRequest<TData>(method, url, variables);
+    },
+    onSuccess: (data) => {
+      if (options?.onSuccess) {
+        options.onSuccess(data);
+      }
+      
+      // Invalidate queries if specified
+      if (options?.invalidateQueries) {
+        options.invalidateQueries.forEach(queryKey => {
+          if (typeof queryKey === 'string') {
+            queryClient.invalidateQueries({ queryKey: [queryKey] });
+          } else {
+            queryClient.invalidateQueries({ queryKey });
+          }
+        });
+      }
+    },
+    onError: (error) => {
+      const errorMessage = handleApiError(error);
       toast({
         title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
       
-      // Call the custom error handler if provided
-      if (onCustomError) {
-        onCustomError(result.error);
+      if (options?.onError) {
+        options.onError(error);
       }
-    }
-  }, [result.error, toast, onCustomError]);
-  
-  return result;
+    },
+  });
 }
-
-// This implementation has been removed to avoid duplicate exports.
-// The first implementation at line ~462 is being used instead.
-
-export type RequestCache = 'default' | 'no-cache' | 'reload' | 'force-cache' | 'only-if-cached';
