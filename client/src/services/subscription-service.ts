@@ -5,18 +5,18 @@ import { subscriptionApi } from './api-service';
  * Available subscription plans
  */
 export enum Plan {
-  FREE = 'Free',
-  BASIC = 'Basic',
-  PREMIUM = 'Premium',
-  ENTERPRISE = 'Enterprise'
+  TRIAL = 'Trial',
+  MONTHLY = 'Monthly',
+  ANNUAL = 'Annual'
 }
 
 /**
  * Plan features and limits
  */
 export const PLAN_FEATURES = {
-  [Plan.FREE]: {
+  [Plan.TRIAL]: {
     price: 0,
+    trialDays: 7,
     offerLimit: 3,
     problemTreeLimit: 5,
     draftedPlanLimit: 3,
@@ -24,32 +24,11 @@ export const PLAN_FEATURES = {
     includesTemplates: false,
     includesCollaboration: false,
     includesAPI: false,
-    storageLimit: '100MB',
+    storageLimit: '500MB',
   },
-  [Plan.BASIC]: {
-    price: 9.99,
-    offerLimit: 10,
-    problemTreeLimit: 20,
-    draftedPlanLimit: 10,
-    includesExport: true,
-    includesTemplates: false,
-    includesCollaboration: false,
-    includesAPI: false,
-    storageLimit: '1GB',
-  },
-  [Plan.PREMIUM]: {
-    price: 19.99,
-    offerLimit: 50,
-    problemTreeLimit: 100,
-    draftedPlanLimit: 50,
-    includesExport: true,
-    includesTemplates: true,
-    includesCollaboration: true,
-    includesAPI: false,
-    storageLimit: '10GB',
-  },
-  [Plan.ENTERPRISE]: {
-    price: 49.99,
+  [Plan.MONTHLY]: {
+    price: 28,
+    trialDays: 0,
     offerLimit: -1, // Unlimited
     problemTreeLimit: -1, // Unlimited
     draftedPlanLimit: -1, // Unlimited
@@ -57,7 +36,20 @@ export const PLAN_FEATURES = {
     includesTemplates: true,
     includesCollaboration: true,
     includesAPI: true,
-    storageLimit: '100GB',
+    storageLimit: '50GB',
+  },
+  [Plan.ANNUAL]: {
+    price: 285.60, // 28 * 12 * 0.85 (15% discount)
+    savingsPercentage: 15,
+    trialDays: 0,
+    offerLimit: -1, // Unlimited
+    problemTreeLimit: -1, // Unlimited
+    draftedPlanLimit: -1, // Unlimited
+    includesExport: true,
+    includesTemplates: true,
+    includesCollaboration: true,
+    includesAPI: true,
+    storageLimit: '50GB',
   }
 };
 
@@ -85,10 +77,10 @@ class SubscriptionService {
   async getCurrentPlan(): Promise<Plan> {
     try {
       const userData = await authService.getCurrentUser();
-      return (userData.plan as Plan) || Plan.FREE;
+      return (userData.plan as Plan) || Plan.TRIAL;
     } catch (error) {
       console.error('Error getting current plan:', error);
-      return Plan.FREE; // Default to free plan on error
+      return Plan.TRIAL; // Default to trial plan on error
     }
   }
   

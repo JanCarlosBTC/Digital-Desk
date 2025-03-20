@@ -97,9 +97,9 @@ const ThinkingDesk = () => {
             <BrainDump />
           </div>
           
-          {/* Problem Trees Tab - Using completely new implementation */}
+          {/* Problem Trees Tab - Using minimal implementation as a fallback */}
           <div id="problem-trees" className="tab-pane w-full">
-            <FixedProblemTrees 
+            <MinimalProblemTrees 
               showNewProblemTree={showNewProblemTree}
               onDialogClose={() => setShowNewProblemTree(false)}
             />
@@ -110,7 +110,6 @@ const ThinkingDesk = () => {
             <DraftedPlans 
               showNewPlan={showNewPlan}
               onDialogClose={() => setShowNewPlan(false)}
-              onEdit={(id) => console.log('Edit drafted plan', id)}
             />
           </div>
           

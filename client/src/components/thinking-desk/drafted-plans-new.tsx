@@ -112,14 +112,14 @@ const DraftedPlanItem = memo(function DraftedPlanItem({
 interface DraftedPlansProps {
   showNewPlan?: boolean;
   onDialogClose?: () => void;
-  onEdit: (id: number) => void;
+  onEdit?: (id: number) => void;
 }
 
 // Main DraftedPlans component
 export const DraftedPlans = memo(function DraftedPlans({ 
   showNewPlan = false, 
   onDialogClose, 
-  onEdit 
+  onEdit = (id) => console.log('Edit drafted plan', id)
 }: DraftedPlansProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -314,7 +314,7 @@ export const DraftedPlans = memo(function DraftedPlans({
 
   // Show loading state while fetching data
   if (isLoading) {
-    return <LoadingState type="list" count={3} />;
+    return <LoadingState variant="skeleton" count={3} />;
   }
 
   // Show error state if there was an error fetching data
