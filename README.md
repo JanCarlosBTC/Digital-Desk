@@ -42,82 +42,111 @@ We've recently made several optimizations to improve performance and user experi
    - Improved color contrast for text elements
    - Added proper semantic HTML structure
 
-## Instructions for Replit Testing
+## Development Guide for Replit
 
-### Setup & Environment
+### Environment Setup
 
-1. **Import the Project:**
-   - Upload the project to Replit or clone from GitHub
-   - Make sure to set the environment as Node.js
+1. **Using Replit Workflow:**
+   - The application is configured to run using the Replit workflow system
+   - Use the "Start application" workflow to run the application 
+   - Do NOT manually start the server using npm/yarn commands
 
-2. **Install Dependencies:**
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
+2. **Package Management:**
+   - Do NOT modify `package.json` directly
+   - Use the Replit package manager tool to install dependencies
 
-3. **Start Development Server:**
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   ```
+3. **Environment Variables:**
+   - The database connection string is available in the `DATABASE_URL` environment variable
+   - JWT secret is configured for authentication
 
-### Testing User Authentication
+### Technology Stack
 
-Since the authentication system is still using a mock implementation in `auth-service.ts`, you can test it using the following credentials:
+- **Frontend:** React with TypeScript and Tailwind CSS
+- **Backend:** Express.js API with TypeScript
+- **Database:** PostgreSQL with Prisma ORM
+- **Authentication:** JWT-based authentication
+- **UI Components:** ShadCN UI library
 
-- **Username:** demo
-- **Password:** password123
+### Architecture Notes
 
-The authentication flow will work without making real API calls to a backend server. The system will generate a demo token and create a mock user session.
+#### Database Access
 
-### Testing Subscription Payments
+- **ORM:** Prisma is used as the ORM for database access
+- **Implementation:** Use the PrismaStorage implementation in `server/prisma-storage.ts`
+- **Important:** The project has migrated from Drizzle ORM to Prisma ORM. Do not use Drizzle methods
 
-1. **Navigate to Subscription Plans:**
-   - Go to the subscription plans page through the UI
-   - Or navigate directly to `/subscription-plans`
+#### API Structure
 
-2. **Testing Payment Flow:**
-   - For testing in Replit, the payment system is set to simulation mode
-   - Click on any plan to upgrade
-   - It will simulate a payment flow without requiring real payment information
-   - The system will update the user's plan after the simulated payment
+- **Routing:** Express routes are defined in `server/routes.ts`
+- **Authentication:** JWT authentication is handled in `server/middleware/auth.js`
+- **Request Validation:** Validation is done using Zod schemas
 
-3. **Test Subscription Features:**
-   - After "upgrading," test features that are specific to your plan:
-     - Creating offers in the Offer Vault
-     - Building Problem Trees
-     - Exporting content (if available on your plan)
+#### Frontend Structure
 
-### Testing API Interactions
+- **Routing:** Uses wouter for client-side routing
+- **State Management:** Uses React Context API (see `context/user-context.tsx`)
+- **Data Fetching:** Uses React Query for data fetching and cache management
+- **Forms:** Uses react-hook-form with Zod validation
 
-Since Replit doesn't have a real backend connected, the API calls are intercepted using a mock implementation. To see the API interaction:
+### Component Guidelines
 
-1. Open the browser developer tools (F12)
-2. Go to the Network tab
-3. Perform actions in the app that would trigger API calls
-4. You'll see the mocked API responses with appropriate status codes
+1. **Loading States:**
+   - Use the `LoadingState` component for consistent loading UIs
+   - Example: `<LoadingState variant="skeleton" count={3} />`
 
-### Testing Responsive Design
+2. **Error Handling:**
+   - Use the Error Boundary component for catching rendering errors
+   - Handle API errors with proper user feedback using toast notifications
 
-1. Use the device toolbar in your browser's dev tools to simulate different screen sizes
-2. Test the mobile view (below 768px width)
-3. Test tablet view (768px - 1280px)
-4. Test desktop view (above 1280px)
+3. **Subscription Features:**
+   - Follow the simplified subscription model (Trial, Monthly, Annual)
+   - Use the `subscription-service.ts` for subscription features
 
-The new responsive hooks should provide a smooth experience across all device sizes.
+### Replit-Specific Best Practices
 
-## Development
+1. **Backend URLs:**
+   - Always use relative URLs for API endpoints (e.g., `/api/offers` not `http://localhost:3000/api/offers`)
+   - Use `0.0.0.0` instead of `localhost` for host bindings
 
-1. Clone the repository
-2. Install dependencies with `npm install` or `yarn install`
-3. Start the development server with `npm run dev` or `yarn dev`
-4. Navigate to `http://localhost:3000`
+2. **File Path References:**
+   - Use relative paths from project root instead of absolute paths
+   - Never reference `/repo/` in your code
 
-## Contributing
+3. **Protected Files:**
+   - Do not modify Vite configuration files (`vite.config.ts`, `server/vite.ts`)
+   - Do not modify TypeScript configuration (`tsconfig.json`, `tsconfig.server.json`)
+   - Do not modify Replit configuration files (`.replit`, `replit.nix`)
 
-1. Create a feature branch from `development`
-2. Make your changes
-3. Submit a pull request to the `development` branch 
+4. **Database Operations:**
+   - Use Prisma methods for database operations
+   - Avoid direct SQL queries where possible
+   - Use Prisma migrations for schema changes
+
+5. **Performance Considerations:**
+   - Use React.memo for expensive components
+   - Leverage React Query's caching capabilities
+   - Use proper code splitting with lazy loading
+
+### Debugging in Replit
+
+1. **Application Logs:**
+   - Check the Replit workflow logs for backend errors
+   - Use the browser console for frontend errors
+
+2. **API Testing:**
+   - Test API endpoints using the browser's network tab
+   - Use properly structured API requests with error handling
+
+3. **Database Issues:**
+   - Use the provided SQL execution tool for database inspection
+   - Check Prisma Client errors for detailed database error information
+
+### Subscription Testing
+
+The system now uses a simplified subscription model:
+
+- **Trial Plan:** 7-day free trial with limited features
+- **Monthly Plan:** $28/month with unlimited features
+- **Annual Plan:** $285.60/year (15% discount) with unlimited features
+
+To test subscription features, navigate to `/subscription-plans` 

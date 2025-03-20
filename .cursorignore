@@ -1,27 +1,52 @@
 
-# Replit Configuration Files
+# Replit Configuration Files - Do not modify these files
 .replit
+.replit.override
+.replit.allow-edits
 replit.nix
 vite.config.ts
 server/vite.ts
 package.json
 tsconfig.json
 tsconfig.server.json
+drizzle.config.ts
+theme.json
+
+# Digital Desk - Deprecated or Transitional Files
+# These files remain for historical/reference purposes but should not be used
+shared/schema.js
+server/storage.ts
+cleanup_logactivity.js
+cleanup_script.sh
+update-packages.js
 
 # Build and Environment
 .env
 node_modules/
 dist/
 build/
+logs/
 
 # Replit-specific directories
 .config/
 .upm/
 
-# Container/Environment Management
+# Container/Environment Management - Not used in this project
 Dockerfile
 docker-compose.yml
 requirements.txt
 pyproject.toml
 virtualenv/
 venv/
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Generated Files
+*.log
+*.lock
+.DS_Store
