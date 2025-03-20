@@ -1,26 +1,61 @@
 import React, { useState } from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, X, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/context/user-context';
 import { subscriptionService, Plan, PLAN_FEATURES } from '@/services/subscription-service';
 import { toast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+
+// Define type for plan features with optional savingsPercentage
+type PlanFeatureType = typeof PLAN_FEATURES[Plan] & {
+  savingsPercentage?: number;
+};
 
 export default function SubscriptionPlans() {
   const { user } = useUser();
-  const [isAnnual, setIsAnnual] = useState(false);
   const [loading, setLoading] = useState<Plan | null>(null);
   
-  const currentPlan = user?.plan as Plan || Plan.FREE;
+  const currentPlan = user?.plan as Plan || Plan.TRIAL;
   
-  // Calculate annual pricing (20% discount)
-  const getPrice = (basePrice: number) => {
-    if (isAnnual) {
-      // Apply annual discount
-      const annualPrice = basePrice * 12 * 0.8;
-      return `$${annualPrice.toFixed(2)}/year`;
+  // Display price with proper formatting
+  const getPrice = (plan: Plan) => {
+    const features = PLAN_FEATURES[plan] as PlanFeatureType;
+    
+    if (plan === Plan.TRIAL) {
+      return (
+        <div className="flex flex-col items-center">
+          <span className="text-2xl font-bold">Free</span>
+          <span className="text-sm text-muted-foreground">{features.trialDays}-day trial</span>
+        </div>
+      );
     }
-    return basePrice === 0 ? 'Free' : `$${basePrice.toFixed(2)}/month`;
+    
+    if (plan === Plan.ANNUAL) {
+      // The Annual plan has savingsPercentage in the PLAN_FEATURES
+      const annualFeatures = PLAN_FEATURES[Plan.ANNUAL] as any;
+      const savingsPercent = annualFeatures.savingsPercentage;
+      
+      return (
+        <div className="flex flex-col items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold">${(features.price / 12).toFixed(2)}</span>
+            <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+              Save {savingsPercent}%
+            </Badge>
+          </div>
+          <span className="text-sm text-muted-foreground">per month, billed annually</span>
+          <span className="text-sm text-muted-foreground">${features.price.toFixed(2)} total</span>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="flex flex-col items-center">
+        <span className="text-2xl font-bold">${features.price.toFixed(2)}</span>
+        <span className="text-sm text-muted-foreground">per month</span>
+      </div>
+    );
   };
   
   const handleUpgrade = async (plan: Plan) => {
@@ -58,41 +93,36 @@ export default function SubscriptionPlans() {
       <div className="text-center mb-12">
         <h1 className="text-3xl font-bold mb-2">Choose Your Plan</h1>
         <p className="text-gray-600 mb-6">Select the plan that best fits your needs</p>
-        
-        <div className="flex items-center justify-center mb-8">
-          <span className={`mr-3 ${!isAnnual ? 'font-semibold' : ''}`}>Monthly</span>
-          <button
-            className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200"
-            onClick={() => setIsAnnual(!isAnnual)}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                isAnnual ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
-          <span className={`ml-3 ${isAnnual ? 'font-semibold' : ''}`}>
-            Annual <span className="text-green-600 text-xs font-medium">Save 20%</span>
-          </span>
-        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {Object.entries(PLAN_FEATURES).map(([planName, features]) => {
+      <div className="grid gap-6 md:grid-cols-3">
+        {Object.keys(PLAN_FEATURES).map((planName) => {
           const plan = planName as Plan;
+          const features = PLAN_FEATURES[plan];
           const isCurrent = plan === currentPlan;
+          const isPremium = plan !== Plan.TRIAL;
           
           return (
             <Card 
               key={planName} 
-              className={`border-2 ${isCurrent ? 'border-blue-500' : 'border-gray-200'}`}
+              className={`border-2 relative ${isCurrent ? 'border-primary shadow-lg' : isPremium ? 'border-gray-200 hover:border-primary/50 transition-colors' : 'border-gray-200'}`}
             >
+              {plan === Plan.ANNUAL && (
+                <div className="absolute -top-3 left-0 right-0 flex justify-center">
+                  <Badge className="bg-primary text-white font-medium">
+                    <Sparkles className="h-3.5 w-3.5 mr-1" /> BEST VALUE
+                  </Badge>
+                </div>
+              )}
               <CardHeader>
-                <CardTitle>{planName}</CardTitle>
-                <CardDescription>
-                  <div className="mt-2 text-2xl font-bold">
-                    {getPrice(features.price)}
-                  </div>
+                <CardTitle className="flex justify-between items-center">
+                  {planName}
+                  {isCurrent && (
+                    <Badge variant="outline" className="border-primary text-primary">Current</Badge>
+                  )}
+                </CardTitle>
+                <CardDescription className="mt-2 flex justify-center">
+                  {getPrice(plan)}
                 </CardDescription>
               </CardHeader>
               <CardContent className="h-80 overflow-y-auto">
