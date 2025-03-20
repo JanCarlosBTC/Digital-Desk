@@ -1,5 +1,14 @@
-import { useMutation, useQueryClient, QueryKey } from "@tanstack/react-query";
-import { handleApiError, ErrorType, ErrorData, EnhancedError } from "./error-utils";
+/**
+ * API Utilities
+ * 
+ * Standardized API request handling with consistent error management,
+ * loading state tracking, and response type safety.
+ */
+
+import { useMutation, useQuery, UseMutationOptions, UseQueryOptions, QueryKey } from '@tanstack/react-query';
+import { queryClient } from './queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { ErrorType, ErrorData, EnhancedError } from "./error-utils";
 
 /**
  * Structured API error with additional metadata
@@ -549,5 +558,189 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
       // Forward to global error handler for consistent error processing
       handleApiError(error);
     }
+  });
+}
+
+// API endpoint constants to avoid string literals
+export const API_ENDPOINTS = {
+  DECISIONS: '/api/decisions',
+  DECISION: (id: number) => `/api/decisions/${id}`,
+  OFFERS: '/api/offers',
+  OFFER: (id: number) => `/api/offers/${id}`,
+  DRAFTED_PLANS: '/api/drafted-plans',
+  DRAFTED_PLAN: (id: number) => `/api/drafted-plans/${id}`,
+};
+
+// Enhanced error handling with more specific messages
+export function getApiErrorMessage(error: Error): string {
+  console.error('API Error:', error);
+  
+  // Extract more meaningful error messages when possible
+  if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+    return 'Network error. Please check your connection and try again.';
+  }
+  
+  if (error.message.includes('404')) {
+    return 'The requested resource was not found.';
+  }
+  
+  if (error.message.includes('401')) {
+    return 'You are not authorized to perform this action. Please log in again.';
+  }
+  
+  if (error.message.includes('403')) {
+    return 'You do not have permission to access this resource.';
+  }
+  
+  return error.message || 'An unexpected error occurred. Please try again.';
+}
+
+// Enhanced query hook with better error handling
+export function useEnhancedApiQuery<T>(
+  endpoint: string,
+  options?: Omit<UseQueryOptions<T, Error, T, QueryKey>, 'queryKey'>
+) {
+  const { toast } = useToast();
+  
+  return useQuery<T, Error, T, QueryKey>({
+    queryKey: [endpoint],
+    ...options,
+    onError: (error: Error) => {
+      const errorMessage = getApiErrorMessage(error);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
+      // Call the custom onError if provided
+      if (options?.onError) {
+        options.onError(error);
+      }
+    },
+  });
+}
+
+// Enhanced mutation hook with better type safety
+export function useEnhancedApiMutation<TData, TVariables>(
+  method: string,
+  endpoint: string | ((variables: TVariables) => string),
+  options?: Omit<UseMutationOptions<TData, Error, TVariables>, 'mutationFn'>
+) {
+  const { toast } = useToast();
+  
+  return useMutation<TData, Error, TVariables>({
+    mutationFn: async (variables: TVariables) => {
+      const finalEndpoint = typeof endpoint === 'function' 
+        ? endpoint(variables) 
+        : endpoint;
+        
+      return apiRequest<TData>(
+        method,
+        finalEndpoint,
+        variables
+      );
+    },
+    ...options,
+    onError: (error: Error, variables, context) => {
+      const errorMessage = getApiErrorMessage(error);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
+      // Call the custom onError if provided
+      if (options?.onError) {
+        options.onError(error, variables, context);
+      }
+    },
+  });
+}
+
+// Standard error handling
+export function handleApiError(error: Error): string {
+  console.error('API Error:', error);
+  
+  // Extract more meaningful error messages when possible
+  if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+    return 'Network error. Please check your connection and try again.';
+  }
+  
+  if (error.message.includes('404')) {
+    return 'The requested resource was not found.';
+  }
+  
+  if (error.message.includes('401')) {
+    return 'You are not authorized to perform this action. Please log in again.';
+  }
+  
+  if (error.message.includes('403')) {
+    return 'You do not have permission to access this resource.';
+  }
+  
+  return error.message || 'An unexpected error occurred. Please try again.';
+}
+
+// Reusable query hook with standardized error handling
+export function useApiQuery<T>(
+  endpoint: string,
+  options?: UseQueryOptions<T>
+) {
+  const { toast } = useToast();
+  
+  return useQuery<T>({
+    queryKey: [endpoint],
+    ...options,
+    onError: (error: Error) => {
+      const errorMessage = handleApiError(error);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
+      // Call the custom onError if provided
+      if (options?.onError) {
+        options.onError(error);
+      }
+    },
+  });
+}
+
+// Reusable mutation hook with standardized error handling
+export function useApiMutation<TData, TVariables>(
+  method: string,
+  endpoint: string | ((variables: TVariables) => string),
+  options?: UseMutationOptions<TData, Error, TVariables>
+) {
+  const { toast } = useToast();
+  
+  return useMutation<TData, Error, TVariables>({
+    mutationFn: async (variables: TVariables) => {
+      const finalEndpoint = typeof endpoint === 'function' 
+        ? endpoint(variables) 
+        : endpoint;
+        
+      return apiRequest<TData>(
+        method,
+        finalEndpoint,
+        variables
+      );
+    },
+    ...options,
+    onError: (error: Error, variables, context) => {
+      const errorMessage = handleApiError(error);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      
+      // Call the custom onError if provided
+      if (options?.onError) {
+        options.onError(error, variables, context);
+      }
+    },
   });
 } 

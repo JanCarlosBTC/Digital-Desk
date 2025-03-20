@@ -1,4 +1,5 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage.js";
 import { 
@@ -9,9 +10,11 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
-
-// For simplicity, we're using a fixed user ID for now
-const DEMO_USER_ID = 1;
+import { authenticate } from "./middleware/auth.js";
+import { register, login, getProfile, updateProfile } from "./controllers/auth.controller.js";
+import { createCheckoutSession, handleWebhook } from "./controllers/subscription.controller.js";
+import { checkSubscriptionLimits } from "./middleware/subscription.js";
+import { authLimiter, strictApiLimiter } from "./middleware/rate-limit.js";
 
 /**
  * Helper function to safely parse an ID from request parameters
@@ -51,32 +54,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.status(500).json({ message: "An unexpected error occurred" });
   };
 
-  // Current user endpoint (using mock user for now)
-  app.get('/api/user', async (req: Request, res: Response) => {
-    try {
-      const user = await storage.getUser(DEMO_USER_ID);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      // Don't return the password
-      const { password, ...userWithoutPassword } = user;
-      return res.json(userWithoutPassword);
-    } catch (error) {
-      return res.status(500).json({ message: "Error fetching user" });
-    }
-  });
+  // Auth routes - don't need authentication middleware but need rate limiting
+  app.post('/api/auth/register', authLimiter, register);
+  app.post('/api/auth/login', authLimiter, login);
+  
+  // User routes
+  app.get('/api/user/profile', authenticate, getProfile);
+  app.put('/api/user/profile', authenticate, updateProfile);
+  
+  // Subscription routes - these are sensitive operations so add strict rate limiting
+  app.post('/api/subscriptions/create-checkout', authenticate, strictApiLimiter, createCheckoutSession);
+  
+  // Stripe webhook handler - needs raw body, but no rate limiting as it's from Stripe
+  app.post('/api/webhooks/stripe', 
+    express.raw({ type: 'application/json' }),
+    handleWebhook
+  );
 
+  // Current user endpoint (using authenticated middleware)
+  app.get('/api/user', authenticate, getProfile);
 
   // Brain Dump endpoints
-  app.get('/api/brain-dump', async (req: Request, res: Response) => {
+  app.get('/api/brain-dump', authenticate, async (req: Request, res: Response) => {
     try {
-      let brainDump = await storage.getBrainDumpByUserId(DEMO_USER_ID);
+      const userId = (req as any).userId;
+      let brainDump = await storage.getBrainDumpByUserId(userId);
       
       // If no brain dump exists, create an empty one
       if (!brainDump) {
         brainDump = await storage.createBrainDump({
-          userId: DEMO_USER_ID,
+          userId,
           content: ""
         });
       }
@@ -87,7 +94,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/brain-dump/:id', async (req: Request, res: Response) => {
+  app.put('/api/brain-dump/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { content } = req.body;
@@ -115,16 +122,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Problem Tree endpoints
-  app.get('/api/problem-trees', cacheMiddleware('problem-trees', 300), async (req: Request, res: Response) => {
+  app.get('/api/problem-trees', authenticate, cacheMiddleware('problem-trees', 300), async (req: Request, res: Response) => {
     try {
-      const problemTrees = await storage.getProblemTrees(DEMO_USER_ID);
+      const userId = (req as any).userId;
+      const problemTrees = await storage.getProblemTrees(userId);
       return res.json(problemTrees);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching problem trees" });
     }
   });
 
-  app.get('/api/problem-trees/:id', async (req: Request, res: Response) => {
+  app.get('/api/problem-trees/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
@@ -134,10 +142,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return; // Error response already sent by the helper function
       }
       
+      const userId = (req as any).userId;
       const problemTree = await storage.getProblemTree(parsedId);
       
       if (!problemTree) {
         return res.status(404).json({ message: "Problem tree not found" });
+      }
+      
+      // Authorization check - only allow access to own data
+      if (problemTree.userId !== userId) {
+        return res.status(403).json({ message: "Unauthorized access to resource" });
       }
       
       return res.json(problemTree);
@@ -146,11 +160,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/problem-trees', async (req: Request, res: Response) => {
+  app.post('/api/problem-trees', authenticate, checkSubscriptionLimits('problemTrees'), async (req: Request, res: Response) => {
     try {
+      const userId = (req as any).userId;
       const data = {
         ...req.body,
-        userId: DEMO_USER_ID
+        userId
       };
       
       const validatedData = insertProblemTreeSchema.parse(data);
@@ -162,7 +177,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/problem-trees/:id', async (req: Request, res: Response) => {
+  app.put('/api/problem-trees/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
@@ -173,6 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return; // Error response already sent by the helper function
       }
       
+      const userId = (req as any).userId;
       const updatedProblemTree = await storage.updateProblemTree(parsedId, data);
       if (!updatedProblemTree) {
         return res.status(404).json({ message: "Problem tree not found" });
@@ -184,7 +200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/problem-trees/:id', async (req: Request, res: Response) => {
+  app.delete('/api/problem-trees/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
@@ -194,6 +210,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return; // Error response already sent by the helper function
       }
       
+      const userId = (req as any).userId;
       const deleted = await storage.deleteProblemTree(parsedId);
       
       if (!deleted) {
@@ -207,16 +224,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Drafted Plans endpoints
-  app.get('/api/drafted-plans', async (req: Request, res: Response) => {
+  app.get('/api/drafted-plans', authenticate, async (req: Request, res: Response) => {
     try {
-      const draftedPlans = await storage.getDraftedPlans(DEMO_USER_ID);
+      const userId = (req as any).userId;
+      const draftedPlans = await storage.getDraftedPlans(userId);
       res.json(draftedPlans);
     } catch (error) {
       res.status(500).json({ message: "Error fetching drafted plans" });
     }
   });
 
-  app.get('/api/drafted-plans/:id', async (req: Request, res: Response) => {
+  app.get('/api/drafted-plans/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
@@ -226,6 +244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return; // Error response already sent by the helper function
       }
       
+      const userId = (req as any).userId;
       const draftedPlan = await storage.getDraftedPlan(parsedId);
       
       if (!draftedPlan) {
@@ -238,11 +257,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/drafted-plans', async (req: Request, res: Response) => {
+  app.post('/api/drafted-plans', authenticate, checkSubscriptionLimits('draftedPlans'), async (req: Request, res: Response) => {
     try {
+      const userId = (req as any).userId;
       const data = {
         ...req.body,
-        userId: DEMO_USER_ID
+        userId
       };
       
       const validatedData = insertDraftedPlanSchema.parse(data);
@@ -254,7 +274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/drafted-plans/:id', async (req: Request, res: Response) => {
+  app.put('/api/drafted-plans/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
@@ -265,6 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return; // Error response already sent by the helper function
       }
       
+      const userId = (req as any).userId;
       const updatedDraftedPlan = await storage.updateDraftedPlan(parsedId, data);
       if (!updatedDraftedPlan) {
         return res.status(404).json({ message: "Drafted plan not found" });
@@ -276,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/drafted-plans/:id', async (req: Request, res: Response) => {
+  app.delete('/api/drafted-plans/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
@@ -286,6 +307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return; // Error response already sent by the helper function
       }
       
+      const userId = (req as any).userId;
       const deleted = await storage.deleteDraftedPlan(parsedId);
       
       if (!deleted) {
@@ -299,17 +321,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Clarity Lab endpoints
-  app.get('/api/clarity-labs', async (req: Request, res: Response) => {
+  app.get('/api/clarity-labs', authenticate, async (req: Request, res: Response) => {
     try {
+      const userId = (req as any).userId;
       const category = req.query.category as string | undefined;
-      const clarityLabs = await storage.getClarityLabs(DEMO_USER_ID, category);
+      const clarityLabs = await storage.getClarityLabs(userId, category);
       res.json(clarityLabs);
     } catch (error) {
       res.status(500).json({ message: "Error fetching clarity labs" });
     }
   });
 
-  app.get('/api/clarity-labs/:id', async (req: Request, res: Response) => {
+  app.get('/api/clarity-labs/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
@@ -319,6 +342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return; // Error response already sent by the helper function
       }
       
+      const userId = (req as any).userId;
       const clarityLab = await storage.getClarityLab(parsedId);
       
       if (!clarityLab) {
@@ -331,11 +355,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/clarity-labs', async (req: Request, res: Response) => {
+  app.post('/api/clarity-labs', authenticate, async (req: Request, res: Response) => {
     try {
+      const userId = (req as any).userId;
       const data = {
         ...req.body,
-        userId: DEMO_USER_ID
+        userId
       };
       
       const validatedData = insertClarityLabSchema.parse(data);
@@ -347,7 +372,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/clarity-labs/:id', async (req: Request, res: Response) => {
+  app.put('/api/clarity-labs/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
@@ -358,6 +383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return; // Error response already sent by the helper function
       }
       
+      const userId = (req as any).userId;
       const updatedClarityLab = await storage.updateClarityLab(parsedId, data);
       if (!updatedClarityLab) {
         return res.status(404).json({ message: "Clarity lab entry not found" });
@@ -369,7 +395,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/clarity-labs/:id', async (req: Request, res: Response) => {
+  app.delete('/api/clarity-labs/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
@@ -379,6 +405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return; // Error response already sent by the helper function
       }
       
+      const userId = (req as any).userId;
       const deleted = await storage.deleteClarityLab(parsedId);
       
       if (!deleted) {
@@ -392,16 +419,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Weekly Reflections endpoints
-  app.get('/api/weekly-reflections', async (req: Request, res: Response) => {
+  app.get('/api/weekly-reflections', authenticate, async (req: Request, res: Response) => {
     try {
-      const weeklyReflections = await storage.getWeeklyReflections(DEMO_USER_ID);
+      const userId = (req as any).userId;
+      const weeklyReflections = await storage.getWeeklyReflections(userId);
       return res.json(weeklyReflections);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching weekly reflections" });
     }
   });
 
-  app.get('/api/weekly-reflections/:id', async (req: Request, res: Response) => {
+  app.get('/api/weekly-reflections/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
@@ -411,6 +439,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return; // Error response already sent by the helper function
       }
       
+      const userId = (req as any).userId;
       const weeklyReflection = await storage.getWeeklyReflection(parsedId);
       
       if (!weeklyReflection) {
@@ -423,11 +452,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/weekly-reflections', async (req: Request, res: Response) => {
+  app.post('/api/weekly-reflections', authenticate, async (req: Request, res: Response) => {
     try {
+      const userId = (req as any).userId;
       const data = {
         ...req.body,
-        userId: DEMO_USER_ID
+        userId
       };
       
       console.log("Received weekly reflection data:", data);
@@ -446,7 +476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/weekly-reflections/:id', async (req: Request, res: Response) => {
+  app.put('/api/weekly-reflections/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
@@ -457,6 +487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return; // Error response already sent by the helper function
       }
       
+      const userId = (req as any).userId;
       const updatedWeeklyReflection = await storage.updateWeeklyReflection(parsedId, data);
       if (!updatedWeeklyReflection) {
         return res.status(404).json({ message: "Weekly reflection not found" });
@@ -469,16 +500,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Monthly Check-ins endpoints
-  app.get('/api/monthly-check-ins', async (req: Request, res: Response) => {
+  app.get('/api/monthly-check-ins', authenticate, async (req: Request, res: Response) => {
     try {
-      const monthlyCheckIns = await storage.getMonthlyCheckIns(DEMO_USER_ID);
+      const userId = (req as any).userId;
+      const monthlyCheckIns = await storage.getMonthlyCheckIns(userId);
       return res.json(monthlyCheckIns);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching monthly check-ins" });
     }
   });
 
-  app.get('/api/monthly-check-ins/:month/:year', async (req: Request, res: Response) => {
+  app.get('/api/monthly-check-ins/:month/:year', authenticate, async (req: Request, res: Response) => {
     try {
       const { month, year } = req.params;
       
@@ -494,8 +526,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid year format. Year must be between 2000 and 2100." });
       }
       
+      const userId = (req as any).userId;
       const monthlyCheckIn = await storage.getMonthlyCheckInByMonthYear(
-        DEMO_USER_ID, 
+        userId, 
         parsedMonth, 
         parsedYear
       );
@@ -510,11 +543,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/monthly-check-ins', async (req: Request, res: Response) => {
+  app.post('/api/monthly-check-ins', authenticate, async (req: Request, res: Response) => {
     try {
+      const userId = (req as any).userId;
       const data = {
         ...req.body,
-        userId: DEMO_USER_ID
+        userId
       };
       
       const validatedData = insertMonthlyCheckInSchema.parse(data);
@@ -526,7 +560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/monthly-check-ins/:id', async (req: Request, res: Response) => {
+  app.put('/api/monthly-check-ins/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
@@ -537,6 +571,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return; // Error response already sent by the helper function
       }
       
+      const userId = (req as any).userId;
       const updatedMonthlyCheckIn = await storage.updateMonthlyCheckIn(parsedId, data);
       if (!updatedMonthlyCheckIn) {
         return res.status(404).json({ message: "Monthly check-in not found" });
@@ -549,20 +584,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Priorities endpoints
-  app.get('/api/priorities', async (req: Request, res: Response) => {
+  app.get('/api/priorities', authenticate, async (req: Request, res: Response) => {
     try {
-      const priorities = await storage.getPriorities(DEMO_USER_ID);
+      const userId = (req as any).userId;
+      const priorities = await storage.getPriorities(userId);
       return res.json(priorities);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching priorities" });
     }
   });
 
-  app.post('/api/priorities', async (req: Request, res: Response) => {
+  app.post('/api/priorities', authenticate, async (req: Request, res: Response) => {
     try {
+      const userId = (req as any).userId;
       const data = {
         ...req.body,
-        userId: DEMO_USER_ID
+        userId
       };
       
       const validatedData = insertPrioritySchema.parse(data);
@@ -574,7 +611,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/priorities/:id', async (req: Request, res: Response) => {
+  app.put('/api/priorities/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
@@ -585,6 +622,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return; // Error response already sent by the helper function
       }
       
+      const userId = (req as any).userId;
       const updatedPriority = await storage.updatePriority(parsedId, data);
       if (!updatedPriority) {
         return res.status(404).json({ message: "Priority not found" });
@@ -596,7 +634,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/priorities/:id', async (req: Request, res: Response) => {
+  app.delete('/api/priorities/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
@@ -606,6 +644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return; // Error response already sent by the helper function
       }
       
+      const userId = (req as any).userId;
       const deleted = await storage.deletePriority(parsedId);
       
       if (!deleted) {
@@ -619,16 +658,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Decision Log endpoints
-  app.get('/api/decisions', cacheMiddleware('decisions', 300), async (req: Request, res: Response) => {
+  app.get('/api/decisions', authenticate, cacheMiddleware('decisions', 300), async (req: Request, res: Response) => {
     try {
-      const decisions = await storage.getDecisions(DEMO_USER_ID);
+      const userId = (req as any).userId;
+      const decisions = await storage.getDecisions(userId);
       return res.json(decisions);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching decisions" });
     }
   });
 
-  app.get('/api/decisions/:id', async (req: Request, res: Response) => {
+  app.get('/api/decisions/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
@@ -638,6 +678,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return; // Error response already sent by the helper function
       }
       
+      const userId = (req as any).userId;
       const decision = await storage.getDecision(parsedId);
       
       if (!decision) {
@@ -650,11 +691,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/decisions', clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
+  app.post('/api/decisions', authenticate, clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
     try {
+      const userId = (req as any).userId;
       const data = {
         ...req.body,
-        userId: DEMO_USER_ID
+        userId
       };
       
       const validatedData = insertDecisionSchema.parse(data);
@@ -666,7 +708,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/decisions/:id', clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
+  app.put('/api/decisions/:id', authenticate, clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
@@ -678,6 +720,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get existing decision to detect status changes
+      const userId = (req as any).userId;
       const existingDecision = await storage.getDecision(parsedId);
       if (!existingDecision) {
         return res.status(404).json({ message: "Decision not found" });
@@ -694,7 +737,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/decisions/:id', clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
+  app.delete('/api/decisions/:id', authenticate, clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
@@ -705,6 +748,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get the decision before deleting for validation
+      const userId = (req as any).userId;
       const decision = await storage.getDecision(parsedId);
       if (!decision) {
         return res.status(404).json({ message: "Decision not found" });
@@ -722,16 +766,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Offer Vault endpoints
-  app.get('/api/offers', async (req: Request, res: Response) => {
+  app.get('/api/offers', authenticate, async (req: Request, res: Response) => {
     try {
-      const offers = await storage.getOffers(DEMO_USER_ID);
+      const userId = (req as any).userId;
+      const offers = await storage.getOffers(userId);
       return res.json(offers);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching offers" });
     }
   });
 
-  app.get('/api/offers/:id', async (req: Request, res: Response) => {
+  app.get('/api/offers/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
@@ -741,6 +786,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return; // Error response already sent by the helper function
       }
       
+      const userId = (req as any).userId;
       const offer = await storage.getOffer(parsedId);
       
       if (!offer) {
@@ -753,11 +799,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/offers', async (req: Request, res: Response) => {
+  app.post('/api/offers', authenticate, checkSubscriptionLimits('offers'), async (req: Request, res: Response) => {
     try {
+      const userId = (req as any).userId;
       const data = {
         ...req.body,
-        userId: DEMO_USER_ID
+        userId
       };
       
       const validatedData = insertOfferSchema.parse(data);
@@ -769,7 +816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/offers/:id', async (req: Request, res: Response) => {
+  app.put('/api/offers/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
@@ -781,6 +828,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get existing offer to detect status changes
+      const userId = (req as any).userId;
       const existingOffer = await storage.getOffer(parsedId);
       if (!existingOffer) {
         return res.status(404).json({ message: "Offer not found" });
@@ -797,7 +845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/offers/:id', async (req: Request, res: Response) => {
+  app.delete('/api/offers/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       
@@ -808,6 +856,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get the offer before deleting for validation
+      const userId = (req as any).userId;
       const offer = await storage.getOffer(parsedId);
       if (!offer) {
         return res.status(404).json({ message: "Offer not found" });
@@ -825,14 +874,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Offer Notes endpoints
-  app.get('/api/offer-notes', async (req: Request, res: Response) => {
+  app.get('/api/offer-notes', authenticate, async (req: Request, res: Response) => {
     try {
-      let offerNotes = await storage.getOfferNotesByUserId(DEMO_USER_ID);
+      const userId = (req as any).userId;
+      let offerNotes = await storage.getOfferNotesByUserId(userId);
       
       // If no notes exist or the array is empty, create empty notes
       if (!offerNotes || offerNotes.length === 0) {
         const newNote = await storage.createOfferNote({
-          userId: DEMO_USER_ID,
+          userId,
           content: ""
         });
         offerNotes = [newNote];
@@ -844,7 +894,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/offer-notes/:id', async (req: Request, res: Response) => {
+  app.put('/api/offer-notes/:id', authenticate, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { content } = req.body;
@@ -860,6 +910,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Content is required" });
       }
       
+      const userId = (req as any).userId;
       const updatedOfferNote = await storage.updateOfferNote(parsedId, content);
       if (!updatedOfferNote) {
         return res.status(404).json({ message: "Offer notes not found" });

@@ -1,4 +1,4 @@
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useCallback, useState, useEffect } from "react";
 import { ApiError } from "./api-utils";
 

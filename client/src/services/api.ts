@@ -1,3 +1,18 @@
+/**
+ * API Services - Legacy Implementation
+ * 
+ * DEPRECATED: This implementation is being phased out.
+ * 
+ * This is the original API service module that is being deprecated in favor of
+ * the more robust api-service.ts implementation. This file is maintained for
+ * backward compatibility with existing code that relies on it.
+ * 
+ * For new features, please use the implementations in api-service.ts instead,
+ * which provides better error handling, authentication, and request management.
+ * 
+ * @deprecated Use api-service.ts for all new feature development
+ */
+
 import { Decision, Offer, Reflection, ClarityItem, ThinkingDeskItem } from '@/types';
 import { useFeedback } from '@/lib/feedback';
 

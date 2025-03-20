@@ -1,3 +1,15 @@
+/**
+ * Thinking Desk Page (Original Implementation)
+ * 
+ * DEPRECATED: This is the original implementation that has been replaced.
+ * 
+ * This was the initial implementation of the Thinking Desk page. It has been
+ * replaced by thinking-desk-new.tsx, which is now imported in App.tsx.
+ * 
+ * This file is kept for reference and backward compatibility until the
+ * migration to the new implementation is complete.
+ */
+
 import React, { useState, createContext, useContext } from "react";
 import { 
   LightbulbIcon, 
