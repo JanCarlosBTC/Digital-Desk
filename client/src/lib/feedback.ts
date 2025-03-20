@@ -1,5 +1,5 @@
 import { useCallback, useState, useRef, useEffect } from 'react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export type FeedbackType = 'success' | 'error' | 'warning' | 'info';
 export type FeedbackPriority = 'low' | 'normal' | 'high';

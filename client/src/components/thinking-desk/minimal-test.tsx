@@ -1,3 +1,16 @@
+/**
+ * Minimal Test Component
+ * 
+ * EXPERIMENTAL: This is a prototype component for testing UI concepts.
+ * 
+ * This component was an experiment to test minimal UI concepts for problem trees.
+ * It is referenced in the original thinking-desk.tsx page but is not used in the
+ * current application. The refined implementation of this concept is available
+ * in the thinking-desk-new/minimal-problem-trees.tsx component.
+ * 
+ * This file is kept for reference and experimental purposes only.
+ */
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 

@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback, memo } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
+import { API_ENDPOINTS, useEnhancedApiMutation } from "@/lib/api-utils";
 import { Button } from "@/components/ui/button";
 import { DialogForm } from "@/components/ui/dialog-form";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormDescription, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -12,15 +11,25 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Offer } from "@shared/schema";
-import { Skeleton } from "@/components/ui/skeleton";
-import { PlusIcon, ArrowUpDown, EditIcon, HistoryIcon, Trash2Icon } from "lucide-react";
+import { LoadingState, CardLoadingState } from "@/components/ui/loading-state";
+import { 
+  PlusIcon, 
+  ArrowUpDown, 
+  EditIcon, 
+  HistoryIcon, 
+  Trash2Icon,
+  TagIcon,
+  DollarSignIcon,
+  ClockIcon,
+  UsersIcon,
+  CheckCircleIcon,
+  ArchiveIcon,
+  CircleIcon
+} from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FeatureCard, StatusBadge } from "@/components/ui/feature-card";
-import { LoadingState } from "@/components/ui/loading-state";
-import { useErrorHandler } from "@/lib/error-utils";
-import { useApiMutation } from "@/lib/api-utils";
-import { queryKeys, defaultQueryConfig } from "@/lib/query-keys";
-import { dateUtils } from "@/lib/date-utils";
+import { FeatureCard } from "@/components/ui/feature-card";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -32,15 +41,24 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
+// Form validation schema with proper type conversions and validation
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().min(5, "Description must be at least 5 characters"),
-  status: z.string(),
+  status: z.enum(["Active", "Coming Soon", "Archived"]),
   price: z.string().min(1, "Price is required"),
   duration: z.string().optional(),
   format: z.string().optional(),
-  clientCount: z.coerce.number().int().min(0).optional(),
+  clientCount: z.coerce.number().int().min(0, "Client count must be a positive number").optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -54,16 +72,13 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [sortBy, setSortBy] = useState<string>("status");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
   
-  // Listen for showNewOffer prop changes
-  useEffect(() => {
-    if (showNewOffer) {
-      handleNewOffer();
-    }
-  }, [showNewOffer]);
-  
+  // Form setup with improved validation
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -77,119 +92,74 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
     },
   });
 
-  // Fetch offers
-  const { data: offers, isLoading } = useQuery<Offer[]>({
-    queryKey: ['/api/offers'],
+  // Enhanced data fetching with better error handling
+  const { data: offers, isLoading, error } = useQuery<Offer[]>({
+    queryKey: [API_ENDPOINTS.OFFERS],
   });
 
-  // Define response type for API requests
-  type OfferResponse = {
-    id: number;
-    title: string;
-    status: string;
-    [key: string]: any;
-  };
-
-  // Create offer with improved type safety
-  const createMutation = useMutation<OfferResponse, Error, FormValues>({
-    mutationFn: async (data: FormValues) => {
-      console.log('Creating offer with data:', data);
-      return apiRequest<OfferResponse>('POST', '/api/offers', data);
-    },
-    onSuccess: (data) => {
-      // Log success for debugging
-      console.log('Offer created successfully:', data);
-      
-      // Use more specific query invalidation
-      queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
-      
-      toast({
-        title: "Offer created",
-        description: "Your offer has been created successfully.",
-        variant: "success",
-      });
-      
-      setIsOpen(false);
-      form.reset();
-    },
-    onError: (error: Error) => {
-      // Log error for debugging
-      console.error('Error creating offer:', error);
-      
-      toast({
-        title: "Error creating offer",
-        description: error.message || "Please try again.",
-        variant: "destructive",
-      });
+  // Create offer with improved API utilities
+  const createMutation = useEnhancedApiMutation<any, FormValues>(
+    'POST',
+    API_ENDPOINTS.OFFERS,
+    {
+      onSuccess: () => {
+        toast({
+          title: "Offer created",
+          description: "Your offer has been created successfully.",
+          variant: "success",
+        });
+        
+        setIsOpen(false);
+        form.reset();
+      }
     }
-  });
+  );
 
-  // Update offer with improved type safety
-  const updateMutation = useMutation<OfferResponse, Error, FormValues & { id: number }>({
-    mutationFn: async (data: FormValues & { id: number }) => {
-      const { id, ...rest } = data;
-      console.log('Updating offer with ID:', id, 'and data:', rest);
-      return apiRequest<OfferResponse>('PUT', `/api/offers/${id}`, rest);
-    },
-    onSuccess: (data) => {
-      // Log success for debugging
-      console.log('Offer updated successfully:', data);
-      
-      // Use more specific query invalidation
-      queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
-      
-      toast({
-        title: "Offer updated",
-        description: "Your offer has been updated successfully.",
-        variant: "success",
-      });
-      
-      setIsEditOpen(false);
-      setSelectedOffer(null);
-    },
-    onError: (error: Error) => {
-      // Log error for debugging
-      console.error('Error updating offer:', error);
-      
-      toast({
-        title: "Error updating offer",
-        description: error.message || "Please try again.",
-        variant: "destructive",
-      });
+  // Update offer with improved API utilities
+  const updateMutation = useEnhancedApiMutation<any, FormValues & { id: number }>(
+    'PUT',
+    (variables) => API_ENDPOINTS.OFFER(variables.id),
+    {
+      onSuccess: () => {
+        toast({
+          title: "Offer updated",
+          description: "Your offer has been updated successfully.",
+          variant: "success",
+        });
+        
+        setIsEditOpen(false);
+        setSelectedOffer(null);
+      }
     }
-  });
+  );
   
-  // Delete offer with improved type safety
-  const deleteMutation = useMutation<void, Error, number>({
-    mutationFn: async (id: number) => {
-      console.log('Deleting offer with ID:', id);
-      return apiRequest<void>('DELETE', `/api/offers/${id}`);
-    },
-    onSuccess: () => {
-      // Use more specific query invalidation
-      queryClient.invalidateQueries({ queryKey: ['/api/offers'] });
-      
-      toast({
-        title: "Offer deleted",
-        description: "Your offer has been deleted successfully.",
-        variant: "success",
-      });
-      
-      setIsEditOpen(false);
-      setSelectedOffer(null);
-    },
-    onError: (error: Error) => {
-      // Log error for debugging
-      console.error('Error deleting offer:', error);
-      
-      toast({
-        title: "Error deleting offer",
-        description: error.message || "Please try again.",
-        variant: "destructive",
-      });
+  // Delete offer with improved API utilities
+  const deleteMutation = useEnhancedApiMutation<any, number>(
+    'DELETE',
+    (id) => API_ENDPOINTS.OFFER(id),
+    {
+      onSuccess: () => {
+        toast({
+          title: "Offer deleted",
+          description: "Your offer has been deleted successfully.",
+          variant: "success",
+        });
+        
+        setIsEditOpen(false);
+        setSelectedOffer(null);
+        setIsDeleteDialogOpen(false);
+      }
     }
-  });
+  );
 
+  // Listen for showNewOffer prop changes
+  useEffect(() => {
+    if (showNewOffer) {
+      handleNewOffer();
+    }
+  }, [showNewOffer]);
+
+  // Form submission handler
   const onSubmit = (data: FormValues) => {
     if (selectedOffer) {
       updateMutation.mutate({ ...data, id: selectedOffer.id });
@@ -198,6 +168,7 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
     }
   };
 
+  // New offer handler
   const handleNewOffer = () => {
     setSelectedOffer(null);
     form.reset({
@@ -212,12 +183,13 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
     setIsOpen(true);
   };
   
+  // Edit offer handler
   const handleManageOffer = (offer: Offer) => {
     setSelectedOffer(offer);
     form.reset({
       title: offer.title,
       description: offer.description,
-      status: offer.status,
+      status: offer.status as "Active" | "Coming Soon" | "Archived",
       price: offer.price,
       duration: offer.duration || "",
       format: offer.format || "",
@@ -226,18 +198,53 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
     setIsEditOpen(true);
   };
   
-  // Handle delete offer
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  
+  // Delete offer handler
   const handleDeleteOffer = () => {
     if (selectedOffer) {
       deleteMutation.mutate(selectedOffer.id);
-      setIsDeleteDialogOpen(false);
     }
   };
 
-  const sortOffers = (offers: Offer[]) => {
-    return [...offers].sort((a, b) => {
+  // Handle dialog close with callback to parent
+  const handleDialogClose = (open: boolean) => {
+    setIsOpen(open);
+    if (!open && onDialogClose) {
+      onDialogClose();
+    }
+  };
+
+  // Handle edit dialog close
+  const handleEditDialogClose = (open: boolean) => {
+    setIsEditOpen(open);
+    if (!open) {
+      setSelectedOffer(null);
+    }
+  };
+
+  // Filter and sort offers
+  const filteredAndSortedOffers = React.useMemo(() => {
+    if (!offers) return [];
+    
+    // First apply filters
+    let filtered = [...offers];
+    
+    // Filter by status if selected
+    if (statusFilter) {
+      filtered = filtered.filter(offer => offer.status === statusFilter);
+    }
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(offer => 
+        offer.title.toLowerCase().includes(query) || 
+        offer.description.toLowerCase().includes(query) ||
+        offer.price.toLowerCase().includes(query)
+      );
+    }
+    
+    // Then sort the filtered results
+    return filtered.sort((a, b) => {
       switch (sortBy) {
         case "status":
           // Sort by status first (Active first, then Coming Soon, then Archived)
@@ -274,21 +281,39 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
           return 0;
       }
     });
-  };
+  }, [offers, statusFilter, searchQuery, sortBy]);
 
-  const getStatusBadgeColor = (status: string) => {
+  // Get status badge component
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case "Active":
-        return "bg-green-100 text-green-800";
+        return (
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center">
+            <CheckCircleIcon className="mr-1 h-3 w-3" /> Active
+          </Badge>
+        );
       case "Coming Soon":
-        return "bg-blue-100 text-blue-800";
+        return (
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 flex items-center">
+            <CircleIcon className="mr-1 h-3 w-3" /> Coming Soon
+          </Badge>
+        );
       case "Archived":
-        return "bg-gray-100 text-gray-800";
+        return (
+          <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 flex items-center">
+            <ArchiveIcon className="mr-1 h-3 w-3" /> Archived
+          </Badge>
+        );
       default:
-        return "bg-gray-100 text-gray-800";
+        return (
+          <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+            {status}
+          </Badge>
+        );
     }
   };
 
+  // Format date helper
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "N/A";
     
@@ -299,89 +324,177 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
     });
   };
 
-  // Handle dialog close with callback to parent
-  const handleDialogClose = (open: boolean) => {
-    setIsOpen(open);
-    if (!open && onDialogClose) {
-      onDialogClose();
-    }
-  };
-
   return (
-    <FeatureCard
-      title="Your Offers"
-      className="p-6"
-      actions={[
-        {
-          label: "New Offer",
-          onClick: handleNewOffer,
-          icon: <PlusIcon className="h-4 w-4" />
-        }
-      ]}
-    >
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex-1"></div>
-        <div>
-          <Select 
-            defaultValue="status" 
-            onValueChange={setSortBy}
+    <div className="space-y-4">
+      {/* Header with filters and actions */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <h2 className="text-2xl font-bold">Offer Vault</h2>
+        
+        <div className="flex gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-auto">
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search offers..."
+              className="w-full sm:w-[200px]"
+            />
+          </div>
+          
+          <Button 
+            onClick={handleNewOffer}
+            className="whitespace-nowrap"
           >
-            <SelectTrigger className="w-[180px] h-9 text-sm mr-2 bg-white border border-gray-300">
-              <ArrowUpDown className="mr-2 h-4 w-4" />
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="status">Sort by Status</SelectItem>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="price-high">Price (High to Low)</SelectItem>
-              <SelectItem value="price-low">Price (Low to High)</SelectItem>
-              <SelectItem value="clients">Most Clients</SelectItem>
-            </SelectContent>
-          </Select>
+            <PlusIcon className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">New Offer</span>
+            <span className="sm:hidden">New</span>
+          </Button>
         </div>
       </div>
       
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-64 w-full" />
-          ))}
+      {/* Filters and Sorting */}
+      <div className="flex flex-col sm:flex-row gap-2 justify-between">
+        <div className="flex gap-2">
+          <Select value={statusFilter || "all"} onValueChange={(value) => setStatusFilter(value === "all" ? null : value)}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="Active">Active</SelectItem>
+              <SelectItem value="Coming Soon">Coming Soon</SelectItem>
+              <SelectItem value="Archived">Archived</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-      ) : offers && offers.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {sortOffers(offers).map((offer) => (
-            <FeatureCard
-              key={offer.id}
-              title={offer.title}
-              description={offer.description}
-              status={offer.status}
-              date={new Date(offer.createdAt)}
-              metadata={[
-                { label: "Price", value: offer.price },
-                ...(offer.duration ? [{ label: "Duration", value: offer.duration }] : []),
-                ...(offer.format ? [{ label: "Format", value: offer.format }] : []),
-                ...(offer.clientCount ? [{ label: "Clients", value: offer.clientCount }] : [])
-              ]}
-              actions={[
-                {
-                  label: "Edit",
-                  onClick: () => handleManageOffer(offer),
-                  icon: <EditIcon className="h-4 w-4 mr-2" />
-                }
-              ]}
-              className="h-full"
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-10 border border-dashed border-gray-300 rounded-lg">
-          <h3 className="text-lg font-medium text-gray-700 mb-2">No Offers Yet</h3>
-          <p className="text-gray-500 mb-4">Start adding your products and services.</p>
-          <Button onClick={handleNewOffer} variant="offerVault">
-            <PlusIcon className="mr-2 h-4 w-4" /> Create Your First Offer
-          </Button>
+        
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="status">Sort by Status</SelectItem>
+            <SelectItem value="newest">Newest First</SelectItem>
+            <SelectItem value="price-high">Price (High to Low)</SelectItem>
+            <SelectItem value="price-low">Price (Low to High)</SelectItem>
+            <SelectItem value="clients">Most Clients</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      {/* Results count */}
+      {!isLoading && (
+        <div className="text-sm text-gray-500">
+          Showing {filteredAndSortedOffers.length} {filteredAndSortedOffers.length === 1 ? 'offer' : 'offers'}
         </div>
       )}
+      
+      {/* Offers Grid */}
+      <LoadingState 
+        variant="skeleton" 
+        count={4} 
+        height="h-60"
+        isLoading={isLoading}
+      >
+        {filteredAndSortedOffers.length === 0 ? (
+          <div className="text-center py-10 border border-dashed border-gray-300 rounded-lg">
+            <h3 className="text-lg font-medium text-gray-700 mb-2">No Offers Found</h3>
+            <p className="text-gray-500 mb-4">
+              {offers?.length === 0 
+                ? "Start adding your products and services." 
+                : "Try adjusting your filters to see more results."}
+            </p>
+            {offers?.length === 0 && (
+              <Button onClick={handleNewOffer}>
+                <PlusIcon className="mr-2 h-4 w-4" /> Create Your First Offer
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredAndSortedOffers.map((offer) => (
+              <Card 
+                key={offer.id} 
+                className="h-full hover:shadow-md transition-shadow"
+              >
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between">
+                    <div className="space-y-1 flex-1">
+                      <CardTitle className="line-clamp-1 text-lg">{offer.title}</CardTitle>
+                      <CardDescription className="line-clamp-2 text-sm">{offer.description}</CardDescription>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <span className="sr-only">Open menu</span>
+                          <EditIcon className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleManageOffer(offer)}>
+                          <EditIcon className="mr-2 h-4 w-4" />
+                          Edit offer
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-600"
+                          onClick={() => {
+                            setSelectedOffer(offer);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2Icon className="mr-2 h-4 w-4" />
+                          Delete offer
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardHeader>
+                <CardContent className="pb-2">
+                  {/* Status Badge */}
+                  <div className="mb-2">
+                    {getStatusBadge(offer.status)}
+                  </div>
+                  
+                  {/* Features */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center text-sm">
+                      <DollarSignIcon className="mr-2 h-4 w-4 text-gray-500" />
+                      <span>{offer.price}</span>
+                    </div>
+                    
+                    {offer.duration && (
+                      <div className="flex items-center text-sm">
+                        <ClockIcon className="mr-2 h-4 w-4 text-gray-500" />
+                        <span>{offer.duration}</span>
+                      </div>
+                    )}
+                    
+                    {offer.format && (
+                      <div className="flex items-center text-sm">
+                        <TagIcon className="mr-2 h-4 w-4 text-gray-500" />
+                        <span>{offer.format}</span>
+                      </div>
+                    )}
+                    
+                    {offer.clientCount > 0 && (
+                      <div className="flex items-center text-sm">
+                        <UsersIcon className="mr-2 h-4 w-4 text-gray-500" />
+                        <span>{offer.clientCount} client{offer.clientCount !== 1 ? 's' : ''}</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+                <CardFooter className="pt-2">
+                  <div className="text-xs text-gray-500">
+                    Created: {formatDate(offer.createdAt)}
+                  </div>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        )}
+      </LoadingState>
 
       {/* New Offer Dialog */}
       <DialogForm
@@ -391,6 +504,7 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
         onOpenChange={handleDialogClose}
         size="lg"
         submitLabel="Save Offer"
+        submitting={createMutation.isPending}
         onSubmit={(e) => {
           e.preventDefault();
           form.handleSubmit(onSubmit)(e);
@@ -407,6 +521,7 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
                   <FormControl>
                     <Input placeholder="E.g., Executive Coaching Package" {...field} />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -424,6 +539,7 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
                       {...field} 
                     />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -447,6 +563,10 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
                         <SelectItem value="Archived">Archived</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormDescription>
+                      Active offers are visible to clients
+                    </FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -460,6 +580,10 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
                     <FormControl>
                       <Input placeholder="E.g., $2,500 / month" {...field} />
                     </FormControl>
+                    <FormDescription>
+                      Include currency and billing frequency if applicable
+                    </FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -475,6 +599,10 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
                     <FormControl>
                       <Input placeholder="E.g., 6-month commitment" {...field} />
                     </FormControl>
+                    <FormDescription>
+                      Time commitment required for this offer
+                    </FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -488,6 +616,10 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
                     <FormControl>
                       <Input placeholder="E.g., In-person or virtual" {...field} />
                     </FormControl>
+                    <FormDescription>
+                      How this offer is delivered to clients
+                    </FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -502,6 +634,10 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
                   <FormControl>
                     <Input type="number" min="0" {...field} />
                   </FormControl>
+                  <FormDescription>
+                    Number of clients currently using this offer
+                  </FormDescription>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -514,43 +650,23 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
         title={`Edit Offer: ${selectedOffer?.title}`}
         description="Update your product or service details"
         open={isEditOpen}
-        onOpenChange={setIsEditOpen}
+        onOpenChange={handleEditDialogClose}
         size="lg"
         submitLabel="Save Changes"
+        submitting={updateMutation.isPending}
         onSubmit={(e) => {
           e.preventDefault();
           form.handleSubmit(onSubmit)(e);
         }}
         footerContent={
-          <AlertDialog
-            open={isDeleteDialogOpen}
-            onOpenChange={setIsDeleteDialogOpen}
+          <Button
+            type="button"
+            variant="destructive"
+            className="mr-auto"
+            onClick={() => setIsDeleteDialogOpen(true)}
           >
-            <AlertDialogTrigger asChild>
-              <Button
-                type="button"
-                variant="destructive"
-                className="mr-auto"
-                onClick={() => setIsDeleteDialogOpen(true)}
-              >
-                <Trash2Icon className="h-4 w-4 mr-2" /> Delete Offer
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Offer</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete this offer? This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteOffer}>
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+            <Trash2Icon className="h-4 w-4 mr-2" /> Delete Offer
+          </Button>
         }
       >
         <Form {...form}>
@@ -564,6 +680,7 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
                   <FormControl>
                     <Input placeholder="E.g., Executive Coaching Package" {...field} />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -581,6 +698,7 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
                       {...field} 
                     />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -604,6 +722,10 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
                         <SelectItem value="Archived">Archived</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormDescription>
+                      Active offers are visible to clients
+                    </FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -617,6 +739,10 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
                     <FormControl>
                       <Input placeholder="E.g., $2,500 / month" {...field} />
                     </FormControl>
+                    <FormDescription>
+                      Include currency and billing frequency if applicable
+                    </FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -632,6 +758,10 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
                     <FormControl>
                       <Input placeholder="E.g., 6-month commitment" {...field} />
                     </FormControl>
+                    <FormDescription>
+                      Time commitment required for this offer
+                    </FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -645,6 +775,10 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
                     <FormControl>
                       <Input placeholder="E.g., In-person or virtual" {...field} />
                     </FormControl>
+                    <FormDescription>
+                      How this offer is delivered to clients
+                    </FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -659,14 +793,46 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
                   <FormControl>
                     <Input type="number" min="0" {...field} />
                   </FormControl>
+                  <FormDescription>
+                    Number of clients currently using this offer
+                  </FormDescription>
+                  <FormMessage />
                 </FormItem>
               )}
             />
           </div>
         </Form>
       </DialogForm>
-    </FeatureCard>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Offer</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{selectedOffer?.title}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteOffer}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteMutation.isPending ? (
+                <span className="flex items-center">
+                  <span className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Deleting...
+                </span>
+              ) : (
+                "Delete Offer"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 };
 
-export default OfferList;
+export default memo(OfferList);

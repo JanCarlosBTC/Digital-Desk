@@ -17,6 +17,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined>;
 
   // Brain Dump methods
   getBrainDumpByUserId(userId: number): Promise<BrainDump | undefined>;
@@ -128,6 +129,7 @@ export class MemStorage implements IStorage {
     this.createUser({
       username: "demo",
       password: "password",
+      email: "demo@example.com",
       name: "John Doe",
       plan: "Premium",
       initials: "JD"
@@ -149,10 +151,26 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id,
-      plan: insertUser.plan || null 
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
+    
     this.users.set(id, user);
     return user;
+  }
+
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    
+    const updatedUser = {
+      ...user,
+      ...userData,
+      updatedAt: new Date()
+    };
+    
+    this.users.set(id, updatedUser);
+    return updatedUser;
   }
 
   // Brain Dump methods

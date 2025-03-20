@@ -1,3 +1,17 @@
+/**
+ * Thinking Desk Page (Current Implementation)
+ * 
+ * This is the current active implementation of the Thinking Desk page.
+ * It replaces the original thinking-desk.tsx implementation with a more
+ * stable and maintainable architecture.
+ * 
+ * Key improvements:
+ * - Uses the FixedProblemTrees component from thinking-desk-new
+ * - Cleaner context implementation
+ * - Better state management
+ * - More consistent UI patterns
+ */
+
 import React, { useState } from "react";
 import { 
   LightbulbIcon, 

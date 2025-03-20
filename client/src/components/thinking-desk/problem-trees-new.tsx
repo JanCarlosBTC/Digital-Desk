@@ -15,10 +15,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 /**
- * Problem Trees Component - A unified approach
+ * Problem Trees Component (New Implementation)
  * 
- * This component handles the display and management of problem trees
- * with a simplified, more reliable UI structure
+ * DEPRECATED: This implementation is transitional and will be replaced.
+ * 
+ * This component was an attempt to refactor the original Problem Trees component,
+ * but has been superseded by the components in the thinking-desk-new directory.
+ * The current active implementation is FixedProblemTrees in thinking-desk-new/fixed-problem-trees.tsx.
+ * 
+ * This file is kept for reference and backward compatibility, but will be removed in a future update.
  */
 
 // Define the form schema for validating problem tree creation/editing

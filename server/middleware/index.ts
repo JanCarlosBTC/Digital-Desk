@@ -5,6 +5,9 @@ import session from 'express-session';
 import { loggerMiddleware } from './logger.js';
 import { errorHandlerMiddleware } from './errorHandler.js';
 import { hostBypassMiddleware } from './host-bypass.js';
+import { standardApiLimiter } from './rate-limit.js';
+import { securityHeaders, sanitizeInput, bruteForceProtection } from './security.js';
+import { securityMonitoring } from './monitoring.js';
 import { log } from '../vite.js';
 
 /**
@@ -14,10 +17,36 @@ import { log } from '../vite.js';
  * @param app Express application instance
  */
 export function setupMiddleware(app: Express): void {
+  // Apply security headers first (before any response is sent)
+  app.use(securityHeaders);
+  
   // Basic middleware setup
-  app.use(cors());
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  const corsOptions = {
+    origin: process.env.NODE_ENV === 'production' 
+      ? [process.env.FRONTEND_URL || 'https://digital-desk.app'] 
+      : '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+    maxAge: 86400 // 24 hours
+  };
+  
+  app.use(cors(corsOptions));
+  app.use(express.json({ limit: '1mb' })); // Limit payload size
+  app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+  
+  // Security monitoring (before rate limiting so we can monitor all requests)
+  app.use(securityMonitoring);
+  
+  // Global brute force protection
+  app.use(bruteForceProtection());
+  
+  // Apply global rate limiting to all requests
+  // This provides basic protection against DoS attacks
+  app.use(standardApiLimiter);
+  
+  // Sanitize all input data
+  app.use(sanitizeInput);
   
   // Custom middleware components
   app.use(hostBypassMiddleware);
@@ -46,7 +75,8 @@ function setupSession(app: Express): void {
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours,
+      sameSite: 'lax' // Provides CSRF protection
     }
   };
   
