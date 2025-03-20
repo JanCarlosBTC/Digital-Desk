@@ -7,7 +7,7 @@ import { PlusIcon, NetworkIcon, EditIcon, TrashIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/api-utils';
+import { useApiMutation } from '@/lib/api-utils';
 import { LoadingState } from '@/components/ui/loading-state';
 
 // Type definitions
@@ -90,84 +90,72 @@ export function BasicTrees({ showNewProblemTree = false, onDialogClose }: BasicT
   
   // Make sure we handle loading state properly with improved UI
 
-  // Create mutation with proper type safety and using apiRequest utility
-  const createMutation = useMutation<ProblemTree, Error, ProblemTreeFormData>({
-    mutationFn: async (data: ProblemTreeFormData) => {
-      console.log('Creating tree with data:', data);
-      
-      // Use the enhanced apiRequest utility function for better error handling
-      return apiRequest<ProblemTree>('POST', '/api/problem-trees', data);
-    },
-    onSuccess: (createdTree) => {
-      console.log('Creation successful:', createdTree);
-      
-      // Use more specific invalidation with proper query key structure
-      queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
-      
-      toast({
-        title: 'Success',
-        description: 'Problem tree created successfully',
-        variant: 'success'
-      });
-      
-      setFormOpen(false);
-      resetForm();
-    },
-    onError: (error: Error) => {
-      console.error('Creation error:', error);
-      
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to create problem tree',
-        variant: 'destructive'
-      });
-      
-      setFormError(error.message || 'An error occurred');
-    }
-  });
-  
-  // Delete mutation with proper type safety using apiRequest
-  const deleteMutation = useMutation<number, Error, number>({
-    mutationFn: async (id: number) => {
-      console.log('Deleting tree with ID:', id);
-      
-      try {
-        // Use the enhanced apiRequest utility for better error handling
-        await apiRequest<void>('DELETE', `/api/problem-trees/${id}`);
-        return id; // Return ID for use in onSuccess
-      } catch (error) {
-        console.error('API request failed:', error);
-        throw error instanceof Error 
-          ? error 
-          : new Error('Failed to delete problem tree');
+  // Create mutation with proper type safety using useApiMutation hook
+  const createMutation = useApiMutation<ProblemTree, ProblemTreeFormData>(
+    '/api/problem-trees',
+    'POST',
+    {
+      onSuccess: (createdTree) => {
+        console.log('Creation successful:', createdTree);
+        
+        // Use more specific invalidation with proper query key structure
+        queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
+        
+        toast({
+          title: 'Success',
+          description: 'Problem tree created successfully',
+          variant: 'success'
+        });
+        
+        setFormOpen(false);
+        resetForm();
+      },
+      onError: (error) => {
+        console.error('Creation error:', error);
+        
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to create problem tree',
+          variant: 'destructive'
+        });
+        
+        setFormError(error.message || 'An error occurred');
       }
-    },
-    onSuccess: (deletedId) => {
-      console.log('Deletion successful, ID:', deletedId);
-      
-      // Use more specific invalidation with proper query key structure
-      queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
-      
-      toast({
-        title: 'Success',
-        description: 'Problem tree deleted successfully',
-        variant: 'success'
-      });
-      
-      // Update the local state immediately for better UX
-      setSelectedTree(prev => prev && prev.id === deletedId ? null : prev);
-      setViewOpen(false); // Close any open dialog if present
-    },
-    onError: (error: Error) => {
-      console.error('Deletion error:', error);
-      
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to delete problem tree',
-        variant: 'destructive'
-      });
     }
-  });
+  );
+  
+  // Delete mutation with proper type safety using useApiMutation
+  const deleteMutation = useApiMutation<void, number>(
+    '/api/problem-trees', 
+    'DELETE',
+    {
+      onSuccess: () => {
+        console.log('Deletion successful');
+        
+        // Use more specific invalidation with proper query key structure
+        queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
+        
+        toast({
+          title: 'Success',
+          description: 'Problem tree deleted successfully',
+          variant: 'success'
+        });
+        
+        // Update the local state immediately for better UX
+        setSelectedTree(null);
+        setViewOpen(false); // Close any open dialog if present
+      },
+      onError: (error) => {
+        console.error('Deletion error:', error);
+        
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to delete problem tree',
+          variant: 'destructive'
+        });
+      }
+    }
+  );
   
   // Define a type for array field types
   type ArrayFieldType = 'subProblems' | 'rootCauses' | 'potentialSolutions' | 'nextActions';
@@ -325,7 +313,37 @@ export function BasicTrees({ showNewProblemTree = false, onDialogClose }: BasicT
   // Delete a problem tree
   const deleteTree = (id: number) => {
     if (confirm('Are you sure you want to delete this problem tree?')) {
-      deleteMutation.mutate(id);
+      // Update the mutation URL path to include the ID
+      const deleteUrl = `/api/problem-trees/${id}`;
+      const deleteTreeMutation = useApiMutation<void, void>(deleteUrl, 'DELETE', {
+        onSuccess: () => {
+          console.log('Deletion successful');
+          
+          // Use more specific invalidation with proper query key structure
+          queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
+          
+          toast({
+            title: 'Success',
+            description: 'Problem tree deleted successfully',
+            variant: 'success'
+          });
+          
+          // Update the local state immediately for better UX
+          setSelectedTree(null);
+          setViewOpen(false); // Close any open dialog if present
+        },
+        onError: (error) => {
+          console.error('Deletion error:', error);
+          
+          toast({
+            title: 'Error',
+            description: error.message || 'Failed to delete problem tree',
+            variant: 'destructive'
+          });
+        }
+      });
+      
+      deleteTreeMutation.mutate();
     }
   };
   
