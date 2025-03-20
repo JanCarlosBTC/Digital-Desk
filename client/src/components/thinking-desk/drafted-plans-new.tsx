@@ -115,6 +115,26 @@ interface DraftedPlansProps {
   onEdit?: (id: number) => void;
 }
 
+// Improved error handling function
+const handleApiError = (error: unknown, toast: any) => {
+  console.error('API error:', error);
+  let errorMessage = 'An unexpected error occurred';
+  
+  if (error instanceof Error) {
+    errorMessage = error.message;
+  } else if (typeof error === 'string') {
+    errorMessage = error;
+  }
+  
+  toast({
+    title: "Error",
+    description: errorMessage,
+    variant: "destructive",
+  });
+  
+  return errorMessage;
+};
+
 // Main DraftedPlans component
 export const DraftedPlans = memo(function DraftedPlans({ 
   showNewPlan = false, 
@@ -127,6 +147,9 @@ export const DraftedPlans = memo(function DraftedPlans({
   const [expandedPlans, setExpandedPlans] = useState<Record<number, boolean>>({});
   const [sortField, setSortField] = useState<keyof DraftedPlan>('updatedAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasSubmissionError, setHasSubmissionError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const handleError = useErrorHandler();
 
   // Initialize form with default values
@@ -234,56 +257,68 @@ export const DraftedPlans = memo(function DraftedPlans({
     });
   }, [plans, sortField, sortDirection]);
 
-  // Mutation for creating a drafted plan
+  // Improved mutation for creating a drafted plan
   const createMutation = useMutation({
     mutationFn: async (data: FormValues) => {
-      // Transform data for API
-      const formattedData = {
-        title: data.title,
-        description: data.description,
-        status: data.status,
-        components: data.components,
-        resourcesNeeded: data.resourcesNeeded,
-        expectedOutcomes: data.expectedOutcomes,
-        comments: 0,
-        attachments: 0,
-      };
-
-      const response = await fetch('/api/drafted-plans', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formattedData)
-      });
+      setIsSubmitting(true);
+      setHasSubmissionError(false);
+      setErrorMessage('');
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Failed to create plan');
+      try {
+        // Transform data for API
+        const formattedData = {
+          title: data.title,
+          description: data.description,
+          status: data.status,
+          components: data.components,
+          resourcesNeeded: data.resourcesNeeded,
+          expectedOutcomes: data.expectedOutcomes,
+          comments: 0,
+          attachments: 0,
+        };
+        
+        const response = await fetch('/api/drafted-plans', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formattedData)
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || 'Failed to create plan');
+        }
+        
+        return await response.json();
+      } catch (error) {
+        const errorMsg = handleApiError(error, toast);
+        setHasSubmissionError(true);
+        setErrorMessage(errorMsg);
+        throw error;
+      } finally {
+        setIsSubmitting(false);
       }
-      
-      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/drafted-plans'] });
       toast({
-        title: "Plan created",
-        description: "Your drafted plan has been created successfully.",
+        title: "Success",
+        description: "Plan created successfully",
       });
       setIsOpen(false);
       form.reset();
     },
     onError: (error) => {
-      toast({
-        title: "Error creating plan",
-        description: error instanceof Error ? error.message : "Please try again.",
-        variant: "destructive",
-      });
+      // Error is already handled in the mutationFn
+      console.error("Error details:", error);
     }
   });
-
-  // Handle form submission
+  
+  // Improved onSubmit function
   const onSubmit = (data: FormValues) => {
+    setHasSubmissionError(false);
+    setErrorMessage('');
     createMutation.mutate(data);
   };
 
@@ -388,18 +423,25 @@ export const DraftedPlans = memo(function DraftedPlans({
 
         {/* New Plan Dialog */}
         <DialogForm
-          title="New Plan"
-          description="Develop initiatives and projects before they're ready for execution"
+          title={`Create New Plan`}
+          description="Draft a new plan with components, resources, and expected outcomes."
           open={isOpen}
-          onOpenChange={setIsOpen}
-          size="full"
+          onOpenChange={handleDialogClose}
           submitLabel="Save Plan"
-          cancelLabel="Cancel"
-          isSubmitting={createMutation.isPending}
-          onSubmit={form.handleSubmit(onSubmit)}
+          submitDisabled={isSubmitting}
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit(onSubmit)(e);
+          }}
         >
           <Form {...form}>
-            <div className="space-y-5">
+            <div className="space-y-4">
+              {hasSubmissionError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
+                  {errorMessage || "There was an error creating your plan. Please try again."}
+                </div>
+              )}
+              
               <FormField
                 control={form.control}
                 name="title"
@@ -522,6 +564,12 @@ Designer for lead magnets"
                   </FormItem>
                 )}
               />
+
+              {isSubmitting && (
+                <div className="text-sm text-primary animate-pulse">
+                  Saving your plan...
+                </div>
+              )}
             </div>
           </Form>
         </DialogForm>
