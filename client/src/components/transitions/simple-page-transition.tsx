@@ -1,29 +1,48 @@
-import React, { ReactNode } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { ReactNode, memo, useMemo } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useLocation } from 'wouter';
+import { pageTransitionVariants, transitions } from './animation-config';
 
 interface PageTransitionProps {
   children: ReactNode;
+  mode?: 'wait' | 'sync';
+  motionKey?: string;
 }
 
 /**
- * Simple PageTransition component provides smooth transitions between pages
- * Uses Framer Motion for fluid animations
+ * Enhanced PageTransition component provides smooth transitions between pages
+ * Uses Framer Motion for fluid animations with optimized performance
  */
-export const PageTransition: React.FC<PageTransitionProps> = ({ children }) => {
+export const PageTransition = memo<PageTransitionProps>(({ 
+  children, 
+  mode = 'wait',
+  motionKey
+}) => {
   const [location] = useLocation();
+  const shouldReduceMotion = useReducedMotion();
   
+  // Use location as motion key for transitions
+  const key = motionKey || location;
+  
+  // Configure transition with respect to reduced motion preferences
+  const transitionConfig = useMemo(() => ({
+    ...transitions.default,
+    duration: shouldReduceMotion ? 0.1 : 0.3,
+  }), [shouldReduceMotion]);
+
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode={mode}>
       <motion.div
-        key={location}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -8 }}
-        transition={{ type: 'tween', ease: 'easeInOut', duration: 0.3 }}
+        key={key}
+        initial={shouldReduceMotion ? { opacity: 0 } : pageTransitionVariants.initial}
+        animate={shouldReduceMotion ? { opacity: 1 } : pageTransitionVariants.animate}
+        exit={shouldReduceMotion ? { opacity: 0 } : pageTransitionVariants.exit}
+        transition={transitionConfig}
       >
         {children}
       </motion.div>
     </AnimatePresence>
   );
-};
+});
+
+PageTransition.displayName = 'PageTransition';
