@@ -353,7 +353,7 @@ export function handleApiError(error: Error): string {
     const apiError = error as ApiError;
     
     // Check for validation errors in the expected format
-    if (apiError.data.errors && typeof apiError.data.errors === 'object') {
+    if (apiError.data?.errors && typeof apiError.data.errors === 'object') {
       const errorMessages = Object.entries(apiError.data.errors)
         .map(([field, messages]) => {
           if (Array.isArray(messages)) {
@@ -370,7 +370,7 @@ export function handleApiError(error: Error): string {
     }
     
     // Check for direct message in data
-    if (apiError.data.message) {
+    if (apiError.data?.message) {
       return apiError.data.message;
     }
   }
