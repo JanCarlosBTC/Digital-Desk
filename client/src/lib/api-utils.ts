@@ -5,6 +5,7 @@
  * loading state tracking, and response type safety.
  */
 
+import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient, QueryKey, UseMutationOptions, UseQueryOptions } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
 import { queryClient } from './queryClient';
@@ -568,32 +569,43 @@ export function handleApiError(error: Error): string {
 // Enhanced query hook with better error handling
 export function useEnhancedApiQuery<T>(
   endpoint: string,
-  options?: Omit<UseQueryOptions<T, Error, T, QueryKey>, 'queryKey'>
+  options?: Omit<UseQueryOptions<T, Error, T, QueryKey>, 'queryKey'> & { 
+    onCustomError?: (error: Error) => void 
+  }
 ) {
   const { toast } = useToast();
   
-  return useQuery<T, Error, T, QueryKey>({
+  // Create the query options without onCustomError
+  const { onCustomError, ...restOptions } = options || {};
+  
+  const result = useQuery<T>({
     queryKey: [endpoint],
-    ...options,
-    onError: (error: Error) => {
-      const errorMessage = handleApiError(error);
+    ...restOptions
+  });
+  
+  // Handle errors with effect
+  useEffect(() => {
+    if (result.error) {
+      const errorMessage = handleApiError(result.error);
       toast({
         title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
       
-      // Call the custom onError if provided
-      if (options?.onError) {
-        options.onError(error);
+      // Call the custom error handler if provided
+      if (onCustomError) {
+        onCustomError(result.error);
       }
-    },
-  });
+    }
+  }, [result.error, toast, onCustomError]);
+  
+  return result;
 }
 
 // Enhanced mutation hook with better type safety
 export function useEnhancedApiMutation<TData, TVariables>(
-  method: string,
+  method: HttpMethod,
   endpoint: string | ((variables: TVariables) => string),
   options?: Omit<UseMutationOptions<TData, Error, TVariables>, 'mutationFn'>
 ) {
@@ -632,27 +644,38 @@ export function useEnhancedApiMutation<TData, TVariables>(
 // Reusable query hook with standardized error handling
 export function useApiQuery<T>(
   endpoint: string,
-  options?: UseQueryOptions<T>
+  options?: Omit<UseQueryOptions<T, Error, T, QueryKey>, 'queryKey'> & { 
+    onCustomError?: (error: Error) => void 
+  }
 ) {
   const { toast } = useToast();
   
-  return useQuery<T>({
+  // Create the query options without onCustomError
+  const { onCustomError, ...restOptions } = options || {};
+  
+  const result = useQuery<T>({
     queryKey: [endpoint],
-    ...options,
-    onError: (error: Error) => {
-      const errorMessage = handleApiError(error);
+    ...restOptions
+  });
+  
+  // Handle errors with effect
+  useEffect(() => {
+    if (result.error) {
+      const errorMessage = handleApiError(result.error);
       toast({
         title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
       
-      // Call the custom onError if provided
-      if (options?.onError) {
-        options.onError(error);
+      // Call the custom error handler if provided
+      if (onCustomError) {
+        onCustomError(result.error);
       }
-    },
-  });
+    }
+  }, [result.error, toast, onCustomError]);
+  
+  return result;
 }
 
 // This implementation has been removed to avoid duplicate exports.
