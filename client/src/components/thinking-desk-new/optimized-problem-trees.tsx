@@ -5,7 +5,7 @@
  * Demonstrates how to create a clean, maintainable component structure.
  */
 
-import { useState, useCallback, memo } from 'react';
+import { useState, useCallback, memo, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { DeleteConfirmationContent } from "@/components/ui/state-handlers";
 import { VirtualizedGrid } from "@/components/shared/virtualized-list";
 import { FormBuilder } from "@/components/shared/form-builder";
-import { useProblemTrees } from "@/components/hooks/use-problem-trees";
+import { useProblemTrees, ProblemTree } from "@/components/hooks/use-problem-trees";
 import { z } from "zod";
 
 // Form schema for problem tree creation
@@ -37,6 +37,12 @@ const problemTreeSchema = z.object({
 });
 
 type ProblemTreeFormValues = z.infer<typeof problemTreeSchema>;
+
+// Component props interface
+interface OptimizedProblemTreesProps {
+  showNewProblemTree?: boolean;
+  onDialogClose?: () => void;
+}
 
 /**
  * Array Field Component for causes and consequences
@@ -69,7 +75,7 @@ const ArrayField = memo(({
       
       <div className="flex flex-wrap gap-2 mb-2">
         {items.length > 0 ? (
-          items.map((item, index) => (
+          items.map((item: string, index: number) => (
             <Badge key={index} variant="secondary" className="flex items-center gap-1">
               {item}
               <XIcon 
@@ -105,11 +111,17 @@ ArrayField.displayName = "ArrayField";
 /**
  * Individual Problem Tree Card
  */
+interface ProblemTreeCardProps {
+  tree: ProblemTree;
+  onDelete: (id: string) => Promise<void>;
+  isDeleting: boolean;
+}
+
 const ProblemTreeCard = memo(({ 
   tree, 
   onDelete, 
   isDeleting 
-}) => {
+}: ProblemTreeCardProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const handleDelete = useCallback(() => {
@@ -136,7 +148,7 @@ const ProblemTreeCard = memo(({
                 description="Are you sure you want to delete this problem tree? This action cannot be undone."
                 onConfirm={handleDelete}
                 onCancel={() => setShowDeleteDialog(false)}
-                isDeleting={isDeleting && tree.id === tree.id}
+                isDeleting={isDeleting}
               />
             </DialogContent>
           </Dialog>
@@ -188,8 +200,15 @@ ProblemTreeCard.displayName = "ProblemTreeCard";
 /**
  * Main Problem Trees Component
  */
-export function OptimizedProblemTrees() {
+export function OptimizedProblemTrees({ showNewProblemTree = false, onDialogClose }: OptimizedProblemTreesProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  
+  // Handle external dialog open request
+  useEffect(() => {
+    if (showNewProblemTree) {
+      setIsCreateDialogOpen(true);
+    }
+  }, [showNewProblemTree]);
   
   const {
     // State
@@ -220,13 +239,24 @@ export function OptimizedProblemTrees() {
   const closeDialog = useCallback(() => {
     setIsCreateDialogOpen(false);
     resetForm();
-  }, [resetForm]);
+    
+    // Call parent callback if provided
+    if (onDialogClose) {
+      onDialogClose();
+    }
+  }, [resetForm, onDialogClose]);
   
   // Handle form submission
   const onSubmit = useCallback(async (data: ProblemTreeFormValues) => {
-    const success = await handleSubmit(data, () => setIsCreateDialogOpen(false));
+    const success = await handleSubmit(data, () => {
+      setIsCreateDialogOpen(false);
+      // Call parent callback if provided
+      if (onDialogClose) {
+        onDialogClose();
+      }
+    });
     return success;
-  }, [handleSubmit]);
+  }, [handleSubmit, onDialogClose]);
   
   // Render loading state
   if (isLoading) {
@@ -238,7 +268,7 @@ export function OptimizedProblemTrees() {
     return (
       <ErrorState
         title="Failed to load problem trees"
-        description={networkError}
+        message={networkError}
         onRetry={() => {
           clearNetworkError();
           refetch();
@@ -401,7 +431,11 @@ export function OptimizedProblemTrees() {
         )}
         estimateSize={400}
         gap={16}
-        minColumnWidth={320}
+        columns={{
+          default: 1,
+          sm: 2,
+          md: 3
+        }}
       />
     </div>
   );

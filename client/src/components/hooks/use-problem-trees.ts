@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import useApiResource from '@/hooks/use-api-resource';
 
 // Type definitions
@@ -110,15 +110,32 @@ export function useProblemTrees() {
       setCauses([]);
       setConsequences([]);
       
+      // Show success toast
+      toast({
+        title: "Success",
+        description: "Problem tree created successfully",
+        variant: "default"
+      });
+      
       // Call success callback if provided
       if (onSuccess) {
         onSuccess();
       }
       
+      return true;
     } catch (error) {
       console.error('Error creating problem tree:', error);
+      
+      // Show error toast
+      toast({
+        title: "Error",
+        description: "Failed to create problem tree. Please try again.",
+        variant: "destructive"
+      });
+      
+      return false;
     }
-  }, [createTreeMutation]);
+  }, [createTreeMutation, toast]);
   
   // Validate problem tree input
   const validateProblemTree = useCallback((data: Omit<ProblemTreeInput, 'causes' | 'consequences'>) => {
@@ -162,37 +179,62 @@ export function useProblemTrees() {
       return false;
     }
     
-    await createProblemTree({
+    return await createProblemTree({
       ...data,
       causes,
       consequences
     }, onSuccess);
-    
-    return true;
   }, [causes, consequences, createProblemTree, validateProblemTree, toast]);
   
   // Delete problem tree
   const deleteProblemTree = useCallback(async (id: string) => {
     setDeletingId(id);
     try {
-      // Replace :id in the URL
-      const url = `${PROBLEM_TREES_API_PATH}/${id}`;
-      await deleteTreeMutation(url);
+      await deleteTreeMutation(id);
+      
+      // Show success toast
+      toast({
+        title: "Success",
+        description: "Problem tree deleted successfully",
+        variant: "default"
+      });
     } catch (error) {
       console.error('Error deleting problem tree:', error);
+      
+      // Show error toast
+      toast({
+        title: "Error",
+        description: "Failed to delete problem tree. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setDeletingId(null);
     }
-  }, [deleteTreeMutation]);
+  }, [deleteTreeMutation, toast]);
   
   // Add cause
   const addCause = useCallback((cause: string) => {
-    if (cause.trim()) {
-      setCauses(prev => [...prev, cause.trim()]);
-      return true;
+    if (!cause.trim()) {
+      toast({
+        title: "Invalid input",
+        description: "Cause cannot be empty",
+        variant: "destructive"
+      });
+      return false;
     }
-    return false;
-  }, []);
+    
+    if (causes.includes(cause.trim())) {
+      toast({
+        title: "Duplicate",
+        description: "This cause already exists",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    setCauses(prev => [...prev, cause.trim()]);
+    return true;
+  }, [causes, toast]);
   
   // Remove cause
   const removeCause = useCallback((indexToRemove: number) => {
@@ -201,12 +243,27 @@ export function useProblemTrees() {
   
   // Add consequence
   const addConsequence = useCallback((consequence: string) => {
-    if (consequence.trim()) {
-      setConsequences(prev => [...prev, consequence.trim()]);
-      return true;
+    if (!consequence.trim()) {
+      toast({
+        title: "Invalid input",
+        description: "Consequence cannot be empty",
+        variant: "destructive"
+      });
+      return false;
     }
-    return false;
-  }, []);
+    
+    if (consequences.includes(consequence.trim())) {
+      toast({
+        title: "Duplicate",
+        description: "This consequence already exists",
+        variant: "destructive"
+      });
+      return false;
+    }
+    
+    setConsequences(prev => [...prev, consequence.trim()]);
+    return true;
+  }, [consequences, toast]);
   
   // Remove consequence
   const removeConsequence = useCallback((indexToRemove: number) => {
@@ -245,10 +302,7 @@ export function useProblemTrees() {
     handleSubmit,
     resetForm,
     refetch,
-    clearNetworkError,
-    
-    // Validation
-    validateProblemTree,
+    clearNetworkError
   };
 }
 
