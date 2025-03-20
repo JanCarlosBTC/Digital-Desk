@@ -35,7 +35,8 @@ export function hostBypassMiddleware(req: Request, res: Response, next: NextFunc
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
   
   // Track request start time for logging

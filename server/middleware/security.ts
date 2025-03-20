@@ -107,9 +107,10 @@ export function bruteForceProtection(
     // Check if IP is currently blocked
     if (attempt.blockedUntil && attempt.blockedUntil > now) {
       const remaining = Math.ceil((attempt.blockedUntil - now) / 1000 / 60);
-      return res.status(429).json({
+      res.status(429).json({
         message: `Too many failed attempts. Please try again after ${remaining} minutes.`
       });
+      return;
     }
     
     // Middleware to track failed responses for this request

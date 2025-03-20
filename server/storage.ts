@@ -129,7 +129,6 @@ export class MemStorage implements IStorage {
     this.createUser({
       username: "demo",
       password: "password",
-      email: "demo@example.com",
       name: "John Doe",
       plan: "Premium",
       initials: "JD"
@@ -147,13 +146,17 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.nextId++;
-    // Ensure plan is explicitly null if not defined
-    const user: User = { 
-      ...insertUser, 
+    // Create a valid user object with all required fields
+    const user = {
       id,
+      username: insertUser.username,
+      password: insertUser.password,
+      name: insertUser.name,
+      initials: insertUser.initials,
+      plan: insertUser.plan || null,
       createdAt: new Date(),
       updatedAt: new Date()
-    };
+    } as unknown as User;
     
     this.users.set(id, user);
     return user;
