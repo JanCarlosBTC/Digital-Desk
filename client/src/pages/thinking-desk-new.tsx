@@ -95,9 +95,9 @@ const ThinkingDesk = () => {
             <BrainDump />
           </div>
           
-          {/* Problem Trees Tab - Using minimal implementation as a fallback */}
+          {/* Problem Trees Tab */}
           <div id="problem-trees" className="tab-pane w-full">
-            <MinimalProblemTrees 
+            <ProblemTrees 
               showNewProblemTree={showNewProblemTree}
               onDialogClose={() => setShowNewProblemTree(false)}
             />
