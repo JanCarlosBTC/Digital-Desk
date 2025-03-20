@@ -10,7 +10,7 @@ import {
   Decision, InsertDecision,
   Offer, InsertOffer,
   OfferNote, InsertOfferNote
-} from "../shared/schema.js";
+} from "../shared/prisma-schema.js";
 
 export interface IStorage {
   // User methods
@@ -129,7 +129,6 @@ export class MemStorage implements IStorage {
     this.createUser({
       username: "demo",
       password: "password",
-      email: "demo@example.com",
       name: "John Doe",
       plan: "Premium",
       initials: "JD"
@@ -150,9 +149,8 @@ export class MemStorage implements IStorage {
     // Ensure plan is explicitly null if not defined
     const user: User = { 
       ...insertUser, 
-      id,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      id
+      // Prisma handles createdAt and updatedAt fields automatically
     };
     
     this.users.set(id, user);
@@ -833,10 +831,15 @@ export class MemStorage implements IStorage {
   async createOfferNote(insertOfferNote: InsertOfferNote): Promise<OfferNote> {
     const id = this.nextId++;
     const now = new Date();
+    // Ensure content is a string, never null
+    const content = insertOfferNote.content !== null && insertOfferNote.content !== undefined 
+      ? insertOfferNote.content 
+      : "";
+      
     const offerNote: OfferNote = { 
       ...insertOfferNote, 
       id,
-      content: insertOfferNote.content || null,
+      content,
       createdAt: now, 
       updatedAt: now 
     };

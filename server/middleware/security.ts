@@ -68,7 +68,7 @@ export function sanitizeInput(req: Request, _res: Response, next: NextFunction) 
     req.query = sanitize(req.query);
   }
   
-  next();
+  return next();
 }
 
 /**
@@ -79,7 +79,7 @@ export function bruteForceProtection(
   windowMs = 15 * 60 * 1000, // 15 minutes
   maxFailures = 5,
   blockDuration = 30 * 60 * 1000 // 30 minutes
-) {
+): (req: Request, res: Response, next: NextFunction) => void {
   // In-memory storage of failed attempts (should use Redis in production)
   const failedAttempts: Record<string, { count: number, blockedUntil?: number }> = {};
   
@@ -128,6 +128,6 @@ export function bruteForceProtection(
       }
     });
     
-    next();
+    return next();
   };
 } 

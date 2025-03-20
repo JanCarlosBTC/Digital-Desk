@@ -655,41 +655,7 @@ export function useApiQuery<T>(
   });
 }
 
-// Reusable mutation hook with standardized error handling
-export function useApiMutation<TData, TVariables>(
-  method: string,
-  endpoint: string | ((variables: TVariables) => string),
-  options?: UseMutationOptions<TData, Error, TVariables>
-) {
-  const { toast } = useToast();
-  
-  return useMutation<TData, Error, TVariables>({
-    mutationFn: async (variables: TVariables) => {
-      const finalEndpoint = typeof endpoint === 'function' 
-        ? endpoint(variables) 
-        : endpoint;
-        
-      return apiRequest<TData>(
-        method,
-        finalEndpoint,
-        variables
-      );
-    },
-    ...options,
-    onError: (error: Error, variables, context) => {
-      const errorMessage = handleApiError(error);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-      
-      // Call the custom onError if provided
-      if (options?.onError) {
-        options.onError(error, variables, context);
-      }
-    },
-  });
-}
+// This implementation has been removed to avoid duplicate exports.
+// The first implementation at line ~462 is being used instead.
 
 export type RequestCache = 'default' | 'no-cache' | 'reload' | 'force-cache' | 'only-if-cached';

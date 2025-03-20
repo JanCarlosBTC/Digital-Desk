@@ -12,7 +12,7 @@ import {
   Decision, InsertDecision,
   Offer, InsertOffer,
   OfferNote, InsertOfferNote
-} from "../shared/schema.js";
+} from "../shared/prisma-schema.js";
 
 export class PrismaStorage implements IStorage {
   // User methods
@@ -40,6 +40,22 @@ export class PrismaStorage implements IStorage {
         plan: user.plan || undefined // Ensure plan is never null
       }
     });
+  }
+
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    try {
+      const updatedUser = await prisma.user.update({
+        where: { id },
+        data: {
+          ...userData
+          // Prisma automatically updates the updatedAt field
+        }
+      });
+      return updatedUser;
+    } catch (error) {
+      console.error("Error updating user:", error);
+      return undefined;
+    }
   }
 
   // Brain Dump methods

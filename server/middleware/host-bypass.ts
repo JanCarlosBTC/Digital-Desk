@@ -47,5 +47,5 @@ export function hostBypassMiddleware(req: Request, res: Response, next: NextFunc
     console.log(`[HOST-BYPASS] Response completed in ${duration}ms with status ${res.statusCode}`);
   });
   
-  next();
+  return next();
 }
