@@ -5,9 +5,9 @@
  * loading state tracking, and response type safety.
  */
 
-import { useMutation, useQuery, UseMutationOptions, UseQueryOptions, QueryKey } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, QueryKey, UseMutationOptions, UseQueryOptions } from '@tanstack/react-query';
+import { useToast } from '@/components/ui/use-toast';
 import { queryClient } from './queryClient';
-import { useToast } from '@/hooks/use-toast';
 import { ErrorType, ErrorData, EnhancedError } from "./error-utils";
 
 /**
@@ -429,33 +429,31 @@ export function useBatchMutation<TData = unknown[]>() {
 export interface ApiMutationOptions<TData = unknown, TVariables = unknown> {
   /** Success callback with the API response */
   onSuccess?: (data: TData) => void;
-  
+
   /** Error callback with the enhanced API error */
   onError?: (error: ApiError) => void;
-  
+
   /** Query keys to invalidate after successful mutation */
   invalidateQueries?: Array<string | QueryKey | { queryKey: string | QueryKey, exact?: boolean }>;
-  
+
   /** Custom headers to include with the request */
   headers?: Record<string, string>;
-  
+
   /** Timeout in milliseconds */
   timeout?: number;
-  
+
   /** Whether to retry the request on certain failures */
   retry?: boolean | number | {
     maxRetries: number;
     retryableStatuses: number[];
   };
-  
+
   /** Cache behavior for the request */
   cache?: RequestCache;
 }
 
 /**
  * Hook for API mutations with enhanced type safety and error handling
- * Provides structured error handling and automatic cache invalidation
- * 
  * @param url API endpoint URL
  * @param method HTTP method
  * @param options Mutation options including callbacks and cache invalidation
@@ -467,6 +465,7 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
   options: ApiMutationOptions<TData, TVariables> = {}
 ) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const { 
     onSuccess, 
     onError, 
@@ -477,7 +476,6 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
     cache
   } = options;
 
-  // Convert retry options to standardized format
   const retryConfig = typeof retry === 'boolean' ? 
     (retry ? { maxRetries: 3, retryableStatuses: [408, 429, 500, 502, 503, 504] } : { maxRetries: 0, retryableStatuses: [] }) :
     typeof retry === 'number' ? 
@@ -499,22 +497,17 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
       );
     },
     onSuccess: (data) => {
-      // Execute success callback if provided
       if (onSuccess) {
         onSuccess(data);
       }
-      
-      // Invalidate relevant queries with improved type safety
+
       if (invalidateQueries && Array.isArray(invalidateQueries)) {
         invalidateQueries.forEach(queryKey => {
           if (typeof queryKey === 'string') {
-            // Single string key
             queryClient.invalidateQueries({ queryKey: [queryKey] });
           } else if (Array.isArray(queryKey)) {
-            // Array query key
             queryClient.invalidateQueries({ queryKey });
           } else if (queryKey && typeof queryKey === 'object' && 'queryKey' in queryKey) {
-            // Object with queryKey property
             const key = queryKey.queryKey;
             queryClient.invalidateQueries({ 
               queryKey: typeof key === 'string' ? [key] : key,
@@ -525,39 +518,17 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
       }
     },
     onError: (error: Error) => {
-      // Convert to ApiError with better type safety
-      let apiError: ApiError;
-      
-      if ('status' in error) {
-        apiError = error as ApiError;
-      } else {
-        // Create properly typed ApiError with operation context
-        apiError = new Error(error.message) as ApiError;
-        apiError.originalError = error;
-        apiError.url = url;
-        apiError.method = method;
-        apiError.timestamp = new Date().toISOString();
-        apiError.operationId = generateRequestId();
-      }
-      
-      // Enhanced structured error logging
-      console.error(`API Mutation error (${url}):`, {
-        operationId: apiError.operationId || 'unknown',
-        message: apiError.message,
-        errorType: apiError.errorType || 'unknown',
-        status: apiError.status || 'unknown',
-        timestamp: apiError.timestamp || new Date().toISOString(),
-        data: apiError.data || {}
+      const errorMessage = handleApiError(error);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
       });
-      
-      // Execute error callback if provided
+
       if (onError) {
-        onError(apiError);
+        onError(error as ApiError);
       }
-      
-      // Forward to global error handler for consistent error processing
-      handleApiError(error);
-    }
+    },
   });
 }
 
@@ -571,27 +542,26 @@ export const API_ENDPOINTS = {
   DRAFTED_PLAN: (id: number) => `/api/drafted-plans/${id}`,
 };
 
-// Enhanced error handling with more specific messages
-export function getApiErrorMessage(error: Error): string {
+// Standard error handling
+export function handleApiError(error: Error): string {
   console.error('API Error:', error);
-  
-  // Extract more meaningful error messages when possible
+
   if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
     return 'Network error. Please check your connection and try again.';
   }
-  
+
   if (error.message.includes('404')) {
     return 'The requested resource was not found.';
   }
-  
+
   if (error.message.includes('401')) {
     return 'You are not authorized to perform this action. Please log in again.';
   }
-  
+
   if (error.message.includes('403')) {
     return 'You do not have permission to access this resource.';
   }
-  
+
   return error.message || 'An unexpected error occurred. Please try again.';
 }
 
@@ -606,7 +576,7 @@ export function useEnhancedApiQuery<T>(
     queryKey: [endpoint],
     ...options,
     onError: (error: Error) => {
-      const errorMessage = getApiErrorMessage(error);
+      const errorMessage = handleApiError(error);
       toast({
         title: "Error",
         description: errorMessage,
@@ -643,7 +613,7 @@ export function useEnhancedApiMutation<TData, TVariables>(
     },
     ...options,
     onError: (error: Error, variables, context) => {
-      const errorMessage = getApiErrorMessage(error);
+      const errorMessage = handleApiError(error);
       toast({
         title: "Error",
         description: errorMessage,
@@ -658,29 +628,6 @@ export function useEnhancedApiMutation<TData, TVariables>(
   });
 }
 
-// Standard error handling
-export function handleApiError(error: Error): string {
-  console.error('API Error:', error);
-  
-  // Extract more meaningful error messages when possible
-  if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-    return 'Network error. Please check your connection and try again.';
-  }
-  
-  if (error.message.includes('404')) {
-    return 'The requested resource was not found.';
-  }
-  
-  if (error.message.includes('401')) {
-    return 'You are not authorized to perform this action. Please log in again.';
-  }
-  
-  if (error.message.includes('403')) {
-    return 'You do not have permission to access this resource.';
-  }
-  
-  return error.message || 'An unexpected error occurred. Please try again.';
-}
 
 // Reusable query hook with standardized error handling
 export function useApiQuery<T>(
@@ -743,4 +690,6 @@ export function useApiMutation<TData, TVariables>(
       }
     },
   });
-} 
+}
+
+export type RequestCache = 'default' | 'no-cache' | 'reload' | 'force-cache' | 'only-if-cached';
