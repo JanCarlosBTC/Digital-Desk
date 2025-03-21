@@ -3,7 +3,8 @@ import { User } from '@shared/schema';
 /**
  * API endpoints for authentication 
  * Note: All endpoints must match the server routes.ts file patterns.
- * The endpoints below match EXACTLY with what's in server/routes.ts.
+ * The fetch API calls in this service don't use apiClient, so we need to include
+ * the full path with /api prefix. DO NOT remove the /api prefix from these endpoints.
  */
 const AUTH_ENDPOINTS = {
   LOGIN: '/api/auth/login',

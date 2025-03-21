@@ -137,6 +137,8 @@ async function performRequest(
   try {
     // Add auth token if available
     const token = authService.getToken();
+    console.log(`[API] Making request to ${url}, auth token exists: ${!!token}`);
+    
     if (token) {
       options.headers = {
         ...options.headers,
@@ -144,7 +146,11 @@ async function performRequest(
       };
     }
     
+    console.log(`[API] Request headers:`, options.headers);
+    console.log(`[API] Request method: ${options.method}`);
+    
     const response = await fetch(url, options);
+    console.log(`[API] Response status: ${response.status}`);
     
     // Don't retry on client errors except for specific cases
     if (response.status >= 400 && response.status < 500) {
