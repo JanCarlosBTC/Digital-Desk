@@ -87,6 +87,9 @@
         // Store the token in localStorage
         localStorage.setItem('authToken', result.token);
         
+        // Also add token to sessionStorage as a backup access method
+        sessionStorage.setItem('authToken', result.token);
+        
         resultDiv.innerHTML += `\nLogin successful!\nUser: ${result.user.name}\nToken saved to localStorage.`;
         resultDiv.className = 'success';
         resultDiv.innerHTML += `\n\nYou can now close this window and refresh the main application.`;
@@ -96,10 +99,11 @@
       }
     }
     
-    // Clear local storage
+    // Clear storage
     function clearStorage() {
       localStorage.clear();
-      resultDiv.innerHTML = 'Local storage cleared.';
+      sessionStorage.clear();
+      resultDiv.innerHTML = 'Storage cleared (both localStorage and sessionStorage).';
       resultDiv.className = 'success';
     }
     
