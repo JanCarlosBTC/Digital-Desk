@@ -68,7 +68,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Username is required' });
       }
       
-      // Find user by username
+      // IMPORTANT: For development purposes, if username is 'demo', always create a temporary user
+      if (username === 'demo') {
+        console.log(`Creating temporary demo user for dev-login`);
+        
+        // Create a temporary demo user
+        const demoUser = {
+          id: 999,
+          username: 'demo',
+          name: 'Demo User',
+          email: 'demo@example.com',
+          plan: 'Trial',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        // Generate JWT token
+        const token = generateToken(demoUser.id);
+        
+        console.log(`Dev login successful for demo user`);
+        
+        return res.json({
+          user: demoUser,
+          token
+        });
+      }
+      
+      // Find user by username (for non-demo users)
       const user = await storage.getUserByUsername(username);
       if (!user) {
         console.log(`User not found: ${username}`);

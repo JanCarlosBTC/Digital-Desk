@@ -44,9 +44,51 @@ export const login = async (req, res) => {
     const { username, password } = req.body;
     
     console.log(`Login attempt for username: ${username}`);
-    
+
     // Find user
     const user = await storage.getUserByUsername(username);
+    
+    // IMPORTANT: For development purposes, we're allowing login with demo user
+    // This is a temporary solution for easier testing
+    if (username === 'demo') {
+      console.log('Using demo user login - bypassing password check');
+      
+      // If demo user doesn't exist in database, create a temporary one
+      if (!user) {
+        console.log('Creating temporary demo user for login');
+        
+        // Create a temporary demo user object
+        const demoUser = {
+          id: 999,
+          username: 'demo',
+          name: 'Demo User',
+          email: 'demo@example.com',
+          plan: 'Trial',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        const token = generateToken(demoUser.id);
+        console.log(`Generated token for demo user ${demoUser.id}`);
+        
+        return res.json({
+          user: demoUser,
+          token: token
+        });
+      }
+      
+      // Use existing demo user
+      const { password: _, ...userWithoutPassword } = user;
+      const token = generateToken(user.id);
+      console.log(`Generated token for demo user ${user.id}`);
+      
+      return res.json({
+        user: userWithoutPassword,
+        token: token
+      });
+    }
+    
+    // Normal user flow for non-demo users
     if (!user) {
       console.log('User not found');
       return res.status(401).json({ message: 'Invalid credentials' });
