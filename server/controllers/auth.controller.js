@@ -43,24 +43,42 @@ export const login = async (req, res) => {
   try {
     const { username, password } = req.body;
     
+    console.log(`Login attempt for username: ${username}`);
+    
     // Find user
     const user = await storage.getUserByUsername(username);
     if (!user) {
+      console.log('User not found');
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    console.log(`User found with id: ${user.id}`);
+    console.log(`Password from request: ${password}`);
+    console.log(`Stored hashed password: ${user.password}`);
+    
+    try {
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      console.log(`Password validation result: ${isPasswordValid}`);
+      
+      if (!isPasswordValid) {
+        console.log('Password validation failed');
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+    } catch (bcryptError) {
+      console.error('bcrypt error:', bcryptError);
+      return res.status(500).json({ message: 'Error validating credentials' });
     }
     
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
     
+    const token = generateToken(user.id);
+    console.log(`Generated token for user ${user.id}`);
+    
     res.json({ 
       user: userWithoutPassword,
-      token: generateToken(user.id)
+      token: token
     });
   } catch (error) {
     console.error('Login error:', error);
