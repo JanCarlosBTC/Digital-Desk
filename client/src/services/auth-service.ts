@@ -1,13 +1,13 @@
 import { User } from '@shared/schema';
-import { ApiError } from '@/lib/api-utils';
 
 /**
  * API endpoints for authentication 
  */
 const AUTH_ENDPOINTS = {
   LOGIN: '/api/auth/login',
+  DEV_LOGIN: '/api/auth/dev-login',
   REGISTER: '/api/auth/register',
-  USER: '/api/user',
+  USER_PROFILE: '/api/user/profile',
   LOGOUT: '/api/auth/logout',
   RESET_PASSWORD: '/api/auth/reset-password',
 };
@@ -82,28 +82,57 @@ class AuthService {
   }
   
   /**
-   * Login a user
-   * Currently a placeholder that will be implemented with real authentication
+   * Login a user with credentials
    */
   async login(data: LoginRequest): Promise<LoginResponse> {
     try {
-      // This is a placeholder - will be properly implemented later
-      // Normally this would make a real API request
-      const token = 'demo_token';
-      this.setToken(token);
+      // Make API request to login endpoint
+      const response = await fetch(AUTH_ENDPOINTS.LOGIN, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
       
-      // Mock user response
-      const user: User = {
-        id: 1,
-        username: data.username,
-        name: 'Demo User',
-        initials: 'DU',
-        plan: 'Premium',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Login failed');
+      }
       
-      return { user, token };
+      const result = await response.json();
+      
+      // Store the token
+      this.setToken(result.token);
+      
+      return result;
+    } catch (error) {
+      this.clearToken();
+      throw error;
+    }
+  }
+  
+  /**
+   * Dev login for testing purposes
+   */
+  async devLogin(username: string): Promise<LoginResponse> {
+    try {
+      // Make API request to dev login endpoint
+      const response = await fetch(AUTH_ENDPOINTS.DEV_LOGIN, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Dev login failed');
+      }
+      
+      const result = await response.json();
+      
+      // Store the token
+      this.setToken(result.token);
+      
+      return result;
     } catch (error) {
       this.clearToken();
       throw error;
@@ -112,12 +141,28 @@ class AuthService {
   
   /**
    * Register a new user
-   * This is a placeholder for the future implementation
    */
   async register(data: RegisterRequest): Promise<User> {
     try {
-      // This will make a real API request in the future
-      throw new Error('Registration not yet implemented');
+      const response = await fetch(AUTH_ENDPOINTS.REGISTER, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Registration failed');
+      }
+      
+      const result = await response.json();
+      
+      // Store the token if returned
+      if (result.token) {
+        this.setToken(result.token);
+      }
+      
+      return result.user;
     } catch (error) {
       throw error;
     }
@@ -130,9 +175,15 @@ class AuthService {
     // Clear token regardless of API response
     this.clearToken();
     
+    // Optional: make an API request to invalidate the token on the server
     try {
-      // Would normally make an API request to invalidate the token on the server
-      // This is a placeholder
+      await fetch(AUTH_ENDPOINTS.LOGOUT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.getToken()}`
+        }
+      });
     } catch (error) {
       console.error('Error during logout:', error);
     }
@@ -143,17 +194,30 @@ class AuthService {
    */
   async getCurrentUser(): Promise<User> {
     try {
-      // This will make a real API request in the future
-      // For now it just returns a mock user
-      return {
-        id: 1,
-        username: 'demo',
-        name: 'Demo User',
-        initials: 'DU',
-        plan: 'Premium',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      // Check if we have a token first
+      if (!this.getToken()) {
+        throw new Error('Not authenticated');
+      }
+      
+      const response = await fetch(AUTH_ENDPOINTS.USER_PROFILE, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.getToken()}`
+        }
+      });
+      
+      if (!response.ok) {
+        // If unauthorized, clear the token
+        if (response.status === 401) {
+          this.clearToken();
+        }
+        
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to get user profile');
+      }
+      
+      return await response.json();
     } catch (error) {
       throw error;
     }
@@ -164,8 +228,16 @@ class AuthService {
    */
   async resetPassword(data: ResetPasswordRequest): Promise<void> {
     try {
-      // This will make a real API request in the future
-      throw new Error('Password reset not yet implemented');
+      const response = await fetch(AUTH_ENDPOINTS.RESET_PASSWORD, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Password reset failed');
+      }
     } catch (error) {
       throw error;
     }
@@ -173,4 +245,4 @@ class AuthService {
 }
 
 // Export a singleton instance
-export const authService = new AuthService(); 
+export const authService = new AuthService();
