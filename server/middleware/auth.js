@@ -57,11 +57,11 @@ export const authenticate = async (req, res, next) => {
     if (decoded.userId === 999) {
       console.log('[authenticate] EMERGENCY AUTH: Demo user detected (ID: 999)');
       
-      // Create a hardcoded demo user response
+      // Create a hardcoded demo user response with a fixed profile
       req.emergencyDemoUser = {
         id: 999,
         username: 'demo',
-        name: 'Demo User',
+        name: 'Demo User (Fixed Profile)',
         email: 'demo@example.com',
         plan: 'Trial',
         initials: 'DU',
@@ -73,6 +73,16 @@ export const authenticate = async (req, res, next) => {
       req.userId = 999;
       console.log('[authenticate] Setting userId to:', req.userId);
       console.log('[authenticate] Setting emergencyDemoUser:', JSON.stringify(req.emergencyDemoUser));
+      
+      return next();
+    }
+    
+    // SPECIAL HANDLER for localhost development in case token is invalid but we're in dev mode
+    if (process.env.NODE_ENV === 'development' && (decoded.userId < 1 || isNaN(decoded.userId))) {
+      console.log('[authenticate] DEVELOPMENT MODE: Using fallback demo user');
+      
+      req.userId = 999; // Use demo user ID for development
+      console.log('[authenticate] Dev mode - Setting userId to:', req.userId);
       
       return next();
     }

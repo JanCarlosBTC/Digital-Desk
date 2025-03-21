@@ -29,7 +29,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FeatureCard } from '@/components/ui/feature-card';
 import { LoadingState } from '@/components/ui/loading-state';
-import { useThinkingDesk } from '@/pages/thinking-desk-new';
+import { useThinkingDesk } from '@/pages/thinking-desk';
 import { Badge } from '@/components/ui/badge';
 
 // Interface for Problem Tree
@@ -60,7 +60,7 @@ const ProblemTreeList = memo(function ProblemTreeList({
   onDeleteProblemTree
 }: ProblemTreeListProps) {
   const { toast } = useToast();
-  const { createProblemTree } = useThinkingDesk();
+  const thinkingDesk = useThinkingDesk();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<keyof ProblemTree>('updatedAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -85,7 +85,10 @@ const ProblemTreeList = memo(function ProblemTreeList({
     if (onNewProblemTreeClick) {
       onNewProblemTreeClick();
     } else {
-      createProblemTree();
+      // Fallback to open the dialog through context if available
+      if (thinkingDesk.setShowNewProblemTree) {
+        thinkingDesk.setShowNewProblemTree(true);
+      }
     }
   };
 

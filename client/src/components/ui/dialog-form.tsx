@@ -20,6 +20,7 @@ interface DialogFormProps {
   cancelLabel?: string;
   isSubmitting?: boolean;
   isDisabled?: boolean;
+  submitDisabled?: boolean;  // Added for clarity-lab.tsx compatibility
   children: React.ReactNode;
   className?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
@@ -39,6 +40,7 @@ export function DialogForm({
   cancelLabel = 'Cancel',
   isSubmitting = false,
   isDisabled = false,
+  submitDisabled = false, // Use this or isDisabled for backward compatibility
   children,
   className,
   size = 'md',
@@ -146,7 +148,7 @@ export function DialogForm({
                 <Button 
                   type="submit"
                   className="min-w-[80px]"
-                  disabled={isSubmitting || isDisabled}
+                  disabled={isSubmitting || isDisabled || submitDisabled}
                 >
                   {isSubmitting ? 'Saving...' : submitLabel}
                 </Button>

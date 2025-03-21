@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import AppLayout from "@/components/layout/app-layout";
 import Home from "@/pages/home";
-import ThinkingDesk from "@/pages/thinking-desk-new"; // Using our completely new implementation
+import ThinkingDesk from "@/pages/thinking-desk"; // Using the original implementation with Brain Dump, Problem Trees, etc.
 import PersonalClaritySystem from "@/pages/personal-clarity-system";
 import DecisionLog from "@/pages/decision-log";
 import OfferVault from "@/pages/offer-vault";
