@@ -1,68 +1,51 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
-import { authApi } from '@/services/api-service';
-import { authService } from '@/services/auth-service';
-import { useUser } from '@/context/user-context';
 
-export function DevLogin() {
+// Import the auth service
+import { authService } from '@/services/auth-service';
+
+const DevLogin: React.FC = () => {
   const [username, setUsername] = useState('demo');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
-  const { refreshUser } = useUser();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleDevLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!username) {
       toast({
         title: 'Error',
-        description: 'Username is required',
-        variant: 'destructive'
+        description: 'Please enter a username',
+        variant: 'destructive',
       });
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
-      console.log('Attempting dev login with username:', username);
+      // Use the dev login directly
+      const response = await authService.devLogin(username);
       
-      // Use the authService for dev login
-      const result = await authService.devLogin(username);
-      console.log('Dev login successful:', result);
-      
-      // Refresh the user in the context
-      await refreshUser();
-      
-      // Show success toast
       toast({
         title: 'Success',
-        description: `Logged in successfully as ${username}`,
-        variant: 'default'
+        description: `Logged in as ${response.user.name}`,
       });
-      
-      // Redirect to home page
+
+      // Navigate to dashboard after successful login
       setLocation('/');
-      
+      window.location.reload(); // Force reload to update authentication state
     } catch (error) {
       console.error('Dev login error:', error);
       toast({
         title: 'Login Failed',
-        description: error instanceof Error ? error.message : 'An unexpected error occurred',
-        variant: 'destructive'
-      });
-      
-      // Provide more guidance on login issues
-      toast({
-        title: 'Troubleshooting',
-        description: 'Make sure the server is running and demo user is created',
-        variant: 'destructive'
+        description: 'Could not log in with dev account. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -70,34 +53,37 @@ export function DevLogin() {
   };
 
   return (
-    <Card className="w-[350px] mx-auto mt-12">
+    <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>Developer Login</CardTitle>
-        <CardDescription>Login with the demo account</CardDescription>
+        <CardTitle className="text-2xl font-bold">Development Login</CardTitle>
+        <CardDescription>Login with any username for testing</CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleDevLogin}>
         <CardContent>
-          <div className="grid w-full items-center gap-4">
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="username">Username</Label>
-              <Input 
-                id="username" 
-                placeholder="Enter username" 
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Input
+                id="username"
+                type="text"
+                placeholder="Username (default: demo)"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                disabled={isLoading}
               />
+              <p className="text-sm text-muted-foreground">
+                This is for development purposes only. No password required.
+              </p>
             </div>
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => setLocation('/login')}>
-            Back to Login
-          </Button>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Logging in...' : 'Login'}
+        <CardFooter>
+          <Button className="w-full" type="submit" disabled={isLoading}>
+            {isLoading ? 'Logging in...' : 'Login (Dev Mode)'}
           </Button>
         </CardFooter>
       </form>
     </Card>
   );
-}
+};
+
+export default DevLogin;

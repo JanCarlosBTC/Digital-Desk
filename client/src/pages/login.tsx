@@ -1,19 +1,51 @@
-import React, { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
 import { LoginForm } from "@/components/auth/login-form";
 import { RegisterForm } from "@/components/auth/register-form";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/context/user-context";
-import { Redirect } from "wouter";
+import { useLocation, Redirect } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { authService } from "@/services/auth-service";
 
 export default function LoginPage() {
   const { user, isLoading } = useUser();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
+  const [isDevLoading, setIsDevLoading] = useState(false);
+  const { toast } = useToast();
+  const [_, setLocation] = useLocation();
   
   // If user is already logged in, redirect to home
   if (user && !isLoading) {
     return <Redirect to="/" />;
   }
+  
+  // Function to handle dev login with the demo user
+  const handleDevLogin = async () => {
+    setIsDevLoading(true);
+    try {
+      const response = await authService.devLogin('demo');
+      
+      toast({
+        title: 'Success',
+        description: `Logged in as ${response.user.name}`,
+      });
+      
+      // Navigate to dashboard after successful login
+      setLocation('/');
+      window.location.reload(); // Force reload to update authentication state
+    } catch (error) {
+      console.error('Dev login error:', error);
+      toast({
+        title: 'Login Failed',
+        description: 'Could not log in with dev account. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDevLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -49,6 +81,19 @@ export default function LoginPage() {
               
               <TabsContent value="login" className="space-y-4">
                 <LoginForm redirectTo="/" />
+                
+                {/* Development Login Button */}
+                <div className="text-center mt-6">
+                  <p className="text-sm text-gray-500 mb-2">For development:</p>
+                  <Button 
+                    onClick={handleDevLogin} 
+                    disabled={isDevLoading}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {isDevLoading ? "Logging in..." : "Login as Demo User"}
+                  </Button>
+                </div>
                 
                 <div className="text-center text-sm text-gray-500 mt-4">
                   <p>

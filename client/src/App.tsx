@@ -15,18 +15,16 @@ import SubscriptionSuccess from "@/pages/subscription-success";
 import Login from "@/pages/login";
 import { PageTransition } from "@/components/transitions/simple-page-transition";
 import { UserProvider } from "@/context/user-context";
-import { DevLogin } from "@/components/auth/dev-login";
 
 // Enhanced router with page transitions
 function Router() {
   const [location] = useLocation();
   
   // Don't use AppLayout for authentication pages
-  if (location === "/login" || location === "/dev-login") {
+  if (location === "/login") {
     return (
       <Switch location={location}>
         <Route path="/login" component={Login} />
-        <Route path="/dev-login" component={DevLogin} />
       </Switch>
     );
   }
