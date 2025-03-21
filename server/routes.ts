@@ -11,7 +11,7 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
 import { authenticate, generateToken } from "./middleware/auth.js";
-import { register, login, getProfile, updateProfile, devLogin } from "./controllers/auth.controller.js";
+import { register, login, getProfile, updateProfile } from "./controllers/auth.controller.js";
 import { createCheckoutSession, handleWebhook } from "./controllers/subscription.controller.js";
 import { checkSubscriptionLimits } from "./middleware/subscription.js";
 import { authLimiter, strictApiLimiter } from "./middleware/rate-limit.js";
@@ -62,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/dev-login', async (req: Request, res: Response) => {
     try {
       const { username } = req.body;
-      console.log(`Dev login attempt for user: ${username}`);
+      console.log(`[Dev Login] Login attempt for user: ${username}`);
       
       if (!username) {
         return res.status(400).json({ message: 'Username is required' });
@@ -70,7 +70,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // IMPORTANT: For development purposes, if username is 'demo', always create a temporary user
       if (username === 'demo') {
-        console.log(`Creating temporary demo user for dev-login`);
+        console.log(`[Dev Login] Creating temporary demo user for dev-login`);
         
         // Create a temporary demo user
         const demoUser = {
@@ -86,7 +86,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Generate JWT token
         const token = generateToken(demoUser.id);
         
-        console.log(`Dev login successful for demo user`);
+        console.log(`[Dev Login] Generated token for demo user: ${token}`);
         
         return res.json({
           user: demoUser,
@@ -97,25 +97,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Find user by username (for non-demo users)
       const user = await storage.getUserByUsername(username);
       if (!user) {
-        console.log(`User not found: ${username}`);
+        console.log(`[Dev Login] User not found: ${username}`);
         return res.status(401).json({ message: 'User not found' });
       }
       
-      console.log(`Dev login successful for user: ${user.id}`);
+      console.log(`[Dev Login] Login successful for user: ${user.id}`);
       
       // Remove password from response
       const { password, ...userWithoutPassword } = user;
       
       // Generate JWT token
       const token = generateToken(user.id);
+      console.log(`[Dev Login] Generated token: ${token}`);
       
-      res.json({
+      return res.json({
         user: userWithoutPassword,
         token
       });
     } catch (error) {
-      console.error('Dev login error:', error);
-      res.status(500).json({ message: 'Error during dev login' });
+      console.error('[Dev Login] Error:', error);
+      return res.status(500).json({ message: 'Error during dev login' });
     }
   });
   
