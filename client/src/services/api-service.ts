@@ -232,23 +232,23 @@ export const apiClient = {
  */
 export const authApi = {
   register(userData: any) {
-    return apiClient.post('/api/auth/register', userData);
+    return apiClient.post('/auth/register', userData);
   },
   
   login(credentials: any) {
-    return apiClient.post('/api/auth/login', credentials);
+    return apiClient.post('/auth/login', credentials);
   },
   
   devLogin(username: string) {
-    return apiClient.post('/api/auth/dev-login', { username });
+    return apiClient.post('/auth/dev-login', { username });
   },
   
   getProfile() {
-    return apiClient.get('/api/user/profile');
+    return apiClient.get('/user/profile');
   },
   
   updateProfile(userData: any) {
-    return apiClient.put('/api/user/profile', userData);
+    return apiClient.put('/user/profile', userData);
   }
 };
 
@@ -257,6 +257,6 @@ export const authApi = {
  */
 export const subscriptionApi = {
   createCheckoutSession(plan: string) {
-    return apiClient.post('/api/subscriptions/create-checkout', { plan });
+    return apiClient.post('/subscriptions/create-checkout', { plan });
   }
 }; 

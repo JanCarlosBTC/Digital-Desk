@@ -2,14 +2,16 @@ import { User } from '@shared/schema';
 
 /**
  * API endpoints for authentication 
+ * Note: We are prepending with 'api' in the fetch request,
+ * so we don't include '/api' here
  */
 const AUTH_ENDPOINTS = {
-  LOGIN: '/api/auth/login',
-  DEV_LOGIN: '/api/auth/dev-login',
-  REGISTER: '/api/auth/register',
-  USER_PROFILE: '/api/user/profile',
-  LOGOUT: '/api/auth/logout',
-  RESET_PASSWORD: '/api/auth/reset-password',
+  LOGIN: '/auth/login',
+  DEV_LOGIN: '/auth/dev-login',
+  REGISTER: '/auth/register',
+  USER_PROFILE: '/user/profile',
+  LOGOUT: '/auth/logout',
+  RESET_PASSWORD: '/auth/reset-password',
 };
 
 /**
@@ -87,7 +89,7 @@ class AuthService {
   async login(data: LoginRequest): Promise<LoginResponse> {
     try {
       // Make API request to login endpoint
-      const response = await fetch(AUTH_ENDPOINTS.LOGIN, {
+      const response = await fetch('/api' + AUTH_ENDPOINTS.LOGIN, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
