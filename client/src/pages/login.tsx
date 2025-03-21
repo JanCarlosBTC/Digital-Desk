@@ -1,13 +1,11 @@
 import React, { useState } from "react";
 import { LoginForm } from "@/components/auth/login-form";
 import { RegisterForm } from "@/components/auth/register-form";
-import { Button } from "@/components/ui/button";
+import { DevLoginButton } from "@/components/auth/dev-login-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/context/user-context";
 import { useLocation, Redirect } from "wouter";
-import { useToast } from "@/hooks/use-toast";
-import { authService } from "@/services/auth-service";
 
 export default function LoginPage() {
   const { user, isLoading, refreshUser } = useUser();
