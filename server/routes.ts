@@ -10,7 +10,7 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
-import { authenticate } from "./middleware/auth.js";
+import { authenticate, generateToken } from "./middleware/auth.js";
 import { register, login, getProfile, updateProfile } from "./controllers/auth.controller.js";
 import { createCheckoutSession, handleWebhook } from "./controllers/subscription.controller.js";
 import { checkSubscriptionLimits } from "./middleware/subscription.js";
@@ -57,6 +57,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes - don't need authentication middleware but need rate limiting
   app.post('/api/auth/register', authLimiter, register);
   app.post('/api/auth/login', authLimiter, login);
+  
+  // Development-only direct login route (bypasses password checks)
+  app.post('/api/auth/dev-login', async (req: Request, res: Response) => {
+    try {
+      const { username } = req.body;
+      console.log(`Dev login attempt for user: ${username}`);
+      
+      if (!username) {
+        return res.status(400).json({ message: 'Username is required' });
+      }
+      
+      // Find user by username
+      const user = await storage.getUserByUsername(username);
+      if (!user) {
+        console.log(`User not found: ${username}`);
+        return res.status(401).json({ message: 'User not found' });
+      }
+      
+      console.log(`Dev login successful for user: ${user.id}`);
+      
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+      
+      // Generate JWT token
+      const token = generateToken(user.id);
+      
+      res.json({
+        user: userWithoutPassword,
+        token
+      });
+    } catch (error) {
+      console.error('Dev login error:', error);
+      res.status(500).json({ message: 'Error during dev login' });
+    }
+  });
   
   // User routes
   app.get('/api/user/profile', authenticate, getProfile);
