@@ -51,8 +51,29 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(true);
         console.log('[UserContext] Fetching user profile with token');
         
-        // Get current user profile
-        const userData = await authApi.getProfile();
+        // Make direct fetch request to profile endpoint
+        const response = await fetch('/api/auth/profile', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          // Handle non-2xx responses
+          const errorData = await response.json();
+          console.error('[UserContext] Profile fetch failed:', response.status, errorData);
+          
+          if (response.status === 401 || response.status === 403) {
+            console.log('[UserContext] Authentication error, clearing token');
+            authService.clearToken();
+          }
+          
+          throw new Error(errorData.message || 'Failed to load user profile');
+        }
+        
+        const userData = await response.json();
         console.log('[UserContext] User profile loaded successfully:', userData);
         
         setUser(userData);
@@ -83,16 +104,31 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   /**
-   * Login function - uses the authentication API
+   * Login function - uses direct fetch to authentication endpoint
    */
   const login = async (username: string, password: string): Promise<boolean> => {
     console.log(`[UserContext] Login attempt for user: ${username}`);
     
     try {
       setIsLoading(true);
-      console.log('[UserContext] Calling login API endpoint');
+      console.log('[UserContext] Calling login API endpoint directly');
       
-      const result = await authApi.login({ username, password });
+      // Make direct fetch request to login endpoint
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      
+      console.log(`[UserContext] Login response status: ${response.status}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('[UserContext] Login failed:', response.status, errorData);
+        throw new Error(errorData.message || 'Login failed');
+      }
+      
+      const result = await response.json();
       
       console.log('[UserContext] Login successful, received token and user data');
       console.log('[UserContext] User:', result.user);
@@ -134,15 +170,35 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   /**
-   * Register function
+   * Register function - uses direct fetch to registration endpoint
    */
   const register = async (userData: any): Promise<boolean> => {
+    console.log('[UserContext] Registration attempt');
+    
     try {
       setIsLoading(true);
-      const result = await authApi.register(userData);
+      
+      // Make direct fetch request to register endpoint
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData)
+      });
+      
+      console.log(`[UserContext] Registration response status: ${response.status}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('[UserContext] Registration failed:', response.status, errorData);
+        throw new Error(errorData.message || 'Registration failed');
+      }
+      
+      const result = await response.json();
+      console.log('[UserContext] Registration successful, received user data');
       
       // Set token if provided in response
       if (result.token) {
+        console.log('[UserContext] Token received, saving to local storage');
         authService.setToken(result.token);
       }
       
@@ -157,6 +213,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return true;
     } catch (error) {
+      console.error('[UserContext] Registration failed:', error);
       setIsError(true);
       
       toast({
@@ -185,17 +242,51 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   /**
-   * Refresh user data from the API
+   * Refresh user data from the API using direct fetch
    */
   const refreshUser = async () => {
+    console.log('[UserContext] Refreshing user data');
+    const token = authService.getToken();
+    
+    if (!token) {
+      console.log('[UserContext] No token available, cannot refresh user');
+      return;
+    }
+    
     try {
       setIsLoading(true);
-      const userData = await authApi.getProfile();
+      
+      // Make direct fetch request to profile endpoint
+      const response = await fetch('/api/auth/profile', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('[UserContext] Profile fetch failed:', response.status, errorData);
+        throw new Error(errorData.message || 'Failed to refresh user data');
+      }
+      
+      const userData = await response.json();
+      console.log('[UserContext] User data refreshed successfully');
+      
       setUser(userData);
       setIsError(false);
     } catch (error) {
-      console.error('Failed to refresh user data:', error);
+      console.error('[UserContext] Failed to refresh user data:', error);
       setIsError(true);
+      
+      if (error instanceof Error && (
+          error.message.includes('Authentication required') || 
+          error.message.includes('Unauthorized') ||
+          error.message.includes('Invalid token'))) {
+        console.log('[UserContext] Authentication error during refresh, clearing token');
+        authService.clearToken();
+      }
     } finally {
       setIsLoading(false);
     }
