@@ -235,7 +235,7 @@ export const WeeklyReflectionComponent = memo(function WeeklyReflectionComponent
   }, [reflections, sortField, sortDirection]);
 
   if (isLoading) {
-    return <LoadingState type="list" count={3} />;
+    return <LoadingState variant="skeleton" count={3} />;
   }
 
   return (
