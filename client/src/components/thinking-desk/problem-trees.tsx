@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useThinkingDesk } from '@/pages/thinking-desk';
+import { useThinkingDesk } from '@/pages/thinking-desk-new';
 import ProblemTreeList from './problem-tree-list';
 import ProblemTreeForm from './problem-tree-form';
 import ProblemTreeDetails from './problem-tree-details';

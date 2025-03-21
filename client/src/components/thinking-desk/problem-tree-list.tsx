@@ -29,7 +29,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FeatureCard } from '@/components/ui/feature-card';
 import { LoadingState } from '@/components/ui/loading-state';
-import { useThinkingDesk } from '@/pages/thinking-desk';
+import { useThinkingDesk } from '@/pages/thinking-desk-new';
 import { Badge } from '@/components/ui/badge';
 
 // Interface for Problem Tree
