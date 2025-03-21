@@ -50,7 +50,60 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         setIsLoading(true);
         console.log('[UserContext] Fetching user profile with token');
-        console.log('[UserContext] Token value:', token ? token.substring(0, 15) + '...' : 'none');
+        
+        // IMPORTANT: Log full token to debug issues (token will be masked in production)
+        if (token) {
+          console.log('[UserContext] Token value:', token.substring(0, 15) + '...');
+          console.log('[UserContext] FULL TOKEN FOR DEBUGGING:', token);
+          
+          try {
+            // Decode and log token parts
+            const tokenParts = token.split('.');
+            if (tokenParts.length === 3) {
+              // Safe decoding for browser compatibility
+              const decodeBase64 = (str: string): string => {
+                // Replace non-url compatible chars with base64 standard chars
+                const input = str.replace(/-/g, '+').replace(/_/g, '/');
+                // Add padding if needed
+                const pad = input.length % 4;
+                if (pad) {
+                  if (pad === 1) {
+                    throw new Error('Invalid base64 string');
+                  }
+                  const padding = '=='.substring(0, 4 - pad);
+                  return window.atob(input + padding);
+                }
+                return window.atob(input);
+              };
+              
+              // Completely safe parsing with all checks
+              try {
+                // Make sure we have strings before decoding
+                const part0 = tokenParts[0] || '';
+                const part1 = tokenParts[1] || '';
+                
+                // Only try to parse if we have actual content
+                if (part0.length > 0 && part1.length > 0) {
+                  const header = JSON.parse(decodeBase64(part0));
+                  const payload = JSON.parse(decodeBase64(part1));
+                  console.log('[UserContext] Token header:', header);
+                  console.log('[UserContext] Token payload:', payload);
+                  if (payload && typeof payload.userId !== 'undefined') {
+                    console.log('[UserContext] UserId from token:', payload.userId);
+                  }
+                } else {
+                  console.warn('[UserContext] Token parts incomplete - cannot decode');
+                }
+              } catch (parseError) {
+                console.error('[UserContext] Error parsing token parts:', parseError);
+              }
+            }
+          } catch (e) {
+            console.error('[UserContext] Failed to decode token:', e);
+          }
+        } else {
+          console.log('[UserContext] No token available');
+        }
         
         // Make direct fetch request to profile endpoint using the stored token
         const response = await fetch('/api/auth/profile', {

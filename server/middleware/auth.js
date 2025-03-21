@@ -24,6 +24,8 @@ const DEMO_USER_ID = 1;
 /**
  * Middleware to authenticate a user from a JWT token
  * This middleware verifies the JWT token and attaches the userId to the request object
+ * 
+ * IMPORTANT: Special handling for demo user and emergency authentication
  */
 export const authenticate = async (req, res, next) => {
   try {
@@ -49,7 +51,28 @@ export const authenticate = async (req, res, next) => {
     
     console.log(`Authentication successful for user ID: ${decoded.userId}`);
     
-    // Attach user ID to request
+    // SPECIAL HANDLING for demo user and tokens from emergency login
+    if (decoded.userId === 999) {
+      console.log('EMERGENCY AUTH: Demo user detected (ID: 999)');
+      
+      // Create a hardcoded demo user response
+      req.emergencyDemoUser = {
+        id: 999,
+        username: 'demo',
+        name: 'Demo User',
+        email: 'demo@example.com',
+        plan: 'Trial',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      // Still set userId to maintain compatibility with the rest of the app
+      req.userId = 999;
+      
+      return next();
+    }
+    
+    // Standard flow - attach user ID to request
     req.userId = decoded.userId;
     next();
   } catch (error) {

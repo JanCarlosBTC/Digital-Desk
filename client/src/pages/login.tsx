@@ -59,8 +59,16 @@ export default function LoginPage() {
       // Store user data directly in localStorage too
       localStorage.setItem('userData', JSON.stringify(result.user));
       
-      // Save user info globally as a fallback
-      window.currentUser = result.user;
+      // Create global emergency user data via a safe alternative method
+      try {
+        Object.defineProperty(window, 'emergencyUserData', {
+          value: result.user,
+          writable: true,
+          enumerable: true
+        });
+      } catch (e) {
+        console.warn('Failed to set global emergency user data:', e);
+      }
       
       toast({
         title: 'EMERGENCY Login Success',
