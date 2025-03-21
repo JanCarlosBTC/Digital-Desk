@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import TabNavigation from "@/components/tab-navigation";
 import BrainDump from "@/components/thinking-desk/brain-dump";
-import { DraftedPlans } from "@/components/thinking-desk/drafted-plans-new";
+import { DraftedPlans } from "@/components/thinking-desk/drafted-plans";
 import ClarityLab from "@/components/thinking-desk/clarity-lab";
 import { PageHeader } from "@/components/ui/page-header";
 import ProblemTrees from "@/components/thinking-desk/problem-trees";
