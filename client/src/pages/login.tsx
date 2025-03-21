@@ -27,24 +27,38 @@ export default function LoginPage() {
     setIsDevLoading(true);
     
     try {
-      // Using the authService directly with the special dev login endpoint
-      console.log('[LoginPage] Calling dev login endpoint with authService');
-      const response = await authService.devLogin('demo');
-      
-      console.log('[LoginPage] Dev login successful. Response:', response);
-      console.log('[LoginPage] Token received:', !!response.token);
-      
-      // No need to manually refresh the user context - just navigate and reload
-      // The page reload will ensure the token is picked up properly
-      
-      toast({
-        title: 'Success',
-        description: `Logged in as ${response.user.name}`,
+      // Make direct fetch request to dev-login endpoint
+      console.log('[LoginPage] Making direct fetch to /api/auth/dev-login');
+      const response = await fetch('/api/auth/dev-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: 'demo' })
       });
+      
+      console.log(`[LoginPage] Dev login response status: ${response.status}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(e => {
+          console.error('[LoginPage] Failed to parse error response:', e);
+          return { message: 'Invalid response format' };
+        });
+        console.log('[LoginPage] Error data:', errorData);
+        throw new Error(errorData.message || 'Dev login failed');
+      }
+      
+      const result = await response.json();
+      
+      console.log('[LoginPage] Dev login successful. Response:', result);
+      console.log('[LoginPage] Token received:', !!result.token);
       
       // Set token explicitly in local storage to ensure it's available
       console.log('[LoginPage] Setting token in local storage');
-      authService.setToken(response.token);
+      localStorage.setItem('authToken', result.token);
+      
+      toast({
+        title: 'Success',
+        description: `Logged in as ${result.user.name}`,
+      });
       
       // Navigate to dashboard after successful login
       console.log('[LoginPage] Redirecting to home page');
@@ -66,7 +80,7 @@ export default function LoginPage() {
       
       toast({
         title: 'Login Failed',
-        description: 'Could not log in with demo account. Please try again.',
+        description: error instanceof Error ? error.message : 'Could not log in with demo account. Please try again.',
         variant: 'destructive',
       });
     } finally {
