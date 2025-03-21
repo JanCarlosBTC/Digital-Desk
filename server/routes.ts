@@ -11,7 +11,7 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
 import { authenticate, generateToken } from "./middleware/auth.js";
-import { register, login, getProfile, updateProfile } from "./controllers/auth.controller.js";
+import { register, login, getProfile, updateProfile, devLogin } from "./controllers/auth.controller.js";
 import { createCheckoutSession, handleWebhook } from "./controllers/subscription.controller.js";
 import { checkSubscriptionLimits } from "./middleware/subscription.js";
 import { authLimiter, strictApiLimiter } from "./middleware/rate-limit.js";
