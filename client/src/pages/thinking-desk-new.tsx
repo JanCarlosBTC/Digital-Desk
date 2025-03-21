@@ -26,6 +26,7 @@ import { DraftedPlans } from "@/components/thinking-desk/drafted-plans-new";
 import ClarityLab from "@/components/thinking-desk/clarity-lab";
 import { PageHeader } from "@/components/ui/page-header";
 import ProblemTrees from "@/components/thinking-desk/problem-trees";
+import { AuthRequired } from "@/components/auth/auth-required";
 
 // Create context for ThinkingDesk 
 interface ThinkingDeskContextType {
@@ -97,26 +98,32 @@ const ThinkingDesk = () => {
           
           {/* Problem Trees Tab */}
           <div id="problem-trees" className="tab-pane w-full">
-            <ProblemTrees 
-              showNewProblemTree={showNewProblemTree}
-              onDialogClose={() => setShowNewProblemTree(false)}
-            />
+            <AuthRequired>
+              <ProblemTrees 
+                showNewProblemTree={showNewProblemTree}
+                onDialogClose={() => setShowNewProblemTree(false)}
+              />
+            </AuthRequired>
           </div>
           
           {/* Drafted Plans Tab */}
           <div id="drafted-plans" className="tab-pane w-full">
-            <DraftedPlans 
-              showNewPlan={showNewPlan}
-              onDialogClose={() => setShowNewPlan(false)}
-            />
+            <AuthRequired>
+              <DraftedPlans 
+                showNewPlan={showNewPlan}
+                onDialogClose={() => setShowNewPlan(false)}
+              />
+            </AuthRequired>
           </div>
           
           {/* Clarity Lab Tab */}
           <div id="clarity-lab" className="tab-pane w-full">
-            <ClarityLab 
-              showNewEntry={showNewClarityEntry}
-              onDialogClose={() => setShowNewClarityEntry(false)}
-            />
+            <AuthRequired>
+              <ClarityLab 
+                showNewEntry={showNewClarityEntry}
+                onDialogClose={() => setShowNewClarityEntry(false)}
+              />
+            </AuthRequired>
           </div>
         </TabNavigation>
       </section>
