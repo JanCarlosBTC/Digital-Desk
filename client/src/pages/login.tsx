@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { authService } from "@/services/auth-service";
 
 export default function LoginPage() {
-  const { user, isLoading } = useUser();
+  const { user, isLoading, login } = useUser();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const [isDevLoading, setIsDevLoading] = useState(false);
   const { toast } = useToast();
@@ -25,21 +25,30 @@ export default function LoginPage() {
   const handleDevLogin = async () => {
     setIsDevLoading(true);
     try {
-      const response = await authService.devLogin('demo');
+      // Using the context's login function with a direct login for the demo user
+      // This places the user in the user context correctly
+      const success = await login('demo', 'password');
       
-      toast({
-        title: 'Success',
-        description: `Logged in as ${response.user.name}`,
-      });
-      
-      // Navigate to dashboard after successful login
-      setLocation('/');
-      window.location.reload(); // Force reload to update authentication state
+      if (success) {
+        toast({
+          title: 'Success',
+          description: 'Logged in as Demo User',
+        });
+        
+        // Navigate to dashboard after successful login
+        setLocation('/');
+      } else {
+        toast({
+          title: 'Login Failed',
+          description: 'Could not log in with demo account.',
+          variant: 'destructive',
+        });
+      }
     } catch (error) {
       console.error('Dev login error:', error);
       toast({
         title: 'Login Failed',
-        description: 'Could not log in with dev account. Please try again.',
+        description: 'Could not log in with demo account. Please try again.',
         variant: 'destructive',
       });
     } finally {
