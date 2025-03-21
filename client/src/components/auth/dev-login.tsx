@@ -31,12 +31,11 @@ export function DevLogin() {
     setIsLoading(true);
     
     try {
-      // Use the authApi for dev login
-      const result = await authApi.devLogin(username);
-      console.log('Dev login successful', result);
+      console.log('Attempting dev login with username:', username);
       
-      // Save the token using authService
-      authService.setToken(result.token);
+      // Use the authService for dev login
+      const result = await authService.devLogin(username);
+      console.log('Dev login successful:', result);
       
       // Refresh the user in the context
       await refreshUser();
@@ -51,12 +50,18 @@ export function DevLogin() {
       // Redirect to home page
       setLocation('/');
       
-      // No need to reload the page as refreshUser() will update the user context
     } catch (error) {
       console.error('Dev login error:', error);
       toast({
         title: 'Login Failed',
         description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        variant: 'destructive'
+      });
+      
+      // Provide more guidance on login issues
+      toast({
+        title: 'Troubleshooting',
+        description: 'Make sure the server is running and demo user is created',
         variant: 'destructive'
       });
     } finally {
