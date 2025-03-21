@@ -3,13 +3,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/context/user-context';
 import { useLocation } from 'wouter';
+import { authService } from '@/services/auth-service';
 
 /**
  * DevLoginButton - Simple direct access login for demo user
  * 
  * This component provides a streamlined way to log in as the demo user
- * without going through the standard login form. It makes a direct API
- * call to the server and stores the token in localStorage.
+ * without going through the standard login form. It uses the authService
+ * to perform the login and handle token storage consistently.
  */
 export function DevLoginButton({ 
   afterLoginPath = '/', 
@@ -27,22 +28,12 @@ export function DevLoginButton({
     setIsLoading(true);
 
     try {
-      // Direct fetch call to dev-login endpoint
-      const response = await fetch('/api/auth/dev-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'demo' })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(e => ({ message: 'Invalid response format' }));
-        throw new Error(errorData.message || 'Dev login failed');
-      }
-
-      const result = await response.json();
-
-      // Store token in localStorage
-      localStorage.setItem('authToken', result.token);
+      console.log('[DevLoginButton] Attempting demo user login via authService');
+      
+      // Use authService for consistent token handling
+      const result = await authService.devLogin('demo');
+      
+      console.log('[DevLoginButton] Login successful, token exists:', !!result.token);
 
       // Show success message
       toast({
@@ -50,13 +41,15 @@ export function DevLoginButton({
         description: `Welcome back, ${result.user.name}!`,
       });
 
-      // Refresh user context
+      // Refresh user context to update UI
+      console.log('[DevLoginButton] Refreshing user context');
       await refreshUser();
 
       // Navigate to specified path
+      console.log('[DevLoginButton] Navigating to', afterLoginPath);
       setLocation(afterLoginPath);
     } catch (error) {
-      console.error('Dev login failed:', error);
+      console.error('[DevLoginButton] Login failed:', error);
       
       toast({
         title: 'Login failed',

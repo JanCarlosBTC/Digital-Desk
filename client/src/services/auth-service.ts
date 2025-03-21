@@ -57,24 +57,35 @@ class AuthService {
   private tokenKey = 'authToken';
   
   /**
-   * Get the stored authentication token
+   * Get the stored authentication token from either localStorage or sessionStorage
    */
   getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
+    // First try localStorage
+    const localToken = localStorage.getItem(this.tokenKey);
+    if (localToken) {
+      return localToken;
+    }
+    
+    // Then try sessionStorage
+    const sessionToken = sessionStorage.getItem(this.tokenKey);
+    return sessionToken;
   }
   
   /**
-   * Set the authentication token in local storage
+   * Set the authentication token in both localStorage and sessionStorage
+   * This ensures both token storage mechanisms work
    */
   setToken(token: string): void {
     localStorage.setItem(this.tokenKey, token);
+    sessionStorage.setItem(this.tokenKey, token);
   }
   
   /**
-   * Clear the authentication token
+   * Clear the authentication token from both storage locations
    */
   clearToken(): void {
     localStorage.removeItem(this.tokenKey);
+    sessionStorage.removeItem(this.tokenKey);
   }
   
   /**
