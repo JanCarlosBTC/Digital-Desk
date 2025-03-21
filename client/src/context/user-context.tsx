@@ -50,19 +50,31 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         setIsLoading(true);
         console.log('[UserContext] Fetching user profile with token');
+        console.log('[UserContext] Token value:', token ? token.substring(0, 15) + '...' : 'none');
         
-        // Make direct fetch request to profile endpoint
+        // Make direct fetch request to profile endpoint using the stored token
         const response = await fetch('/api/auth/profile', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
-          }
+          },
+          credentials: 'include' // Include credentials in the request
         });
+        
+        console.log('[UserContext] Profile response status:', response.status);
+        console.log('[UserContext] Profile response type:', response.headers.get('content-type'));
         
         if (!response.ok) {
           // Handle non-2xx responses
-          const errorData = await response.json();
+          let errorData;
+          try {
+            errorData = await response.json();
+          } catch (jsonError) {
+            console.error('[UserContext] Failed to parse error response:', await response.text());
+            errorData = { message: 'Invalid response format' };
+          }
+          
           console.error('[UserContext] Profile fetch failed:', response.status, errorData);
           
           if (response.status === 401 || response.status === 403) {
@@ -73,8 +85,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
           throw new Error(errorData.message || 'Failed to load user profile');
         }
         
-        const userData = await response.json();
-        console.log('[UserContext] User profile loaded successfully:', userData);
+        // Safely parse the response
+        let userData;
+        try {
+          userData = await response.json();
+          console.log('[UserContext] User profile loaded successfully:', userData);
+        } catch (jsonError) {
+          console.error('[UserContext] Failed to parse user profile response:', jsonError);
+          const responseText = await response.text();
+          console.log('[UserContext] Raw response:', responseText.substring(0, 200) + '...');
+          throw new Error('Invalid response format from server');
+        }
         
         setUser(userData);
         setIsError(false);
@@ -253,6 +274,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
+    console.log('[UserContext] Token for refresh:', token ? token.substring(0, 15) + '...' : 'none');
+    
     try {
       setIsLoading(true);
       
@@ -262,17 +285,38 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        }
+        },
+        credentials: 'include' // Include credentials in request
       });
       
+      console.log('[UserContext] Refresh profile response status:', response.status);
+      console.log('[UserContext] Refresh profile response type:', response.headers.get('content-type'));
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('[UserContext] Profile fetch failed:', response.status, errorData);
+        // Handle non-2xx responses
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (jsonError) {
+          console.error('[UserContext] Failed to parse refresh error response:', await response.text());
+          errorData = { message: 'Invalid response format' };
+        }
+        
+        console.error('[UserContext] Profile refresh failed:', response.status, errorData);
         throw new Error(errorData.message || 'Failed to refresh user data');
       }
       
-      const userData = await response.json();
-      console.log('[UserContext] User data refreshed successfully');
+      // Safely parse the response
+      let userData;
+      try {
+        userData = await response.json();
+        console.log('[UserContext] User data refreshed successfully:', userData);
+      } catch (jsonError) {
+        console.error('[UserContext] Failed to parse refresh response:', jsonError);
+        const responseText = await response.text();
+        console.log('[UserContext] Raw refresh response:', responseText.substring(0, 200) + '...');
+        throw new Error('Invalid response format from server');
+      }
       
       setUser(userData);
       setIsError(false);
@@ -280,12 +324,16 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('[UserContext] Failed to refresh user data:', error);
       setIsError(true);
       
-      if (error instanceof Error && (
-          error.message.includes('Authentication required') || 
-          error.message.includes('Unauthorized') ||
-          error.message.includes('Invalid token'))) {
-        console.log('[UserContext] Authentication error during refresh, clearing token');
-        authService.clearToken();
+      if (error instanceof Error) {
+        console.log('[UserContext] Refresh error type:', error.name);
+        console.log('[UserContext] Refresh error message:', error.message);
+        
+        if (error.message.includes('Authentication required') || 
+            error.message.includes('Unauthorized') ||
+            error.message.includes('Invalid token')) {
+          console.log('[UserContext] Authentication error during refresh, clearing token');
+          authService.clearToken();
+        }
       }
     } finally {
       setIsLoading(false);
