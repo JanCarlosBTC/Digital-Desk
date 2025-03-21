@@ -130,8 +130,14 @@ export const login = async (req, res) => {
 
 export const getProfile = async (req, res) => {
   try {
+    // DEBUG: Log full request details to diagnose issues
+    console.log(`[getProfile] Request headers:`, JSON.stringify(req.headers));
+    console.log(`[getProfile] Request userId:`, req.userId);
+    console.log(`[getProfile] Request body:`, JSON.stringify(req.body));
+    
     const authHeader = req.headers.authorization || '';
     const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+    console.log(`[getProfile] Parsed token:`, token.substring(0, 15) + '...');
     
     // EMERGENCY DETECTION: Check for our emergency tokens (for quick demo access)
     if (token.startsWith('emergency_demo_token_')) {
@@ -157,38 +163,74 @@ export const getProfile = async (req, res) => {
       return res.json(req.emergencyDemoUser);
     }
     
-    const userId = req.userId;
-    console.log(`[getProfile] Looking up user with ID: ${userId}`);
-    
-    // UNIVERSAL DEMO USER: Always provide a demo user for ID 999
-    if (userId === 999) {
-      console.log('[getProfile] Providing universal demo user for ID 999');
+    // If we have a userId from the authentication middleware
+    if (req.userId) {
+      const userId = req.userId;
+      console.log(`[getProfile] Looking up user with ID: ${userId}`);
       
-      const demoUser = {
-        id: 999,
-        username: 'demo',
-        name: 'Demo User',
-        email: 'demo@example.com',
-        plan: 'Trial',
-        initials: 'DU',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
+      // UNIVERSAL DEMO USER: Always provide a demo user for ID 999
+      if (userId === 999) {
+        console.log('[getProfile] Providing universal demo user for ID 999');
+        
+        const demoUser = {
+          id: 999,
+          username: 'demo',
+          name: 'Demo User',
+          email: 'demo@example.com',
+          plan: 'Trial',
+          initials: 'DU',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        return res.json(demoUser);
+      }
       
-      return res.json(demoUser);
+      // Normal flow for real users - try to find in storage
+      try {
+        const user = await storage.getUser(userId);
+        
+        if (user) {
+          // Remove password from response
+          const { password, ...userWithoutPassword } = user;
+          return res.json(userWithoutPassword);
+        }
+      } catch (storageError) {
+        console.log(`[getProfile] Storage error:`, storageError);
+        // Continue to fallback (will provide demo user or error)
+      }
     }
     
-    // Normal flow for real users
-    const user = await storage.getUser(userId);
-    
-    if (!user) {
-      console.log(`[getProfile] User with ID ${userId} not found in database`);
-      return res.status(404).json({ message: 'User not found' });
+    // Final fallback - if we have a token with userId 999 but it wasn't caught above
+    try {
+      const decodedToken = jwt.verify(token, process.env.JWT_SECRET || 'digital_desk_jwt_secret_key_2025');
+      console.log(`[getProfile] Decoded token in fallback:`, decodedToken);
+      
+      if (decodedToken && decodedToken.userId === 999) {
+        console.log('[getProfile] FALLBACK: Providing demo user as final fallback');
+        
+        const fallbackDemoUser = {
+          id: 999,
+          username: 'demo',
+          name: 'Demo User (Fallback)',
+          email: 'demo@example.com',
+          plan: 'Trial',
+          initials: 'DU', 
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        return res.json(fallbackDemoUser);
+      }
+    } catch (tokenError) {
+      console.log(`[getProfile] Token decode error in fallback:`, tokenError);
+      // Continue to final error response
     }
     
-    // Remove password from response
-    const { password, ...userWithoutPassword } = user;
-    res.json(userWithoutPassword);
+    // If we get here, no user was found and no fallbacks worked
+    console.log(`[getProfile] No user found and no fallbacks worked`);
+    return res.status(404).json({ message: 'User not found' });
+    
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({ message: 'Error fetching user profile' });
