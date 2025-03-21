@@ -34,6 +34,7 @@ interface LoginFormProps {
 export function LoginForm({ onSuccess, redirectTo }: LoginFormProps) {
   const { login } = useUser();
   const { toast } = useToast();
+  const [_, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize form with validation
@@ -63,7 +64,7 @@ export function LoginForm({ onSuccess, redirectTo }: LoginFormProps) {
         }
         
         if (redirectTo) {
-          window.location.href = redirectTo;
+          setLocation(redirectTo);
         }
       } else {
         toast({
