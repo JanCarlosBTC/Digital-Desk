@@ -244,12 +244,10 @@ export const authApi = {
   },
   
   getProfile() {
-    // Server route is /api/user/profile but apiClient already prefixes with /api/
     return apiClient.get('/user/profile');
   },
   
   updateProfile(userData: any) {
-    // Server route is /api/user/profile but apiClient already prefixes with /api/
     return apiClient.put('/user/profile', userData);
   }
 };
