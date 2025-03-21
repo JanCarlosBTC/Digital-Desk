@@ -13,7 +13,11 @@ import jwt from 'jsonwebtoken';
 import { storage } from '../storage.js';
 
 // Use environment variable for JWT secret, with fallback for development
-const JWT_SECRET = process.env.JWT_SECRET || 'temp_development_secret';
+const JWT_SECRET = process.env.JWT_SECRET || 'digital_desk_jwt_secret_key_2025';
+
+// Log JWT secret status on startup
+console.log(`JWT_SECRET initialization: ${JWT_SECRET ? 'Secret is set' : 'SECRET IS MISSING!'}`);
+
 // Temporary demo user ID until we implement proper authentication
 const DEMO_USER_ID = 1;
 
@@ -25,22 +29,32 @@ export const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     
+    // Log auth header for debugging
+    console.log(`Auth header: ${authHeader ? 'Present' : 'Missing'}`);
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new Error('No token provided');
+      console.error('Authentication failed: No token provided or invalid format');
+      return res.status(401).json({ message: 'Authentication required' });
     }
     
     const token = authHeader.split(' ')[1];
+    console.log(`Verifying token: ${token.substring(0, 10)}...`);
+    
     const decoded = verifyToken(token);
     
     if (!decoded) {
-      throw new Error('Invalid token');
+      console.error('Authentication failed: Invalid or expired token');
+      return res.status(401).json({ message: 'Invalid or expired token' });
     }
+    
+    console.log(`Authentication successful for user ID: ${decoded.userId}`);
     
     // Attach user ID to request
     req.userId = decoded.userId;
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Unauthorized' });
+    console.error('Authentication error:', error.message);
+    res.status(401).json({ message: 'Authentication failed', error: error.message });
   }
 };
 
@@ -63,8 +77,19 @@ export const generateToken = (userId) => {
  */
 export const verifyToken = (token) => {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    console.log(`Using JWT_SECRET: ${JWT_SECRET ? 'Secret is set' : 'Secret is missing!'}`);
+    const result = jwt.verify(token, JWT_SECRET);
+    console.log(`Token verification successful: ${JSON.stringify(result)}`);
+    return result;
   } catch (error) {
+    console.error(`Token verification failed: ${error.message}`);
+    if (error.name === 'TokenExpiredError') {
+      console.log('Token has expired');
+    } else if (error.name === 'JsonWebTokenError') {
+      console.log('Invalid token signature');
+    } else {
+      console.log(`Unknown token error: ${error.name}`);
+    }
     return null;
   }
 }; 

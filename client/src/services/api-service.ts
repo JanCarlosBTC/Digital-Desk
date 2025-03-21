@@ -69,8 +69,19 @@ async function handleResponse(response: Response) {
   if (!response.ok) {
     // Handle specific error cases
     if (response.status === 401) {
-      // Token expired or invalid, trigger logout
-      authService.logout();
+      // Token expired or invalid, log details and trigger logout
+      console.error('Authentication error:', data);
+      console.log('Current token:', authService.getToken() ? 'Token exists' : 'No token');
+      
+      // Show more detailed error message
+      toast({
+        title: 'Authentication Error',
+        description: data.message || 'Your session has expired. Please log in again.',
+        variant: 'destructive'
+      });
+      
+      // Clear token and trigger logout
+      authService.clearToken();
     } else if (response.status === 429) {
       // Rate limit exceeded
       toast({
