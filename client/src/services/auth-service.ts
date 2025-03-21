@@ -2,16 +2,16 @@ import { User } from '@shared/schema';
 
 /**
  * API endpoints for authentication 
- * Note: We are prepending with 'api' in the fetch request,
- * so we don't include '/api' here
+ * Note: IMPORTANT - These endpoints must match EXACTLY with what's in the
+ * server routes.ts file. The '/api' prefix is already included there!
  */
 const AUTH_ENDPOINTS = {
-  LOGIN: '/auth/login',
-  DEV_LOGIN: '/auth/dev-login',
-  REGISTER: '/auth/register',
-  USER_PROFILE: '/user/profile',
-  LOGOUT: '/auth/logout',
-  RESET_PASSWORD: '/auth/reset-password',
+  LOGIN: '/api/auth/login',
+  DEV_LOGIN: '/api/auth/dev-login',
+  REGISTER: '/api/auth/register',
+  USER_PROFILE: '/api/user/profile',
+  LOGOUT: '/api/auth/logout',
+  RESET_PASSWORD: '/api/auth/reset-password',
 };
 
 /**
