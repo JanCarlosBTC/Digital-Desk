@@ -65,6 +65,11 @@ export function LoginForm({ onSuccess, redirectTo }: LoginFormProps) {
         
         if (redirectTo) {
           setLocation(redirectTo);
+          
+          // Force a page reload to ensure the token is properly loaded
+          setTimeout(() => {
+            window.location.reload();
+          }, 100);
         }
       } else {
         toast({
