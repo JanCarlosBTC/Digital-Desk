@@ -40,6 +40,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const loadUser = async () => {
       const token = authService.getToken();
       
+      console.log('[UserContext] Loading user, token exists:', !!token);
+      
       if (!token) {
         setIsLoading(false);
         return;
@@ -47,16 +49,30 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       try {
         setIsLoading(true);
+        console.log('[UserContext] Fetching user profile with token');
+        
         // Get current user profile
         const userData = await authApi.getProfile();
+        console.log('[UserContext] User profile loaded successfully:', userData);
+        
         setUser(userData);
         setIsError(false);
       } catch (error) {
-        console.error('Failed to load user data:', error);
+        console.error('[UserContext] Failed to load user data:', error);
         setIsError(true);
-        // Clear token if invalid
-        if (error instanceof Error && error.message.includes('Authentication required')) {
-          authService.clearToken();
+        
+        // More detailed error logging
+        if (error instanceof Error) {
+          console.log('[UserContext] Error type:', error.name);
+          console.log('[UserContext] Error message:', error.message);
+          
+          // Clear token if authentication issues are detected
+          if (error.message.includes('Authentication required') || 
+              error.message.includes('Unauthorized') ||
+              error.message.includes('Invalid token')) {
+            console.log('[UserContext] Clearing invalid token');
+            authService.clearToken();
+          }
         }
       } finally {
         setIsLoading(false);
@@ -70,9 +86,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
    * Login function - uses the authentication API
    */
   const login = async (username: string, password: string): Promise<boolean> => {
+    console.log(`[UserContext] Login attempt for user: ${username}`);
+    
     try {
       setIsLoading(true);
+      console.log('[UserContext] Calling login API endpoint');
+      
       const result = await authApi.login({ username, password });
+      
+      console.log('[UserContext] Login successful, received token and user data');
+      console.log('[UserContext] User:', result.user);
+      console.log('[UserContext] Token exists:', !!result.token);
       
       // Save token
       authService.setToken(result.token);
@@ -88,7 +112,14 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return true;
     } catch (error) {
+      console.error('[UserContext] Login failed:', error);
       setIsError(true);
+      
+      // More detailed error logging
+      if (error instanceof Error) {
+        console.log('[UserContext] Error type:', error.name);
+        console.log('[UserContext] Error message:', error.message);
+      }
       
       toast({
         title: 'Login failed',

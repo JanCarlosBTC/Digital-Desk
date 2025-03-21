@@ -116,6 +116,9 @@ class AuthService {
    * Dev login for testing purposes
    */
   async devLogin(username: string): Promise<LoginResponse> {
+    console.log(`[AuthService] Attempting dev login for user: ${username}`);
+    console.log(`[AuthService] Using endpoint: ${AUTH_ENDPOINTS.DEV_LOGIN}`);
+    
     try {
       // Make API request to dev login endpoint - endpoints already include /api prefix
       const response = await fetch(AUTH_ENDPOINTS.DEV_LOGIN, {
@@ -124,19 +127,40 @@ class AuthService {
         body: JSON.stringify({ username })
       });
       
+      console.log(`[AuthService] Dev login response status: ${response.status}`);
+      
       if (!response.ok) {
-        const errorData = await response.json();
+        console.log('[AuthService] Dev login response not OK');
+        const errorData = await response.json().catch(e => {
+          console.error('[AuthService] Failed to parse error response:', e);
+          return { message: 'Invalid response format' };
+        });
+        console.log('[AuthService] Error data:', errorData);
         throw new Error(errorData.message || 'Dev login failed');
       }
       
-      const result = await response.json();
+      console.log('[AuthService] Parsing successful response body');
+      const result = await response.json().catch(e => {
+        console.error('[AuthService] Failed to parse success response:', e);
+        throw new Error('Invalid response format');
+      });
+      
+      console.log('[AuthService] Dev login successful, token present:', !!result.token);
+      console.log('[AuthService] User data retrieved:', result.user);
       
       // Store the token
       this.setToken(result.token);
+      console.log('[AuthService] Token stored in local storage');
       
       return result;
     } catch (error) {
+      console.error('[AuthService] Dev login error:', error);
+      if (error instanceof Error) {
+        console.log('[AuthService] Error name:', error.name);
+        console.log('[AuthService] Error message:', error.message);
+      }
       this.clearToken();
+      console.log('[AuthService] Token cleared due to error');
       throw error;
     }
   }

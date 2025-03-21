@@ -23,10 +23,16 @@ export default function LoginPage() {
   
   // Function to handle dev login with the demo user
   const handleDevLogin = async () => {
+    console.log('[LoginPage] Starting dev login for demo user');
     setIsDevLoading(true);
+    
     try {
       // Using the authService directly with the special dev login endpoint
+      console.log('[LoginPage] Calling dev login endpoint with authService');
       const response = await authService.devLogin('demo');
+      
+      console.log('[LoginPage] Dev login successful. Response:', response);
+      console.log('[LoginPage] Token received:', !!response.token);
       
       // No need to manually refresh the user context - just navigate and reload
       // The page reload will ensure the token is picked up properly
@@ -36,15 +42,28 @@ export default function LoginPage() {
         description: `Logged in as ${response.user.name}`,
       });
       
+      // Set token explicitly in local storage to ensure it's available
+      console.log('[LoginPage] Setting token in local storage');
+      authService.setToken(response.token);
+      
       // Navigate to dashboard after successful login
+      console.log('[LoginPage] Redirecting to home page');
       setLocation('/');
       
       // Force a page reload to ensure the token is properly loaded
+      console.log('[LoginPage] Scheduling page reload');
       setTimeout(() => {
         window.location.reload();
       }, 100);
     } catch (error) {
-      console.error('Dev login error:', error);
+      console.error('[LoginPage] Dev login error:', error);
+      
+      // More detailed error logging
+      if (error instanceof Error) {
+        console.log('[LoginPage] Error type:', error.name);
+        console.log('[LoginPage] Error message:', error.message);
+      }
+      
       toast({
         title: 'Login Failed',
         description: 'Could not log in with demo account. Please try again.',
