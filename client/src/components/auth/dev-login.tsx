@@ -10,7 +10,7 @@ export function DevLogin() {
   const [username, setUsername] = useState('demo');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const [_, setLocation] = useLocation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,12 +35,11 @@ export function DevLogin() {
         body: JSON.stringify({ username })
       });
       
+      const data = await response.json();
+      
       if (!response.ok) {
-        const data = await response.json();
         throw new Error(data.message || 'Login failed');
       }
-      
-      const data = await response.json();
       console.log('Dev login successful', data);
       
       // Save the token to localStorage
@@ -54,7 +53,7 @@ export function DevLogin() {
       });
       
       // Redirect to home page
-      navigate('/');
+      setLocation('/');
       
       // Reload the page to update auth state
       window.location.reload();
@@ -91,7 +90,7 @@ export function DevLogin() {
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => navigate('/login')}>
+          <Button variant="outline" onClick={() => setLocation('/login')}>
             Back to Login
           </Button>
           <Button type="submit" disabled={isLoading}>
