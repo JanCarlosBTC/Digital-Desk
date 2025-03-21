@@ -29,22 +29,40 @@ const DevLogin: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Use the dev login directly
-      const response = await authService.devLogin(username);
+      console.log(`[DevLogin] Attempting dev login with username: ${username}`);
+      
+      // Make API request to dev login endpoint directly
+      const response = await fetch('/api/auth/dev-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Dev login failed');
+      }
+      
+      const result = await response.json();
+      console.log('[DevLogin] Login successful, result:', result);
+      
+      // Save token in localStorage
+      authService.setToken(result.token);
+      console.log('[DevLogin] Token saved to local storage');
       
       toast({
         title: 'Success',
-        description: `Logged in as ${response.user.name}`,
+        description: `Logged in as ${result.user.name}`,
       });
 
       // Navigate to dashboard after successful login
       setLocation('/');
       window.location.reload(); // Force reload to update authentication state
     } catch (error) {
-      console.error('Dev login error:', error);
+      console.error('[DevLogin] Login error:', error);
       toast({
         title: 'Login Failed',
-        description: 'Could not log in with dev account. Please try again.',
+        description: error instanceof Error ? error.message : 'Could not log in with dev account. Please try again.',
         variant: 'destructive',
       });
     } finally {
