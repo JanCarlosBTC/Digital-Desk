@@ -125,10 +125,11 @@ export class MemStorage implements IStorage {
 
     this.nextId = 1;
 
-    // Add a demo user
+    // Add a demo user with a hashed password
+    // This is the bcrypt hash for the password "password"
     this.createUser({
       username: "demo",
-      password: "password",
+      password: "$2b$10$9YmHDN1QGZ28Z9TKpMSsn.AYJKxBG4.QOmA44sIH3laf4X2pE4d56",
       name: "John Doe",
       plan: "Premium",
       initials: "JD"
