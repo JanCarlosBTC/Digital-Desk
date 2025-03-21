@@ -88,8 +88,8 @@ class AuthService {
    */
   async login(data: LoginRequest): Promise<LoginResponse> {
     try {
-      // Make API request to login endpoint
-      const response = await fetch('/api' + AUTH_ENDPOINTS.LOGIN, {
+      // Make API request to login endpoint - endpoints already include /api prefix
+      const response = await fetch(AUTH_ENDPOINTS.LOGIN, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -117,8 +117,8 @@ class AuthService {
    */
   async devLogin(username: string): Promise<LoginResponse> {
     try {
-      // Make API request to dev login endpoint
-      const response = await fetch('/api' + AUTH_ENDPOINTS.DEV_LOGIN, {
+      // Make API request to dev login endpoint - endpoints already include /api prefix
+      const response = await fetch(AUTH_ENDPOINTS.DEV_LOGIN, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username })
@@ -146,7 +146,7 @@ class AuthService {
    */
   async register(data: RegisterRequest): Promise<User> {
     try {
-      const response = await fetch('/api' + AUTH_ENDPOINTS.REGISTER, {
+      const response = await fetch(AUTH_ENDPOINTS.REGISTER, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -179,7 +179,7 @@ class AuthService {
     
     // Optional: make an API request to invalidate the token on the server
     try {
-      await fetch('/api' + AUTH_ENDPOINTS.LOGOUT, {
+      await fetch(AUTH_ENDPOINTS.LOGOUT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -201,7 +201,7 @@ class AuthService {
         throw new Error('Not authenticated');
       }
       
-      const response = await fetch('/api' + AUTH_ENDPOINTS.USER_PROFILE, {
+      const response = await fetch(AUTH_ENDPOINTS.USER_PROFILE, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -230,7 +230,7 @@ class AuthService {
    */
   async resetPassword(data: ResetPasswordRequest): Promise<void> {
     try {
-      const response = await fetch('/api' + AUTH_ENDPOINTS.RESET_PASSWORD, {
+      const response = await fetch(AUTH_ENDPOINTS.RESET_PASSWORD, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
