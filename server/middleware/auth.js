@@ -31,29 +31,31 @@ export const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     
-    // Log auth header for debugging
-    console.log(`Auth header: ${authHeader ? 'Present' : 'Missing'}`);
+    // DETAILED LOGGING for debugging
+    console.log(`[authenticate] Request path: ${req.path}`);
+    console.log(`[authenticate] Auth header: ${authHeader ? `Present (${authHeader.substring(0, 15)}...)` : 'Missing'}`);
+    console.log(`[authenticate] Headers: ${JSON.stringify(req.headers)}`);
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.error('Authentication failed: No token provided or invalid format');
+      console.error('[authenticate] Authentication failed: No token provided or invalid format');
       return res.status(401).json({ message: 'Authentication required' });
     }
     
     const token = authHeader.split(' ')[1];
-    console.log(`Verifying token: ${token.substring(0, 10)}...`);
+    console.log(`[authenticate] Verifying token: ${token.substring(0, 15)}...`);
     
     const decoded = verifyToken(token);
     
     if (!decoded) {
-      console.error('Authentication failed: Invalid or expired token');
+      console.error('[authenticate] Authentication failed: Invalid or expired token');
       return res.status(401).json({ message: 'Invalid or expired token' });
     }
     
-    console.log(`Authentication successful for user ID: ${decoded.userId}`);
+    console.log(`[authenticate] Authentication successful for user ID: ${decoded.userId}`);
     
     // SPECIAL HANDLING for demo user and tokens from emergency login
     if (decoded.userId === 999) {
-      console.log('EMERGENCY AUTH: Demo user detected (ID: 999)');
+      console.log('[authenticate] EMERGENCY AUTH: Demo user detected (ID: 999)');
       
       // Create a hardcoded demo user response
       req.emergencyDemoUser = {
@@ -62,22 +64,28 @@ export const authenticate = async (req, res, next) => {
         name: 'Demo User',
         email: 'demo@example.com',
         plan: 'Trial',
+        initials: 'DU',
         createdAt: new Date(),
         updatedAt: new Date()
       };
       
       // Still set userId to maintain compatibility with the rest of the app
       req.userId = 999;
+      console.log('[authenticate] Setting userId to:', req.userId);
+      console.log('[authenticate] Setting emergencyDemoUser:', JSON.stringify(req.emergencyDemoUser));
       
       return next();
     }
     
     // Standard flow - attach user ID to request
     req.userId = decoded.userId;
-    next();
+    console.log('[authenticate] Standard flow - Setting userId to:', req.userId);
+    
+    // Continue to the actual endpoint handler
+    return next();
   } catch (error) {
-    console.error('Authentication error:', error.message);
-    res.status(401).json({ message: 'Authentication failed', error: error.message });
+    console.error('[authenticate] Authentication error:', error.message);
+    return res.status(401).json({ message: 'Authentication failed', error: error.message });
   }
 };
 
