@@ -5,12 +5,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
+import { authApi } from '@/services/api-service';
+import { authService } from '@/services/auth-service';
+import { useUser } from '@/context/user-context';
 
 export function DevLogin() {
   const [username, setUsername] = useState('demo');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
+  const { refreshUser } = useUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,36 +31,27 @@ export function DevLogin() {
     setIsLoading(true);
     
     try {
-      const response = await fetch('/api/auth/dev-login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username })
-      });
+      // Use the authApi for dev login
+      const result = await authApi.devLogin(username);
+      console.log('Dev login successful', result);
       
-      const data = await response.json();
+      // Save the token using authService
+      authService.setToken(result.token);
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
-      console.log('Dev login successful', data);
-      
-      // Save the token to localStorage
-      localStorage.setItem('authToken', data.token);
+      // Refresh the user in the context
+      await refreshUser();
       
       // Show success toast
       toast({
         title: 'Success',
-        description: 'Logged in successfully',
+        description: `Logged in successfully as ${username}`,
         variant: 'default'
       });
       
       // Redirect to home page
       setLocation('/');
       
-      // Reload the page to update auth state
-      window.location.reload();
+      // No need to reload the page as refreshUser() will update the user context
     } catch (error) {
       console.error('Dev login error:', error);
       toast({
