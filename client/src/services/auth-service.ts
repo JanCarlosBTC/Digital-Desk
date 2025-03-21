@@ -2,8 +2,8 @@ import { User } from '@shared/schema';
 
 /**
  * API endpoints for authentication 
- * Note: IMPORTANT - These endpoints must match EXACTLY with what's in the
- * server routes.ts file. The '/api' prefix is already included there!
+ * Note: All endpoints must match the server routes.ts file patterns.
+ * The endpoints below match EXACTLY with what's in server/routes.ts.
  */
 const AUTH_ENDPOINTS = {
   LOGIN: '/api/auth/login',
