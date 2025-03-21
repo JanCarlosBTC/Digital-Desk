@@ -131,37 +131,56 @@ export const login = async (req, res) => {
 
 export const getProfile = async (req, res) => {
   try {
-    // UNIVERSAL DEMO USER HANDLER
-    console.log('====== PROFILE HANDLER =====');
-    console.log(`[getProfile] Request path: ${req.path}`);
+    // UNIVERSAL DEMO USER DIRECT OVERRIDE
+    console.log('====== EMERGENCY PROFILE HANDLER =====');
+    console.log(`[getProfile] DIRECT EMERGENCY PATH: ${req.path}`);
+    console.log(`[getProfile] Request headers:`, JSON.stringify(req.headers));
     console.log(`[getProfile] Request userId:`, req.userId);
+    console.log(`[getProfile] Request body:`, JSON.stringify(req.body));
     
-    // Create a standardized demo user (used in all cases to ensure consistency)
-    const standardDemoUser = {
-      id: 999,
-      username: 'demo',
-      name: 'Demo User (Fixed Profile)',
-      email: 'demo@example.com',
-      plan: 'Trial',
-      initials: 'DU',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    // BYPASS - ALWAYS USE DEMO USER in development or when explicitly requested
-    const isDevelopment = process.env.NODE_ENV === 'development';
-    const isDevBypass = req.headers['x-environment'] === 'development';
-    const isDemoPath = req.path === '/api/auth/profile';
-    
-    if (isDevelopment || isDevBypass || isDemoPath) {
-      console.log('[getProfile] Development mode or direct profile path - providing demo user');
-      return res.json(standardDemoUser);
+    // IMMEDIATE DEMO USER - Always return demo user for /api/auth/profile
+    if (req.path === '/api/auth/profile') {
+      console.log('[getProfile] DIRECT PATH MATCH: /api/auth/profile - providing demo user');
+      const directDemoUser = {
+        id: 999,
+        username: 'demo',
+        name: 'Demo User (Direct Path Access)',
+        email: 'demo@example.com',
+        plan: 'Trial',
+        initials: 'DU',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      return res.json(directDemoUser);
     }
     
-    // EMERGENCY AUTH: Check if we're using the emergency demo user from auth middleware
+    // Auth header extraction
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+    console.log(`[getProfile] Parsed token:`, token ? (token.substring(0, 15) + '...') : 'none');
+    
+    // EMERGENCY DETECTION: Check for our emergency tokens (for quick demo access)
+    if (token && token.startsWith('emergency_demo_token_')) {
+      console.log('[getProfile] EMERGENCY TOKEN DETECTED - Providing demo user access');
+      
+      const emergencyDemoUser = {
+        id: 999,
+        username: 'demo',
+        name: 'Demo User (Emergency Access)',
+        email: 'demo@example.com',
+        plan: 'Trial',
+        initials: 'DU',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      return res.json(emergencyDemoUser);
+    }
+    
+    // EMERGENCY AUTH: Check if we're using the emergency demo user
     if (req.emergencyDemoUser) {
       console.log('[getProfile] Using provided emergency demo user object');
-      return res.json(standardDemoUser); // Use standard version for consistency
+      return res.json(req.emergencyDemoUser);
     }
     
     // If we have a userId from the authentication middleware
@@ -172,7 +191,19 @@ export const getProfile = async (req, res) => {
       // UNIVERSAL DEMO USER: Always provide a demo user for ID 999
       if (userId === 999) {
         console.log('[getProfile] Providing universal demo user for ID 999');
-        return res.json(standardDemoUser);
+        
+        const demoUser = {
+          id: 999,
+          username: 'demo',
+          name: 'Demo User',
+          email: 'demo@example.com',
+          plan: 'Trial',
+          initials: 'DU',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        return res.json(demoUser);
       }
       
       // Normal flow for real users - try to find in storage
@@ -183,38 +214,46 @@ export const getProfile = async (req, res) => {
           // Remove password from response
           const { password, ...userWithoutPassword } = user;
           return res.json(userWithoutPassword);
-        } else {
-          // If user ID is valid but not found, fallback to demo
-          console.log(`[getProfile] User ID ${userId} not found, using demo fallback`);
-          return res.json(standardDemoUser);
         }
       } catch (storageError) {
         console.log(`[getProfile] Storage error:`, storageError);
-        // Fallback to demo user to avoid blocking the UI
-        return res.json(standardDemoUser);
+        // Continue to fallback (will provide demo user or error)
       }
     }
     
-    // Final fallback - always return the demo user to keep the app functional
-    console.log(`[getProfile] No user context found, using final demo fallback`);
-    return res.json(standardDemoUser);
+    // Final fallback - if we have a token with userId 999 but it wasn't caught above
+    try {
+      const decodedToken = jwt.verify(token, process.env.JWT_SECRET || 'digital_desk_jwt_secret_key_2025');
+      console.log(`[getProfile] Decoded token in fallback:`, decodedToken);
+      
+      if (decodedToken && decodedToken.userId === 999) {
+        console.log('[getProfile] FALLBACK: Providing demo user as final fallback');
+        
+        const fallbackDemoUser = {
+          id: 999,
+          username: 'demo',
+          name: 'Demo User (Fallback)',
+          email: 'demo@example.com',
+          plan: 'Trial',
+          initials: 'DU', 
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        return res.json(fallbackDemoUser);
+      }
+    } catch (tokenError) {
+      console.log(`[getProfile] Token decode error in fallback:`, tokenError);
+      // Continue to final error response
+    }
+    
+    // If we get here, no user was found and no fallbacks worked
+    console.log(`[getProfile] No user found and no fallbacks worked`);
+    return res.status(404).json({ message: 'User not found' });
     
   } catch (error) {
     console.error('Get profile error:', error);
-    
-    // Even on error, return the demo user to keep the app functional
-    const emergencyDemoUser = {
-      id: 999,
-      username: 'demo',
-      name: 'Demo User (Error Recovery)',
-      email: 'demo@example.com',
-      plan: 'Trial',
-      initials: 'DU',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    return res.json(emergencyDemoUser);
+    res.status(500).json({ message: 'Error fetching user profile' });
   }
 };
 

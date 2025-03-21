@@ -90,6 +90,7 @@ export interface FeatureCardProps {
   className?: string;
   children?: React.ReactNode;
   onClick?: () => void;
+  icon?: React.ReactNode;  // Added for clarity-lab.tsx compatibility
 }
 
 /**
@@ -107,7 +108,8 @@ export const FeatureCard = memo(({
   metadata,
   actions,
   className,
-  children
+  children,
+  icon
 }: FeatureCardProps) => {
   // Format date only when needed
   const formattedDate = useMemo(() => {
@@ -169,6 +171,11 @@ export const FeatureCard = memo(({
       </CardHeader>
       
       <CardContent>
+        {icon && (
+          <div className="w-8 h-8 mb-2 rounded-full bg-primary/10 flex items-center justify-center">
+            {icon}
+          </div>
+        )}
         {description && (
           <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
         )}

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug Login</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #3b82f6;
+      margin-bottom: 20px;
+    }
+    button {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    button:hover {
+      background-color: #2563eb;
+    }
+    #result {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      min-height: 100px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .success {
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>Digital Desk Debug Login</h1>
+  <div>
+    <button id="demoLogin">Login as Demo User</button>
+    <button id="clearStorage">Clear Local Storage</button>
+  </div>
+  
+  <div id="result"></div>
+
+  <script>
+    // DOM elements
+    const demoLoginBtn = document.getElementById('demoLogin');
+    const clearStorageBtn = document.getElementById('clearStorage');
+    const resultDiv = document.getElementById('result');
+    
+    // Dev login function
+    async function doDevLogin() {
+      resultDiv.innerHTML = 'Attempting login...';
+      resultDiv.className = '';
+      
+      try {
+        // Make direct fetch request to dev-login endpoint
+        const response = await fetch('/api/auth/dev-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: 'demo' })
+        });
+        
+        resultDiv.innerHTML += `\nResponse status: ${response.status}`;
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(e => {
+            return { message: 'Invalid response format' };
+          });
+          throw new Error(errorData.message || 'Dev login failed');
+        }
+        
+        const result = await response.json();
+        
+        // Store the token in localStorage
+        localStorage.setItem('authToken', result.token);
+        
+        // Also add token to sessionStorage as a backup access method
+        sessionStorage.setItem('authToken', result.token);
+        
+        resultDiv.innerHTML += `\nLogin successful!\nUser: ${result.user.name}\nToken saved to localStorage.`;
+        resultDiv.className = 'success';
+        resultDiv.innerHTML += `\n\nYou can now close this window and refresh the main application.`;
+      } catch (error) {
+        resultDiv.innerHTML += `\nError: ${error.message}`;
+        resultDiv.className = 'error';
+      }
+    }
+    
+    // Clear storage
+    function clearStorage() {
+      localStorage.clear();
+      sessionStorage.clear();
+      resultDiv.innerHTML = 'Storage cleared (both localStorage and sessionStorage).';
+      resultDiv.className = 'success';
+    }
+    
+    // Event listeners
+    demoLoginBtn.addEventListener('click', doDevLogin);
+    clearStorageBtn.addEventListener('click', clearStorage);
+    
+    // Show current storage state on load
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        resultDiv.innerHTML = 'Current state: Token found in localStorage';
+        resultDiv.className = 'success';
+      } else {
+        resultDiv.innerHTML = 'Current state: No token in localStorage';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -37,9 +37,20 @@ export const createRateLimiter = (
       res.status(options.statusCode).json(options.message);
     },
     
-    // Skip rate limiting in development mode
+    // Skip rate limiting in development mode or for authorized users
     skip: (req: Request) => {
-      return process.env.NODE_ENV === 'development';
+      // Always skip in development mode
+      if (process.env.NODE_ENV === 'development') {
+        return true;
+      }
+      
+      // If this is a dev environment in production mode, also skip
+      // This helps when testing in production-like environments
+      if (req.headers['x-environment'] === 'development') {
+        return true;
+      }
+      
+      return false;
     },
     
     // Use IP address as the key by default

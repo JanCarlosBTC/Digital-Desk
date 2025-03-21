@@ -125,10 +125,11 @@ export class MemStorage implements IStorage {
 
     this.nextId = 1;
 
-    // Add a demo user
+    // Add a demo user with a hashed password
+    // This is the bcrypt hash for the password "password"
     this.createUser({
       username: "demo",
-      password: "password",
+      password: "$2b$10$9YmHDN1QGZ28Z9TKpMSsn.AYJKxBG4.QOmA44sIH3laf4X2pE4d56",
       name: "John Doe",
       plan: "Premium",
       initials: "JD"
@@ -892,6 +893,65 @@ export class MemStorage implements IStorage {
   }
 }
 
-let storageImpl: IStorage = new MemStorage();
+// Initialize storage with a demo user
+const memStorage = new MemStorage();
 
-export const storage: IStorage = storageImpl;
+// Create a demo user
+(async () => {
+  try {
+    const bcrypt = await import('bcrypt');
+    const hashedPassword = await bcrypt.hash('password', 10);
+    
+    // Check if user already exists first
+    const existingUser = await memStorage.getUserByUsername('demo');
+    
+    if (!existingUser) {
+      console.log('Creating demo user...');
+      const user = await memStorage.createUser({
+        username: 'demo',
+        password: hashedPassword,
+        name: 'John Doe',
+        plan: 'Trial',
+        initials: 'JD'
+      });
+      
+      console.log(`Created demo user: ${user.name} (${user.username}), ID: ${user.id}`);
+      console.log('Login credentials: username="demo", password="password"');
+      
+      // Create sample data for demo user
+      await memStorage.createBrainDump({
+        userId: user.id,
+        content: 'This is a sample brain dump for the demo user.'
+      });
+      
+      await memStorage.createProblemTree({
+        userId: user.id,
+        title: 'Sample Problem Tree',
+        mainProblem: 'Main problem to solve',
+        subProblems: ['Sub-problem 1', 'Sub-problem 2'],
+        rootCauses: ['Root cause 1', 'Root cause 2'],
+        potentialSolutions: ['Solution 1', 'Solution 2'],
+        nextActions: ['Action 1', 'Action 2']
+      });
+      
+      await memStorage.createDraftedPlan({
+        userId: user.id,
+        title: 'Sample Plan',
+        description: 'This is a sample drafted plan',
+        components: ['Component 1', 'Component 2'],
+        resourcesNeeded: ['Resource 1', 'Resource 2'],
+        expectedOutcomes: ['Outcome 1', 'Outcome 2'],
+        status: 'active',
+        comments: 0,
+        attachments: 0
+      });
+    } else {
+      console.log('Demo user already exists, skipping creation');
+    }
+  } catch (error) {
+    console.error('Failed to create demo user:', error);
+  }
+})();
+
+// Export the storage implementation
+export const storage: IStorage = memStorage;

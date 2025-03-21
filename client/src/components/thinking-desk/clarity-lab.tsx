@@ -11,7 +11,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ClarityLab } from "@shared/schema";
+// Define a simple interface for ClarityLab
+interface ClarityLab {
+  id: number;
+  userId: number;
+  title: string;
+  description: string;
+  category: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlusIcon, FilterIcon, CheckCircleIcon, FlaskConicalIcon, LightbulbIcon, CalendarIcon, AlertTriangleIcon } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -80,15 +89,19 @@ const ClarityLabComponent = ({ showNewEntry = false, onDialogClose }: ClarityLab
     refetch 
   } = useQuery<ClarityLab[]>({
     queryKey: ['/api/clarity-labs', activeCategory && { category: activeCategory }],
-    retry: 2,
-    onError: (error) => {
+    retry: 2
+  });
+  
+  // Handle errors from the query
+  React.useEffect(() => {
+    if (queryError) {
       toast({
         title: "Error loading entries",
-        description: error instanceof Error ? error.message : "Failed to load clarity lab entries",
+        description: queryError instanceof Error ? queryError.message : "Failed to load clarity lab entries",
         variant: "destructive",
       });
     }
-  });
+  }, [queryError, toast]);
 
   // Create clarity lab entry with improved error handling
   const createMutation = useMutation({

@@ -12,8 +12,8 @@ import { fromZodError } from "zod-validation-error";
 import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
 import { authenticate, generateToken } from "./middleware/auth.js";
 import { register, login, getProfile, updateProfile } from "./controllers/auth.controller.js";
-// Removed subscription controller import and middleware
-// import { createCheckoutSession, handleWebhook } from "./controllers/subscription.controller.js";
+import { createCheckoutSession, handleWebhook } from "./controllers/subscription.controller.js";
+import { checkSubscriptionLimits } from "./middleware/subscription.js";
 import { authLimiter, strictApiLimiter } from "./middleware/rate-limit.js";
 
 /**
@@ -143,14 +143,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   app.put('/api/auth/profile', authenticate, updateProfile);
   
-  // Subscription routes removed
-  // app.post('/api/subscriptions/create-checkout', authenticate, strictApiLimiter, createCheckoutSession);
+  // Subscription routes - these are sensitive operations so add strict rate limiting
+  app.post('/api/subscriptions/create-checkout', authenticate, strictApiLimiter, createCheckoutSession);
   
-  // Stripe webhook handler removed
-  // app.post('/api/webhooks/stripe', 
-  //   express.raw({ type: 'application/json' }),
-  //   handleWebhook
-  // );
+  // Stripe webhook handler - needs raw body, but no rate limiting as it's from Stripe
+  app.post('/api/webhooks/stripe', 
+    express.raw({ type: 'application/json' }),
+    handleWebhook
+  );
 
   // Current user endpoint (using authenticated middleware)
   app.get('/api/user', authenticate, getProfile);
@@ -257,7 +257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/problem-trees', authenticate, async (req: Request, res: Response) => {
+  app.post('/api/problem-trees', authenticate, checkSubscriptionLimits('problemTrees'), async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
       const data = {
@@ -376,7 +376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/drafted-plans', authenticate, async (req: Request, res: Response) => {
+  app.post('/api/drafted-plans', authenticate, checkSubscriptionLimits('draftedPlans'), async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
       const data = {
@@ -948,7 +948,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/offers', authenticate, async (req: Request, res: Response) => {
+  app.post('/api/offers', authenticate, checkSubscriptionLimits('offers'), async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
       const data = {
