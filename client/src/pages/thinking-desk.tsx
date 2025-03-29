@@ -22,7 +22,7 @@ import {
 import TabNavigation from "@/components/tab-navigation";
 import BrainDump from "@/components/thinking-desk/brain-dump";
 import ProblemTrees from "@/components/thinking-desk/problem-trees";
-import { DraftedPlans } from "@/components/thinking-desk/drafted-plans-new";
+import DraftedPlans from "@/components/thinking-desk/drafted-plans";
 import ClarityLab from "@/components/thinking-desk/clarity-lab";
 import { PageHeader } from "@/components/ui/page-header";
 import ProblemTreeSimple from "@/components/thinking-desk/problem-tree-simple";
@@ -127,7 +127,7 @@ const ThinkingDesk = () => {
         <TabNavigation 
           tabs={tabs} 
           defaultTabId="brain-dump"
-          onTabChange={(tabId: string) => setActiveTab(tabId)}
+          onTabChange={(tabId) => setActiveTab(tabId)}
         >
           <div id="brain-dump" className="tab-pane w-full">
             <BrainDump />
@@ -159,7 +159,7 @@ const ThinkingDesk = () => {
             <DraftedPlans 
               showNewPlan={showNewPlan}
               onDialogClose={() => setShowNewPlan(false)}
-              onEdit={(id) => console.log('Edit drafted plan', id)}
+              onEdit={(id: number) => console.log('Edit drafted plan', id)}
             />
           </div>
           

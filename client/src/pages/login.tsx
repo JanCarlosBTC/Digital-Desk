@@ -1,18 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoginForm } from "@/components/auth/login-form";
 import { RegisterForm } from "@/components/auth/register-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from "@/context/user-context";
-import { Navigate } from "wouter";
+import { useLocation } from "wouter";
 
 export default function LoginPage() {
   const { user, isLoading } = useUser();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
+  const [, setLocation] = useLocation();
   
   // If user is already logged in, redirect to home
+  useEffect(() => {
+    if (user && !isLoading) {
+      setLocation("/");
+    }
+  }, [user, isLoading, setLocation]);
+  
   if (user && !isLoading) {
-    return <Navigate to="/" />;
+    return null; // This will briefly show before the redirect happens
   }
 
   return (

@@ -40,10 +40,33 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const DraftedPlans = () => {
+interface DraftedPlansProps {
+  showNewPlan?: boolean;
+  onDialogClose?: () => void;
+  onEdit?: (id: number) => void;
+}
+
+const DraftedPlans = ({ 
+  showNewPlan = false, 
+  onDialogClose = () => {}, 
+  onEdit = (id: number) => console.log('Edit drafted plan', id) 
+}: DraftedPlansProps) => {
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(showNewPlan);
   const [expandedPlan, setExpandedPlan] = useState<number | null>(0); // First plan expanded by default
+  
+  // Effect to handle external control of the dialog
+  React.useEffect(() => {
+    setIsOpen(showNewPlan);
+  }, [showNewPlan]);
+  
+  // Call the onDialogClose prop when dialog closes
+  const handleDialogChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open && onDialogClose) {
+      onDialogClose();
+    }
+  };
   
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -231,7 +254,11 @@ const DraftedPlans = () => {
                   <div>
                     {expandedPlan === plan.id && (
                       <>
-                        <Button variant="thinkingDeskOutline" className="mr-2">
+                        <Button 
+                          variant="thinkingDeskOutline" 
+                          className="mr-2" 
+                          onClick={() => onEdit(plan.id)}
+                        >
                           <EditIcon className="mr-1 h-4 w-4" /> Edit
                         </Button>
                         <Button variant="thinkingDesk">
@@ -269,7 +296,7 @@ const DraftedPlans = () => {
         )}
 
         {/* New Plan Dialog */}
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={handleDialogChange}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Create New Plan</DialogTitle>
