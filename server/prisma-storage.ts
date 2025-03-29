@@ -12,7 +12,7 @@ import {
   Decision, InsertDecision,
   Offer, InsertOffer,
   OfferNote, InsertOfferNote
-} from "../shared/prisma-schema.js";
+} from "../shared/schema.js";
 
 export class PrismaStorage implements IStorage {
   // User methods

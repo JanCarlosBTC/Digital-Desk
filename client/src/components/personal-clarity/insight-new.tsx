@@ -270,7 +270,7 @@ export const InsightComponent = memo(function InsightComponent({
   }, [insights, sortField, sortDirection]);
 
   if (isLoading) {
-    return <LoadingState variant="skeleton" count={3} />;
+    return <LoadingState type="list" count={3} />;
   }
 
   return (

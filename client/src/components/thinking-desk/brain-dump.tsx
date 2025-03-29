@@ -14,14 +14,7 @@ import {
   ListIcon,
   InfoIcon
 } from "lucide-react";
-// Define a simple interface for BrainDump
-interface BrainDumpType {
-  id: number;
-  userId: number;
-  content: string;
-  createdAt: string | Date;
-  updatedAt: string | Date;
-}
+import { BrainDump as BrainDumpType } from "@shared/schema";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {

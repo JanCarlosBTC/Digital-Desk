@@ -3,15 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { PlusIcon, NetworkIcon, TrashIcon, EditIcon, TreePine, AlertTriangleIcon, InfoIcon } from 'lucide-react';
+import { PlusIcon, NetworkIcon, TrashIcon, EditIcon, TreePine } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { LoadingState } from '@/components/ui/loading-state';
 import { ProblemTreeVisualization } from './visual-problem-tree';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Badge } from '@/components/ui/badge';
 
 // Type definitions
 interface ProblemTree {
@@ -46,10 +43,6 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
   const [selectedTree, setSelectedTree] = useState<ProblemTree | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [networkError, setNetworkError] = useState<string | null>(null);
   
   // Hooks
   const { toast } = useToast();
@@ -93,27 +86,15 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
     setSelectedTree(null);
   };
   
-  // Improved fetch problem trees with retry and better error handling
+  // Fetch problem trees
   const { 
     data: problemTrees = [], 
     isLoading,
     error: fetchError,
-    isError,
-    refetch,
-    isRefetching 
+    refetch 
   } = useQuery<ProblemTree[]>({
     queryKey: ['/api/problem-trees'],
-    refetchOnWindowFocus: false,
-    retry: 3,
-    retryDelay: (attempt) => Math.min(attempt > 1 ? 2 ** attempt * 1000 : 1000, 30 * 1000),
-    onSuccess: () => {
-      // Clear any network errors on successful fetch
-      setNetworkError(null);
-    },
-    onError: (error: Error) => {
-      console.error('Error fetching problem trees:', error);
-      setNetworkError(error.message || 'Failed to load problem trees');
-    }
+    refetchOnWindowFocus: false
   });
   
   // Type definition for problem tree form data
@@ -126,34 +107,22 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
     nextActions: string[];
   }
 
-  // Improved create mutation with proper loading states
+  // Create mutation with proper type safety
   const createMutation = useMutation<ProblemTree, Error, ProblemTreeFormData>({
     mutationFn: async (data: ProblemTreeFormData) => {
-      setIsSubmitting(true);
-      setError(null);
+      console.log('Creating tree with data:', data);
+      const response = await fetch('/api/problem-trees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
       
-      try {
-        console.log('Creating tree with data:', data);
-        const response = await fetch('/api/problem-trees', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(errorText || 'Failed to create problem tree');
-        }
-        
-        return response.json();
-      } catch (error) {
-        console.error('API error:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Network error occurred';
-        setError(errorMessage);
-        throw error;
-      } finally {
-        setIsSubmitting(false);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to create problem tree');
       }
+      
+      return response.json();
     },
     onSuccess: () => {
       console.log('Creation successful');
@@ -173,7 +142,7 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
         description: error.message || 'Failed to create problem tree',
         variant: 'destructive'
       });
-      // Error is already set in mutationFn
+      setError(error.message || 'An error occurred');
     }
   });
   
@@ -183,33 +152,20 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
     data: ProblemTreeFormData;
   }
   
-  // Improved update mutation with proper loading states
   const updateMutation = useMutation<ProblemTree, Error, UpdateProblemTreeParams>({
     mutationFn: async ({ id, data }: UpdateProblemTreeParams) => {
-      setIsSubmitting(true);
-      setError(null);
+      const response = await fetch(`/api/problem-trees/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
       
-      try {
-        const response = await fetch(`/api/problem-trees/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(errorText || 'Failed to update problem tree');
-        }
-        
-        return response.json();
-      } catch (error) {
-        console.error('API error:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Network error occurred';
-        setError(errorMessage);
-        throw error;
-      } finally {
-        setIsSubmitting(false);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to update problem tree');
       }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
@@ -228,37 +184,21 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
         description: error instanceof Error ? error.message : 'Failed to update problem tree',
         variant: 'destructive'
       });
-      // Error is already set in mutationFn
     }
   });
   
-  // Improved delete mutation with proper loading states
+  // Delete mutation with proper type safety
   const deleteMutation = useMutation<number, Error, number>({
     mutationFn: async (id: number) => {
-      setIsDeleting(true);
+      const response = await fetch(`/api/problem-trees/${id}`, {
+        method: 'DELETE'
+      });
       
-      try {
-        const response = await fetch(`/api/problem-trees/${id}`, {
-          method: 'DELETE'
-        });
-        
-        if (!response.ok && response.status !== 204) {
-          throw new Error('Failed to delete problem tree');
-        }
-        
-        return id;
-      } catch (error) {
-        console.error('API error:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Network error occurred';
-        toast({
-          title: 'Error',
-          description: errorMessage,
-          variant: 'destructive'
-        });
-        throw error;
-      } finally {
-        setIsDeleting(false);
+      if (!response.ok && response.status !== 204) {
+        throw new Error('Failed to delete problem tree');
       }
+      
+      return id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
@@ -357,46 +297,40 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
     nextActions?: string;
   }
   
-  // Improved validation with better user feedback
+  // Type-safe form validation
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
     
     // Required field validations
     if (!title.trim()) {
       newErrors.title = 'Title is required';
-    } else if (title.length < 3) {
-      newErrors.title = 'Title must be at least 3 characters';
     }
     
     if (!mainProblem.trim()) {
-      newErrors.mainProblem = 'Main problem statement is required';
+      newErrors.mainProblem = 'Main problem is required';
     }
     
     // Array field validations - require at least one non-empty item
-    const nonEmptySubproblems = subProblems.filter(item => item.trim());
-    if (nonEmptySubproblems.length === 0) {
+    if (!subProblems.some(sp => sp.trim() !== '')) {
       newErrors.subProblems = 'At least one sub-problem is required';
     }
     
-    const nonEmptyRootCauses = rootCauses.filter(item => item.trim());
-    if (nonEmptyRootCauses.length === 0) {
+    if (!rootCauses.some(rc => rc.trim() !== '')) {
       newErrors.rootCauses = 'At least one root cause is required';
     }
     
-    const nonEmptySolutions = potentialSolutions.filter(item => item.trim());
-    if (nonEmptySolutions.length === 0) {
+    if (!potentialSolutions.some(ps => ps.trim() !== '')) {
       newErrors.potentialSolutions = 'At least one potential solution is required';
     }
     
     // If there are errors, set the first one to display and return false
     if (Object.keys(newErrors).length > 0) {
       const errorValues = Object.values(newErrors);
-      const firstError = errorValues.length > 0 ? errorValues[0] : "Please fix validation errors before submitting";
+      const firstError = errorValues.length > 0 ? errorValues[0] : "Validation error";
       setError(firstError);
       return false;
     }
     
-    setError(null);
     return true;
   };
   
@@ -457,108 +391,101 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
     });
   };
   
-  // Improved rendering for empty states and errors
+  // Render empty state
   const renderEmptyState = () => (
-    <div className="text-center py-12 border border-dashed border-gray-300 rounded-lg">
-      <NetworkIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-      <h3 className="text-lg font-medium text-gray-700 mb-2">No Problem Trees Yet</h3>
-      <p className="text-gray-500 mb-4 max-w-md mx-auto">
-        Create your first problem tree to break down complex problems into actionable solutions.
-      </p>
+    <div className="text-center py-8 border border-dashed border-gray-300 rounded-lg">
+      <NetworkIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+      <h3 className="text-xl font-medium text-gray-700 mb-2">No Problem Trees Yet</h3>
+      <p className="text-gray-500 mb-4">Start breaking down complex problems into manageable parts.</p>
       <Button onClick={() => setFormOpen(true)}>
         <PlusIcon className="mr-2 h-4 w-4" /> Create Your First Problem Tree
       </Button>
     </div>
   );
   
-  // New component to show network errors with retry
-  const renderNetworkError = () => (
-    <div className="text-center py-10 border border-dashed border-red-200 rounded-lg bg-red-50">
-      <AlertTriangleIcon className="h-10 w-10 text-red-500 mx-auto mb-3" />
-      <h3 className="text-lg font-medium text-red-700 mb-2">Connection Error</h3>
-      <p className="text-red-600 mb-4 max-w-md mx-auto">
-        {networkError || "We couldn't load your problem trees. There might be a connection issue."}
-      </p>
-      <Button 
-        variant="outline" 
-        onClick={() => {
-          setNetworkError(null);
-          refetch();
-        }}
-        disabled={isRefetching}
-      >
-        {isRefetching ? 'Retrying...' : 'Try Again'}
-      </Button>
-    </div>
-  );
-  
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-            Problem Trees
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <InfoIcon className="h-4 w-4 text-gray-500 ml-2 cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                Break down complex problems into root causes and potential solutions
-              </TooltipContent>
-            </Tooltip>
-          </h2>
-          <p className="text-gray-600 mt-1">
-            Break down complex problems into root causes and potential solutions.
-          </p>
-        </div>
-        <Button
-          onClick={() => {
+    <>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-2xl font-bold">Problem Trees</h2>
+            <p className="text-gray-600">Break down complex problems to find effective solutions</p>
+          </div>
+          <Button variant="default" onClick={() => {
             resetForm();
             setFormOpen(true);
-          }}
-        >
-          <PlusIcon className="mr-2 h-4 w-4" /> New Problem Tree
-        </Button>
-      </div>
-      
-      {/* Content Display Area */}
-      <div className="mt-6">
+          }}>
+            <PlusIcon className="mr-2 h-4 w-4" /> New Problem Tree
+          </Button>
+        </div>
+        
+        {/* Main content */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-36 w-full rounded-lg" />
-            ))}
+          <LoadingState type="list" count={3} />
+        ) : fetchError ? (
+          <div className="bg-red-50 p-4 rounded-md text-red-700">
+            <h3 className="font-medium">Error loading problem trees</h3>
+            <p className="text-sm">Please try again</p>
           </div>
-        ) : networkError ? (
-          renderNetworkError()
         ) : problemTrees.length === 0 ? (
           renderEmptyState()
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {problemTrees.map(tree => (
-              <Card 
-                key={tree.id} 
-                className="hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => viewTree(tree)}
-              >
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg font-semibold text-primary truncate">{tree.title}</CardTitle>
-                  <CardDescription className="text-xs">
-                    Last updated: {formatDate(tree.updatedAt)}
-                  </CardDescription>
+            {problemTrees.map((tree) => (
+              <Card key={tree.id} className="overflow-hidden border-2 border-gray-200 hover:border-gray-300 transition-all">
+                <CardHeader className="pb-3 bg-gradient-to-r from-gray-50 to-white">
+                  <div className="flex items-center gap-2">
+                    <TreePine className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                    <CardTitle className="truncate text-lg">{tree.title}</CardTitle>
+                  </div>
+                  <CardDescription className="line-clamp-2 mt-1">{tree.mainProblem}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm font-medium mb-2">Problem: {tree.mainProblem}</p>
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    <Badge variant="outline" className="bg-blue-50">
-                      {tree.subProblems.length} sub-problems
-                    </Badge>
-                    <Badge variant="outline" className="bg-amber-50">
-                      {tree.rootCauses.length} root causes
-                    </Badge>
-                    <Badge variant="outline" className="bg-green-50">
-                      {tree.potentialSolutions.length} solutions
-                    </Badge>
+                  {/* Mini-visualization preview */}
+                  <div className="mb-3 bg-gray-50 p-2 rounded-md text-xs text-gray-600 flex flex-col items-center">
+                    <div className="bg-red-50 border border-red-100 rounded px-2 py-1 mb-1 w-4/5 text-center">Problem</div>
+                    <div className="h-3 w-px bg-gray-300"></div>
+                    <div className="flex gap-1 mb-1">
+                      <div className="bg-yellow-50 border border-yellow-100 rounded px-2 py-1">Causes</div>
+                      <div className="bg-green-50 border border-green-100 rounded px-2 py-1">Solutions</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center text-sm text-gray-500 mb-3">
+                    <div>Updated: {formatDate(tree.updatedAt)}</div>
+                    <div className="flex gap-1">
+                      <span className="px-2 py-1 bg-orange-50 border border-orange-100 rounded-full text-xs">
+                        {tree.subProblems.length} sub-problems
+                      </span>
+                      <span className="px-2 py-1 bg-green-50 border border-green-100 rounded-full text-xs">
+                        {tree.potentialSolutions.length} solutions
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2 mt-3">
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="flex-1"
+                      onClick={() => viewTree(tree)}
+                    >
+                      View Tree
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => editTree(tree)}
+                    >
+                      <EditIcon className="h-4 w-4 mr-1" /> Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => deleteTree(tree.id)}
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -567,23 +494,29 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
         )}
       </div>
       
-      {/* Form Dialog */}
-      <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      {/* Create/Edit Form Dialog */}
+      <Dialog open={formOpen} onOpenChange={(open) => {
+        setFormOpen(open);
+        if (!open) {
+          resetForm();
+          if (onDialogClose) onDialogClose();
+        }
+      }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white">
           <DialogHeader>
             <DialogTitle>{isEditing ? 'Edit Problem Tree' : 'Create New Problem Tree'}</DialogTitle>
             <DialogDescription>
-              Break down a complex problem into its components, causes and solutions.
+              Break down complex problems into root causes and potential solutions.
             </DialogDescription>
           </DialogHeader>
           
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded p-3 text-red-600 text-sm mb-4">
-              {error}
-            </div>
-          )}
-          
           <div className="space-y-4 py-4">
+            {error && (
+              <div className="bg-red-50 text-red-700 p-3 rounded-md mb-4">
+                {error}
+              </div>
+            )}
+            
             {/* Title field */}
             <div className="space-y-2">
               <label className="font-medium">Title</label>
@@ -730,78 +663,85 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
             </div>
           </div>
           
-          <DialogFooter className="mt-6 flex items-center justify-between">
-            <div>
-              {isSubmitting && (
-                <span className="text-sm text-primary animate-pulse">
-                  {isEditing ? 'Updating...' : 'Creating...'}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setFormOpen(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-              >
-                {isEditing ? 'Update' : 'Create'} Problem Tree
-              </Button>
-            </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFormOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSubmit}
+              disabled={createMutation.isPending || updateMutation.isPending}
+            >
+              {createMutation.isPending || updateMutation.isPending 
+                ? (isEditing ? 'Updating...' : 'Creating...') 
+                : (isEditing ? 'Update Problem Tree' : 'Create Problem Tree')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
       
       {/* View Dialog */}
-      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <Dialog open={viewDialogOpen} onOpenChange={(open) => {
+        setViewDialogOpen(open);
+        if (!open) {
+          // Small delay to prevent UI glitches when closing
+          setTimeout(() => {
+            setSelectedTree(null);
+          }, 300);
+        }
+      }}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto flex flex-col bg-white z-50 border-2 border-gray-300 shadow-2xl">
           {selectedTree && (
             <>
-              <DialogHeader className="mb-4">
-                <div className="flex justify-between items-start">
-                  <DialogTitle className="text-xl font-bold text-primary">{selectedTree.title}</DialogTitle>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => {
-                        setViewDialogOpen(false);
-                        editTree(selectedTree);
-                      }}
-                    >
-                      <EditIcon className="h-4 w-4 mr-1" /> Edit
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="sm" 
-                      onClick={() => deleteTree(selectedTree.id)}
-                      disabled={isDeleting}
-                    >
-                      {isDeleting ? (
-                        <span className="animate-pulse">Deleting...</span>
-                      ) : (
-                        <>
-                          <TrashIcon className="h-4 w-4 mr-1" /> Delete
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-                <DialogDescription className="text-sm text-gray-500 mt-1">
-                  Created: {formatDate(selectedTree.createdAt)}
+              <DialogHeader className="flex-shrink-0">
+                <DialogTitle className="flex items-center gap-2">
+                  <TreePine className="h-5 w-5 text-gray-600" />
+                  {selectedTree.title}
+                </DialogTitle>
+                <DialogDescription>
+                  Created: {formatDate(selectedTree.createdAt)} | 
+                  Last updated: {formatDate(selectedTree.updatedAt)}
                 </DialogDescription>
               </DialogHeader>
               
-              <ProblemTreeVisualization tree={selectedTree} />
+              {/* Visual Problem Tree View */}
+              <div className="border-2 border-gray-200 rounded-xl shadow-inner bg-white flex-grow overflow-auto">
+                <ProblemTreeVisualization 
+                  mainProblem={selectedTree.mainProblem}
+                  subProblems={selectedTree.subProblems || []}
+                  rootCauses={selectedTree.rootCauses || []}
+                  potentialSolutions={selectedTree.potentialSolutions || []}
+                  nextActions={selectedTree.nextActions || []}
+                />
+              </div>
+              
+              <DialogFooter className="space-x-2 flex-shrink-0 mt-4">
+                <Button 
+                  variant="destructive" 
+                  onClick={() => deleteTree(selectedTree.id)}
+                  disabled={deleteMutation.isPending}
+                >
+                  {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setViewDialogOpen(false);
+                    // Small delay to ensure dialog is closed before opening the edit dialog
+                    setTimeout(() => {
+                      editTree(selectedTree);
+                    }, 100);
+                  }}
+                >
+                  <EditIcon className="h-4 w-4 mr-1" /> Edit
+                </Button>
+                <Button variant="outline" onClick={() => setViewDialogOpen(false)}>
+                  Close
+                </Button>
+              </DialogFooter>
             </>
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

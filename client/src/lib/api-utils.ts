@@ -353,7 +353,7 @@ export function handleApiError(error: Error): string {
     const apiError = error as ApiError;
     
     // Check for validation errors in the expected format
-    if (apiError.data?.errors && typeof apiError.data.errors === 'object') {
+    if (apiError.data.errors && typeof apiError.data.errors === 'object') {
       const errorMessages = Object.entries(apiError.data.errors)
         .map(([field, messages]) => {
           if (Array.isArray(messages)) {
@@ -370,7 +370,7 @@ export function handleApiError(error: Error): string {
     }
     
     // Check for direct message in data
-    if (apiError.data?.message) {
+    if (apiError.data.message) {
       return apiError.data.message;
     }
   }
@@ -458,31 +458,33 @@ export function useEnhancedApiQuery<T>(
 export interface ApiMutationOptions<TData = unknown, TVariables = unknown> {
   /** Success callback with the API response */
   onSuccess?: (data: TData) => void;
-
+  
   /** Error callback with the enhanced API error */
   onError?: (error: ApiError) => void;
-
+  
   /** Query keys to invalidate after successful mutation */
   invalidateQueries?: Array<string | QueryKey | { queryKey: string | QueryKey, exact?: boolean }>;
-
+  
   /** Custom headers to include with the request */
   headers?: Record<string, string>;
-
+  
   /** Timeout in milliseconds */
   timeout?: number;
-
+  
   /** Whether to retry the request on certain failures */
   retry?: boolean | number | {
     maxRetries: number;
     retryableStatuses: number[];
   };
-
+  
   /** Cache behavior for the request */
   cache?: RequestCache;
 }
 
 /**
  * Hook for API mutations with enhanced type safety and error handling
+ * Provides structured error handling and automatic cache invalidation
+ * 
  * @param url API endpoint URL
  * @param method HTTP method
  * @param options Mutation options including callbacks and cache invalidation
@@ -503,6 +505,7 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
     cache
   } = options;
 
+  // Convert retry options to standardized format
   const retryConfig = typeof retry === 'boolean' ? 
     (retry ? { maxRetries: 3, retryableStatuses: [408, 429, 500, 502, 503, 504] } : { maxRetries: 0, retryableStatuses: [] }) :
     typeof retry === 'number' ? 
@@ -524,6 +527,7 @@ export function useApiMutation<TData = unknown, TVariables = unknown>(
       );
     },
     onSuccess: (data) => {
+      // Execute success callback if provided
       if (onSuccess) {
         onSuccess(data);
       }

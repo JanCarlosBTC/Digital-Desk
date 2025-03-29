@@ -1,8 +1,13 @@
 /**
- * Thinking Desk Page
+ * Thinking Desk Page (Original Implementation)
  * 
- * A page that provides various tools for structured thinking and problem analysis.
- * Contains: Brain Dump, Problem Trees, Drafted Plans, and Clarity Lab
+ * DEPRECATED: This is the original implementation that has been replaced.
+ * 
+ * This was the initial implementation of the Thinking Desk page. It has been
+ * replaced by thinking-desk-new.tsx, which is now imported in App.tsx.
+ * 
+ * This file is kept for reference and backward compatibility until the
+ * migration to the new implementation is complete.
  */
 
 import React, { useState, createContext, useContext } from "react";
@@ -11,84 +16,97 @@ import {
   NetworkIcon, 
   ClipboardListIcon, 
   FlaskConicalIcon,
+  BookOpenIcon,
   PlusIcon
 } from "lucide-react";
-import TabNavigationWrapper from "@/components/thinking-desk/tab-navigation-wrapper";
+import TabNavigation from "@/components/tab-navigation";
 import BrainDump from "@/components/thinking-desk/brain-dump";
-import { DraftedPlans } from "@/components/thinking-desk/drafted-plans";
+import ProblemTrees from "@/components/thinking-desk/problem-trees";
+import { DraftedPlans } from "@/components/thinking-desk/drafted-plans-new";
 import ClarityLab from "@/components/thinking-desk/clarity-lab";
 import { PageHeader } from "@/components/ui/page-header";
-import ProblemTrees from "@/components/thinking-desk/problem-trees";
-import { AuthRequired } from "@/components/auth/auth-required";
+import ProblemTreeSimple from "@/components/thinking-desk/problem-tree-simple";
+import MinimalTest from "@/components/thinking-desk/minimal-test";
 
-// Context type for sharing state across thinking desk components
+// Create a context for Think Desk actions
 interface ThinkingDeskContextType {
-  showNewProblemTree: boolean;
-  setShowNewProblemTree: (show: boolean) => void;
-  showNewPlan: boolean;
-  setShowNewPlan: (show: boolean) => void;
-  showNewClarityEntry: boolean;
-  setShowNewClarityEntry: (show: boolean) => void;
   activeTab: string;
-  setActiveTab: (tab: string) => void;
+  createProblemTree: () => void;
+  createPlan: () => void;
+  createClarityEntry: () => void;
 }
 
-// Create the context with default values
 export const ThinkingDeskContext = createContext<ThinkingDeskContextType>({
-  showNewProblemTree: false,
-  setShowNewProblemTree: () => {},
-  showNewPlan: false,
-  setShowNewPlan: () => {},
-  showNewClarityEntry: false,
-  setShowNewClarityEntry: () => {},
   activeTab: "brain-dump",
-  setActiveTab: () => {}
+  createProblemTree: () => {},
+  createPlan: () => {},
+  createClarityEntry: () => {}
 });
 
-// Custom hook for components to use the ThinkingDesk context
+// Hook for components to consume the context
 export const useThinkingDesk = () => useContext(ThinkingDeskContext);
 
-export default function ThinkingDesk() {
-  // State for controlling dialog visibility
+const ThinkingDesk = () => {
+  const [activeTab, setActiveTab] = useState("brain-dump");
   const [showNewProblemTree, setShowNewProblemTree] = useState(false);
   const [showNewPlan, setShowNewPlan] = useState(false);
   const [showNewClarityEntry, setShowNewClarityEntry] = useState(false);
-  const [activeTab, setActiveTab] = useState("brain-dump");
-
-  // Define the tabs for the navigation
+  
   const tabs = [
     {
       id: "brain-dump",
       label: "Brain Dump",
-      icon: LightbulbIcon
+      icon: LightbulbIcon,
     },
     {
       id: "problem-trees",
       label: "Problem Trees",
-      icon: NetworkIcon
+      icon: NetworkIcon,
     },
     {
       id: "drafted-plans",
       label: "Drafted Plans",
-      icon: ClipboardListIcon
+      icon: ClipboardListIcon,
     },
     {
       id: "clarity-lab",
       label: "Clarity Lab",
-      icon: FlaskConicalIcon
+      icon: FlaskConicalIcon,
     }
   ];
 
-  // Context value for sharing state with child components
+  // Context value with action handlers
   const contextValue: ThinkingDeskContextType = {
-    showNewProblemTree,
-    setShowNewProblemTree,
-    showNewPlan,
-    setShowNewPlan,
-    showNewClarityEntry,
-    setShowNewClarityEntry,
     activeTab,
-    setActiveTab
+    createProblemTree: () => setShowNewProblemTree(true),
+    createPlan: () => setShowNewPlan(true),
+    createClarityEntry: () => setShowNewClarityEntry(true)
+  };
+
+  // Get action button configuration based on active tab
+  const getAction = () => {
+    switch (activeTab) {
+      case "problem-trees":
+        return {
+          label: "New Problem Tree",
+          onClick: () => contextValue.createProblemTree(),
+          icon: <PlusIcon className="mr-2 h-4 w-4" />
+        };
+      case "drafted-plans":
+        return {
+          label: "New Plan",
+          onClick: () => contextValue.createPlan(),
+          icon: <PlusIcon className="mr-2 h-4 w-4" />
+        };
+      case "clarity-lab":
+        return {
+          label: "New Entry",
+          onClick: () => contextValue.createClarityEntry(),
+          icon: <PlusIcon className="mr-2 h-4 w-4" />
+        };
+      default:
+        return undefined;
+    }
   };
 
   return (
@@ -100,53 +118,61 @@ export default function ThinkingDesk() {
           icon={<LightbulbIcon className="h-8 w-8" />}
           action={{
             label: "New Item",
-            onClick: () => setActiveTab("brain-dump"),
+            onClick: () => setActiveTab("Brain Dump"),
             icon: <PlusIcon className="mr-2 h-4 w-4" />,
             variant: "thinkingDesk"
           }}
         />
 
-        <TabNavigationWrapper 
+        <TabNavigation 
           tabs={tabs} 
           defaultTabId="brain-dump"
           onTabChange={(tabId: string) => setActiveTab(tabId)}
         >
-          {/* Brain Dump Tab */}
           <div id="brain-dump" className="tab-pane w-full">
             <BrainDump />
           </div>
           
-          {/* Problem Trees Tab */}
           <div id="problem-trees" className="tab-pane w-full">
-            <AuthRequired>
-              <ProblemTrees 
-                showNewProblemTree={showNewProblemTree}
-                onDialogClose={() => setShowNewProblemTree(false)}
-              />
-            </AuthRequired>
+            {/* We're bypassing the normal ProblemTrees component temporarily */}
+            {/* <ProblemTrees 
+              showNewProblemTree={showNewProblemTree}
+              onDialogClose={() => setShowNewProblemTree(false)}
+            /> */}
+            
+            {/* Standard layout for Problem Trees section */}
+            <div className="mb-6">
+              <h2 className="text-xl font-bold mb-4">Problem Trees</h2>
+              <p className="text-gray-600 mb-4">
+                Break down complex problems into root causes and potential solutions.
+              </p>
+            </div>
+            
+            {/* Use the original ProblemTrees component */}
+            <ProblemTrees 
+              showNewProblemTree={showNewProblemTree}
+              onDialogClose={() => setShowNewProblemTree(false)}
+            />
           </div>
           
-          {/* Drafted Plans Tab */}
           <div id="drafted-plans" className="tab-pane w-full">
-            <AuthRequired>
-              <DraftedPlans 
-                showNewPlan={showNewPlan}
-                onDialogClose={() => setShowNewPlan(false)}
-              />
-            </AuthRequired>
+            <DraftedPlans 
+              showNewPlan={showNewPlan}
+              onDialogClose={() => setShowNewPlan(false)}
+              onEdit={(id) => console.log('Edit drafted plan', id)}
+            />
           </div>
           
-          {/* Clarity Lab Tab */}
           <div id="clarity-lab" className="tab-pane w-full">
-            <AuthRequired>
-              <ClarityLab 
-                showNewEntry={showNewClarityEntry}
-                onDialogClose={() => setShowNewClarityEntry(false)}
-              />
-            </AuthRequired>
+            <ClarityLab 
+              showNewEntry={showNewClarityEntry}
+              onDialogClose={() => setShowNewClarityEntry(false)}
+            />
           </div>
-        </TabNavigationWrapper>
+        </TabNavigation>
       </section>
     </ThinkingDeskContext.Provider>
   );
-}
+};
+
+export default ThinkingDesk;

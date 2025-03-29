@@ -42,7 +42,20 @@ const Sidebar = () => {
           );
         })}
         
-{/* Subscription plans link removed */}
+        {/* Add subscription plans link */}
+        <li>
+          <Link 
+            href="/subscription-plans"
+            className={cn(
+              "flex items-center p-3 text-gray-700 hover:bg-gray-100 rounded-md font-medium transition-colors",
+              location === "/subscription-plans" && "bg-blue-50 text-primary"
+            )}
+            aria-current={location === "/subscription-plans" ? "page" : undefined}
+          >
+            <CreditCard className="w-5 h-5 mr-3 text-primary" aria-hidden="true" />
+            <span>Subscription Plans</span>
+          </Link>
+        </li>
       </ul>
     );
   }, [location]);
@@ -75,6 +88,7 @@ const Sidebar = () => {
               </Avatar>
               <div className="flex-1 text-left">
                 <p className="font-medium text-sm">{user.name}</p>
+                <p className="text-xs text-gray-500">{user.plan} Plan</p>
               </div>
             </Button>
           </DropdownMenuTrigger>
@@ -85,7 +99,10 @@ const Sidebar = () => {
               <User className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </DropdownMenuItem>
-{/* Subscription menu item removed */}
+            <DropdownMenuItem>
+              <CreditCard className="mr-2 h-4 w-4" />
+              <span>Subscription</span>
+            </DropdownMenuItem>
             <DropdownMenuItem>
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
@@ -113,6 +130,7 @@ const Sidebar = () => {
         </Avatar>
         <div>
           <p className="font-medium text-sm">John Doe</p>
+          <p className="text-xs text-gray-500">Premium Plan</p>
         </div>
       </div>
     );

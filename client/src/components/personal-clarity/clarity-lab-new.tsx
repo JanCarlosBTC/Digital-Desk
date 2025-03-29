@@ -7,7 +7,7 @@ import { queryKeys, defaultQueryConfig, getQueryKey } from "@/lib/query-keys";
 import { memo, useCallback, useState, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { dateUtils } from "@/lib/date-utils";
-import { useLocation } from "wouter";
+import { useNavigate } from "wouter";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -232,7 +232,7 @@ export const ClarityLabComponent = memo(function ClarityLabComponent({
   }, [labs, sortField, sortDirection]);
 
   if (isLoading) {
-    return <LoadingState variant="skeleton" count={3} />;
+    return <LoadingState type="list" count={3} />;
   }
 
   return (

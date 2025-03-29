@@ -186,7 +186,7 @@ export const MonthlyCheckInComponent = memo(function MonthlyCheckInComponent({
   }, [checkIns, sortField, sortDirection]);
 
   if (isLoading) {
-    return <LoadingState variant="skeleton" count={3} />;
+    return <LoadingState type="list" count={3} />;
   }
 
   return (

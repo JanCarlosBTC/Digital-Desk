@@ -69,19 +69,8 @@ async function handleResponse(response: Response) {
   if (!response.ok) {
     // Handle specific error cases
     if (response.status === 401) {
-      // Token expired or invalid, log details and trigger logout
-      console.error('Authentication error:', data);
-      console.log('Current token:', authService.getToken() ? 'Token exists' : 'No token');
-      
-      // Show more detailed error message
-      toast({
-        title: 'Authentication Error',
-        description: data.message || 'Your session has expired. Please log in again.',
-        variant: 'destructive'
-      });
-      
-      // Clear token and trigger logout
-      authService.clearToken();
+      // Token expired or invalid, trigger logout
+      authService.logout();
     } else if (response.status === 429) {
       // Rate limit exceeded
       toast({
@@ -137,8 +126,6 @@ async function performRequest(
   try {
     // Add auth token if available
     const token = authService.getToken();
-    console.log(`[API] Making request to ${url}, auth token exists: ${!!token}`);
-    
     if (token) {
       options.headers = {
         ...options.headers,
@@ -146,11 +133,7 @@ async function performRequest(
       };
     }
     
-    console.log(`[API] Request headers:`, options.headers);
-    console.log(`[API] Request method: ${options.method}`);
-    
     const response = await fetch(url, options);
-    console.log(`[API] Response status: ${response.status}`);
     
     // Don't retry on client errors except for specific cases
     if (response.status >= 400 && response.status < 500) {
@@ -246,9 +229,6 @@ export const apiClient = {
 
 /**
  * Auth API service
- * 
- * IMPORTANT: apiClient already prefixes these with '/api', so the paths here 
- * should NOT include the '/api' prefix.
  */
 export const authApi = {
   register(userData: any) {
@@ -257,11 +237,6 @@ export const authApi = {
   
   login(credentials: any) {
     return apiClient.post('/auth/login', credentials);
-  },
-  
-  devLogin(username: string) {
-    console.log('[authApi] Calling dev login with username:', username);
-    return apiClient.post('/auth/dev-login', { username });
   },
   
   getProfile() {
@@ -275,9 +250,6 @@ export const authApi = {
 
 /**
  * Subscription API service
- * 
- * IMPORTANT: apiClient already prefixes these with '/api', so the paths here 
- * should NOT include the '/api' prefix.
  */
 export const subscriptionApi = {
   createCheckoutSession(plan: string) {

@@ -1,103 +1,19 @@
 import React, { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoginForm } from "@/components/auth/login-form";
 import { RegisterForm } from "@/components/auth/register-form";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from "@/context/user-context";
-import { useLocation, Redirect } from "wouter";
-import { useToast } from "@/hooks/use-toast";
+import { Navigate } from "wouter";
 
 export default function LoginPage() {
-  const { user, isLoading, refreshUser } = useUser();
+  const { user, isLoading } = useUser();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
-  const [isDevLoading, setIsDevLoading] = useState(false);
-  const { toast } = useToast();
-  const [_, setLocation] = useLocation();
   
   // If user is already logged in, redirect to home
   if (user && !isLoading) {
-    return <Redirect to="/" />;
+    return <Navigate to="/" />;
   }
-  
-  // Emergency direct login function that bypasses the entire context system
-  const handleDevLogin = async () => {
-    console.log('[LoginPage] Starting EMERGENCY direct dev login for demo user');
-    setIsDevLoading(true);
-    
-    try {
-      // Make direct fetch request to dev-login endpoint
-      console.log('[LoginPage] Making direct fetch to /api/auth/dev-login');
-      const response = await fetch('/api/auth/dev-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'demo' })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(e => {
-          console.error('[LoginPage] Failed to parse error response:', e);
-          return { message: 'Invalid response format' };
-        });
-        throw new Error(errorData.message || 'Dev login failed');
-      }
-      
-      const result = await response.json();
-      
-      // EMERGENCY SOLUTION: Store token in multiple places to ensure it's available everywhere
-      console.log('[LoginPage] EMERGENCY login successful. Setting token in multiple places');
-      
-      // Set in localStorage
-      localStorage.setItem('authToken', result.token);
-      
-      // Set in sessionStorage
-      sessionStorage.setItem('authToken', result.token);
-      
-      // Set as a cookie with long expiration
-      document.cookie = `authToken=${result.token}; path=/; max-age=86400;`;
-      
-      // Store user data directly in localStorage too
-      localStorage.setItem('userData', JSON.stringify(result.user));
-      
-      // Create global emergency user data via a safe alternative method
-      try {
-        Object.defineProperty(window, 'emergencyUserData', {
-          value: result.user,
-          writable: true,
-          enumerable: true
-        });
-      } catch (e) {
-        console.warn('Failed to set global emergency user data:', e);
-      }
-      
-      toast({
-        title: 'EMERGENCY Login Success',
-        description: `Logged in as ${result.user.name}`,
-      });
-      
-      // Force a complete page reload to reset all application state
-      toast({
-        title: 'Reloading Application',
-        description: "Please wait while we reload the app with your credentials...",
-      });
-      
-      // Add a slight delay and then force a complete page reload
-      setTimeout(() => {
-        window.location.href = '/thinking-desk';
-      }, 1500);
-      
-    } catch (error) {
-      console.error('[LoginPage] Emergency dev login error:', error);
-      
-      toast({
-        title: 'Emergency Login Failed',
-        description: "Sorry, our simplified login process failed. Please try again.",
-        variant: 'destructive',
-      });
-    } finally {
-      setIsDevLoading(false);
-    }
-  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -133,19 +49,6 @@ export default function LoginPage() {
               
               <TabsContent value="login" className="space-y-4">
                 <LoginForm redirectTo="/" />
-                
-                {/* Development Login Button */}
-                <div className="text-center mt-6">
-                  <p className="text-sm text-gray-500 mb-2">For development:</p>
-                  <Button 
-                    onClick={handleDevLogin} 
-                    disabled={isDevLoading}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    {isDevLoading ? "Logging in..." : "Login as Demo User"}
-                  </Button>
-                </div>
                 
                 <div className="text-center text-sm text-gray-500 mt-4">
                   <p>

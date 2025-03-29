@@ -60,7 +60,7 @@ const ProblemTreeList = memo(function ProblemTreeList({
   onDeleteProblemTree
 }: ProblemTreeListProps) {
   const { toast } = useToast();
-  const thinkingDesk = useThinkingDesk();
+  const { createProblemTree } = useThinkingDesk();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<keyof ProblemTree>('updatedAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
@@ -85,10 +85,7 @@ const ProblemTreeList = memo(function ProblemTreeList({
     if (onNewProblemTreeClick) {
       onNewProblemTreeClick();
     } else {
-      // Fallback to open the dialog through context if available
-      if (thinkingDesk.setShowNewProblemTree) {
-        thinkingDesk.setShowNewProblemTree(true);
-      }
+      createProblemTree();
     }
   };
 
@@ -148,7 +145,7 @@ const ProblemTreeList = memo(function ProblemTreeList({
   });
 
   if (isLoading) {
-    return <LoadingState variant="skeleton" count={3} />;
+    return <LoadingState type="list" count={3} />;
   }
 
   if (error) {

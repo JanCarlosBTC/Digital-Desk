@@ -112,34 +112,14 @@ const DraftedPlanItem = memo(function DraftedPlanItem({
 interface DraftedPlansProps {
   showNewPlan?: boolean;
   onDialogClose?: () => void;
-  onEdit?: (id: number) => void;
+  onEdit: (id: number) => void;
 }
-
-// Improved error handling function
-const handleApiError = (error: unknown, toast: any) => {
-  console.error('API error:', error);
-  let errorMessage = 'An unexpected error occurred';
-  
-  if (error instanceof Error) {
-    errorMessage = error.message;
-  } else if (typeof error === 'string') {
-    errorMessage = error;
-  }
-  
-  toast({
-    title: "Error",
-    description: errorMessage,
-    variant: "destructive",
-  });
-  
-  return errorMessage;
-};
 
 // Main DraftedPlans component
 export const DraftedPlans = memo(function DraftedPlans({ 
   showNewPlan = false, 
   onDialogClose, 
-  onEdit = (id) => console.log('Edit drafted plan', id)
+  onEdit 
 }: DraftedPlansProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -147,9 +127,6 @@ export const DraftedPlans = memo(function DraftedPlans({
   const [expandedPlans, setExpandedPlans] = useState<Record<number, boolean>>({});
   const [sortField, setSortField] = useState<keyof DraftedPlan>('updatedAt');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasSubmissionError, setHasSubmissionError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
   const handleError = useErrorHandler();
 
   // Initialize form with default values
@@ -257,68 +234,56 @@ export const DraftedPlans = memo(function DraftedPlans({
     });
   }, [plans, sortField, sortDirection]);
 
-  // Improved mutation for creating a drafted plan
+  // Mutation for creating a drafted plan
   const createMutation = useMutation({
     mutationFn: async (data: FormValues) => {
-      setIsSubmitting(true);
-      setHasSubmissionError(false);
-      setErrorMessage('');
+      // Transform data for API
+      const formattedData = {
+        title: data.title,
+        description: data.description,
+        status: data.status,
+        components: data.components,
+        resourcesNeeded: data.resourcesNeeded,
+        expectedOutcomes: data.expectedOutcomes,
+        comments: 0,
+        attachments: 0,
+      };
+
+      const response = await fetch('/api/drafted-plans', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formattedData)
+      });
       
-      try {
-        // Transform data for API
-        const formattedData = {
-          title: data.title,
-          description: data.description,
-          status: data.status,
-          components: data.components,
-          resourcesNeeded: data.resourcesNeeded,
-          expectedOutcomes: data.expectedOutcomes,
-          comments: 0,
-          attachments: 0,
-        };
-        
-        const response = await fetch('/api/drafted-plans', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(formattedData)
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(errorText || 'Failed to create plan');
-        }
-        
-        return await response.json();
-      } catch (error) {
-        const errorMsg = handleApiError(error, toast);
-        setHasSubmissionError(true);
-        setErrorMessage(errorMsg);
-        throw error;
-      } finally {
-        setIsSubmitting(false);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to create plan');
       }
+      
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/drafted-plans'] });
       toast({
-        title: "Success",
-        description: "Plan created successfully",
+        title: "Plan created",
+        description: "Your drafted plan has been created successfully.",
       });
       setIsOpen(false);
       form.reset();
     },
     onError: (error) => {
-      // Error is already handled in the mutationFn
-      console.error("Error details:", error);
+      toast({
+        title: "Error creating plan",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
     }
   });
-  
-  // Improved onSubmit function
+
+  // Handle form submission
   const onSubmit = (data: FormValues) => {
-    setHasSubmissionError(false);
-    setErrorMessage('');
     createMutation.mutate(data);
   };
 
@@ -349,7 +314,7 @@ export const DraftedPlans = memo(function DraftedPlans({
 
   // Show loading state while fetching data
   if (isLoading) {
-    return <LoadingState variant="skeleton" count={3} />;
+    return <LoadingState type="list" count={3} />;
   }
 
   // Show error state if there was an error fetching data
@@ -423,25 +388,18 @@ export const DraftedPlans = memo(function DraftedPlans({
 
         {/* New Plan Dialog */}
         <DialogForm
-          title={`Create New Plan`}
-          description="Draft a new plan with components, resources, and expected outcomes."
+          title="New Plan"
+          description="Develop initiatives and projects before they're ready for execution"
           open={isOpen}
-          onOpenChange={handleDialogClose}
+          onOpenChange={setIsOpen}
+          size="full"
           submitLabel="Save Plan"
-          submitDisabled={isSubmitting}
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit(onSubmit)(e);
-          }}
+          cancelLabel="Cancel"
+          isSubmitting={createMutation.isPending}
+          onSubmit={form.handleSubmit(onSubmit)}
         >
           <Form {...form}>
-            <div className="space-y-4">
-              {hasSubmissionError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded text-red-600 text-sm">
-                  {errorMessage || "There was an error creating your plan. Please try again."}
-                </div>
-              )}
-              
+            <div className="space-y-5">
               <FormField
                 control={form.control}
                 name="title"
@@ -564,12 +522,6 @@ Designer for lead magnets"
                   </FormItem>
                 )}
               />
-
-              {isSubmitting && (
-                <div className="text-sm text-primary animate-pulse">
-                  Saving your plan...
-                </div>
-              )}
             </div>
           </Form>
         </DialogForm>

@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { PlusIcon, NetworkIcon } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { PlusIcon, NetworkIcon, EditIcon, TrashIcon } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useApiMutation } from '@/lib/api-utils';
+import { LoadingState } from '@/components/ui/loading-state';
 
-// Define the Problem Tree type
+// Type definitions
 interface ProblemTree {
   id: number;
   userId: number;
@@ -22,15 +24,13 @@ interface ProblemTree {
   updatedAt: string | Date;
 }
 
-interface MinimalProblemTreesProps {
+interface BasicTreesProps {
   showNewProblemTree?: boolean;
   onDialogClose?: () => void;
 }
 
-export function MinimalProblemTrees({ 
-  showNewProblemTree = false, 
-  onDialogClose 
-}: MinimalProblemTreesProps) {
+// Main component export
+export function BasicTrees({ showNewProblemTree = false, onDialogClose }: BasicTreesProps) {
   // State
   const [title, setTitle] = useState('');
   const [mainProblem, setMainProblem] = useState('');
@@ -40,7 +40,9 @@ export function MinimalProblemTrees({
   const [nextActions, setNextActions] = useState(['']);
   
   const [formOpen, setFormOpen] = useState(showNewProblemTree);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedTree, setSelectedTree] = useState<ProblemTree | null>(null);
+  const [viewOpen, setViewOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   
   // Hooks
   const { toast } = useToast();
@@ -59,17 +61,21 @@ export function MinimalProblemTrees({
     setRootCauses(['']);
     setPotentialSolutions(['']);
     setNextActions(['']);
-    setError(null);
+    setSelectedTree(null);
+    setFormError(null);
   };
   
-  // Fetch problem trees
+  // Fetch problem trees with improved error handling and caching
   const { 
-    data = [], 
+    data: problemTrees = [], 
     isLoading,
+    isError,
     refetch 
   } = useQuery<ProblemTree[]>({
     queryKey: ['/api/problem-trees'],
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    staleTime: 60000, // 1 minute stale time for better performance
+    retry: 2, // Retry failed queries twice
   });
   
   // Type definition for problem tree form data
@@ -81,46 +87,75 @@ export function MinimalProblemTrees({
     potentialSolutions: string[];
     nextActions: string[];
   }
+  
+  // Make sure we handle loading state properly with improved UI
 
-  // Create mutation with proper type safety
-  const createMutation = useMutation<ProblemTree, Error, ProblemTreeFormData>({
-    mutationFn: async (formData: ProblemTreeFormData) => {
-      console.log('Creating with data:', formData);
-      const response = await fetch('/api/problem-trees', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Failed to create problem tree');
+  // Create mutation with proper type safety using useApiMutation hook
+  const createMutation = useApiMutation<ProblemTree, ProblemTreeFormData>(
+    '/api/problem-trees',
+    'POST',
+    {
+      onSuccess: (createdTree) => {
+        console.log('Creation successful:', createdTree);
+        
+        // Use more specific invalidation with proper query key structure
+        queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
+        
+        toast({
+          title: 'Success',
+          description: 'Problem tree created successfully',
+          variant: 'success'
+        });
+        
+        setFormOpen(false);
+        resetForm();
+      },
+      onError: (error) => {
+        console.error('Creation error:', error);
+        
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to create problem tree',
+          variant: 'destructive'
+        });
+        
+        setFormError(error.message || 'An error occurred');
       }
-      
-      return response.json();
-    },
-    onSuccess: () => {
-      console.log('Success! Created problem tree');
-      queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
-      toast({
-        title: 'Success',
-        description: 'Problem tree created successfully',
-        variant: 'success'
-      });
-      setFormOpen(false);
-      resetForm();
-      refetch();
-    },
-    onError: (error: Error) => {
-      console.error('Error creating problem tree:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to create problem tree',
-        variant: 'destructive'
-      });
-      setError(error.message || 'An error occurred');
     }
-  });
+  );
+  
+  // Delete mutation with proper type safety using useApiMutation
+  const deleteMutation = useApiMutation<void, number>(
+    '/api/problem-trees', 
+    'DELETE',
+    {
+      onSuccess: () => {
+        console.log('Deletion successful');
+        
+        // Use more specific invalidation with proper query key structure
+        queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
+        
+        toast({
+          title: 'Success',
+          description: 'Problem tree deleted successfully',
+          variant: 'success'
+        });
+        
+        // Update the local state immediately for better UX
+        setSelectedTree(null);
+        setViewOpen(false); // Close any open dialog if present
+      },
+      onError: (error) => {
+        console.error('Deletion error:', error);
+        
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to delete problem tree',
+          variant: 'destructive'
+        });
+      }
+    }
+  );
   
   // Define a type for array field types
   type ArrayFieldType = 'subProblems' | 'rootCauses' | 'potentialSolutions' | 'nextActions';
@@ -169,6 +204,16 @@ export function MinimalProblemTrees({
     setArrayState(type, [...currentArray, '']);
   };
   
+  // Remove an item from an array
+  const removeArrayItem = (type: ArrayFieldType, index: number): void => {
+    const currentArray = getArrayState(type);
+    
+    if (currentArray.length > 1 && index >= 0 && index < currentArray.length) {
+      const newArray = currentArray.filter((_, i) => i !== index);
+      setArrayState(type, newArray);
+    }
+  };
+  
   // Update an item in an array
   const updateArrayItem = (type: ArrayFieldType, index: number, value: string): void => {
     const currentArray = getArrayState(type);
@@ -176,16 +221,6 @@ export function MinimalProblemTrees({
     if (index >= 0 && index < currentArray.length) {
       const newArray = [...currentArray];
       newArray[index] = value;
-      setArrayState(type, newArray);
-    }
-  };
-  
-  // Remove an item from an array
-  const removeArrayItem = (type: ArrayFieldType, index: number): void => {
-    const currentArray = getArrayState(type);
-    
-    if (currentArray.length > 1 && index >= 0 && index < currentArray.length) {
-      const newArray = currentArray.filter((_, i) => i !== index);
       setArrayState(type, newArray);
     }
   };
@@ -233,7 +268,7 @@ export function MinimalProblemTrees({
     if (Object.keys(newErrors).length > 0) {
       const errorValues = Object.values(newErrors);
       const firstError = errorValues.length > 0 ? errorValues[0] : "Validation error";
-      setError(firstError);
+      setFormError(firstError);
       return false;
     }
     
@@ -248,7 +283,7 @@ export function MinimalProblemTrees({
     }
     
     // Create data object with filtered values
-    const formData: ProblemTreeFormData = {
+    const data: ProblemTreeFormData = {
       title,
       mainProblem,
       subProblems: subProblems.filter(item => item.trim()),
@@ -257,10 +292,10 @@ export function MinimalProblemTrees({
       nextActions: nextActions.filter(item => item.trim())
     };
     
-    console.log('Submitting data:', formData);
+    console.log('Submitting data:', data);
     
-    // Submit data with proper typing
-    createMutation.mutate(formData);
+    // Submit data
+    createMutation.mutate(data);
   };
   
   // Format date for display
@@ -269,8 +304,97 @@ export function MinimalProblemTrees({
     return date.toLocaleDateString();
   };
   
-  const problemTrees = data as ProblemTree[];
+  // View a problem tree
+  const viewTree = (tree: ProblemTree) => {
+    setSelectedTree(tree);
+    setViewOpen(true);
+  };
   
+  // Delete a problem tree
+  const deleteTree = (id: number) => {
+    if (confirm('Are you sure you want to delete this problem tree?')) {
+      // Update the mutation URL path to include the ID
+      const deleteUrl = `/api/problem-trees/${id}`;
+      const deleteTreeMutation = useApiMutation<void, void>(deleteUrl, 'DELETE', {
+        onSuccess: () => {
+          console.log('Deletion successful');
+          
+          // Use more specific invalidation with proper query key structure
+          queryClient.invalidateQueries({ queryKey: ['/api/problem-trees'] });
+          
+          toast({
+            title: 'Success',
+            description: 'Problem tree deleted successfully',
+            variant: 'success'
+          });
+          
+          // Update the local state immediately for better UX
+          setSelectedTree(null);
+          setViewOpen(false); // Close any open dialog if present
+        },
+        onError: (error) => {
+          console.error('Deletion error:', error);
+          
+          toast({
+            title: 'Error',
+            description: error.message || 'Failed to delete problem tree',
+            variant: 'destructive'
+          });
+        }
+      });
+      
+      deleteTreeMutation.mutate();
+    }
+  };
+  
+  // Render empty state
+  const renderEmptyState = () => (
+    <div className="text-center py-8">
+      <NetworkIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+      <h3 className="text-xl font-medium text-gray-700 mb-2">No Problem Trees Yet</h3>
+      <p className="text-gray-500 mb-4">Start breaking down complex problems into manageable parts.</p>
+      <Button
+        variant="default"
+        onClick={() => setFormOpen(true)}
+      >
+        <PlusIcon className="mr-2 h-4 w-4" /> Create Your First Problem Tree
+      </Button>
+    </div>
+  );
+  
+  // Render problem tree list
+  const renderProblemTrees = () => {
+    if (problemTrees.length === 0) {
+      return renderEmptyState();
+    }
+    
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {problemTrees.map((tree: ProblemTree) => (
+          <Card key={tree.id} className="overflow-hidden h-full">
+            <CardHeader>
+              <CardTitle>{tree.title}</CardTitle>
+              <CardDescription className="line-clamp-2">{tree.mainProblem}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-gray-500 mb-4">
+                <p>Updated: {formatDate(tree.updatedAt)}</p>
+                <p>{tree.subProblems.length} sub-problems, {tree.potentialSolutions.length} solutions</p>
+              </div>
+              <div className="flex space-x-2">
+                <Button size="sm" onClick={() => viewTree(tree)}>View</Button>
+                <Button size="sm" variant="destructive" onClick={() => deleteTree(tree.id)}>
+                  <TrashIcon className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+  
+  // Main render
   return (
     <>
       <div className="space-y-6">
@@ -285,33 +409,9 @@ export function MinimalProblemTrees({
         </div>
         
         {isLoading ? (
-          <div>Loading problem trees...</div>
-        ) : problemTrees.length === 0 ? (
-          <div className="text-center py-8">
-            <NetworkIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-gray-700 mb-2">No Problem Trees Yet</h3>
-            <p className="text-gray-500 mb-4">Start breaking down complex problems into manageable parts.</p>
-            <Button onClick={() => setFormOpen(true)}>
-              <PlusIcon className="mr-2 h-4 w-4" /> Create Your First Problem Tree
-            </Button>
-          </div>
+          <LoadingState type="list" count={3} />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {problemTrees.map((tree) => (
-              <Card key={tree.id} className="overflow-hidden h-full">
-                <CardHeader>
-                  <CardTitle>{tree.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="mb-4">{tree.mainProblem}</p>
-                  <div className="text-sm text-gray-500">
-                    <p>Updated: {formatDate(tree.updatedAt)}</p>
-                    <p>{tree.subProblems.length} sub-problems, {tree.potentialSolutions.length} solutions</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          renderProblemTrees()
         )}
       </div>
       
@@ -332,9 +432,9 @@ export function MinimalProblemTrees({
           </DialogHeader>
           
           <div className="space-y-4 py-4">
-            {error && (
+            {formError && (
               <div className="bg-red-50 text-red-700 p-3 rounded-md mb-4">
-                {error}
+                {formError}
               </div>
             )}
             
@@ -494,6 +594,91 @@ export function MinimalProblemTrees({
               {createMutation.isPending ? 'Creating...' : 'Create Problem Tree'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* View Dialog */}
+      <Dialog open={viewOpen} onOpenChange={setViewOpen}>
+        <DialogContent>
+          {selectedTree && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{selectedTree.title}</DialogTitle>
+                <DialogDescription>
+                  Created: {formatDate(selectedTree.createdAt)} | 
+                  Last updated: {formatDate(selectedTree.updatedAt)}
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-4">
+                <div>
+                  <h3 className="font-medium mb-2">Main Problem</h3>
+                  <p className="bg-gray-50 p-3 rounded-md">{selectedTree.mainProblem}</p>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium mb-2">Sub Problems</h3>
+                  <ul className="space-y-2">
+                    {selectedTree.subProblems.map((problem, index) => (
+                      <li key={`view-sub-${index}`} className="bg-gray-50 p-3 rounded-md">
+                        {problem}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium mb-2">Root Causes</h3>
+                  <ul className="space-y-2">
+                    {selectedTree.rootCauses.map((cause, index) => (
+                      <li key={`view-cause-${index}`} className="bg-gray-50 p-3 rounded-md">
+                        {cause}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div>
+                  <h3 className="font-medium mb-2">Potential Solutions</h3>
+                  <ul className="space-y-2">
+                    {selectedTree.potentialSolutions.map((solution, index) => (
+                      <li key={`view-solution-${index}`} className="bg-gray-50 p-3 rounded-md">
+                        {solution}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                {selectedTree.nextActions && selectedTree.nextActions.length > 0 && (
+                  <div>
+                    <h3 className="font-medium mb-2">Next Actions</h3>
+                    <ul className="space-y-2">
+                      {selectedTree.nextActions.map((action, index) => (
+                        <li key={`view-action-${index}`} className="bg-gray-50 p-3 rounded-md">
+                          {action}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+              
+              <DialogFooter>
+                <Button 
+                  variant="destructive" 
+                  onClick={() => {
+                    setViewOpen(false);
+                    deleteTree(selectedTree.id);
+                  }}
+                >
+                  Delete
+                </Button>
+                <Button variant="outline" onClick={() => setViewOpen(false)}>
+                  Close
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </>

@@ -247,7 +247,7 @@ export const PriorityComponent = memo(function PriorityComponent({
   }, [priorities, sortField, sortDirection]);
 
   if (isLoading) {
-    return <LoadingState variant="skeleton" count={3} />;
+    return <LoadingState type="list" count={3} />;
   }
 
   return (

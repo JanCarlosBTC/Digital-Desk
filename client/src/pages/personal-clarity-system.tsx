@@ -3,7 +3,7 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import WeeklyReflections from "@/components/personal-clarity/weekly-reflections";
 import WeeklyReflectionLog from "@/components/personal-clarity/weekly-reflection-log";
 import MonthlyCheckIns from "@/components/personal-clarity/monthly-check-ins";
-import PrioritiesTracker from "@/components/personal-clarity/priorities-tracker-new";
+import PrioritiesTracker from "@/components/personal-clarity/priorities-tracker";
 import "@/components/personal-clarity/button-styles.css";
 import { PageHeader } from "@/components/ui/page-header";
 import { BrainIcon, Compass, CalendarIcon } from "lucide-react";

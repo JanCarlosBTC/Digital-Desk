@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, X, CalendarClock } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/context/user-context';
@@ -11,20 +11,16 @@ export default function SubscriptionPlans() {
   const [isAnnual, setIsAnnual] = useState(false);
   const [loading, setLoading] = useState<Plan | null>(null);
   
-  // Default to trial plan
-  const currentPlan = user?.plan as Plan || Plan.TRIAL;
+  const currentPlan = user?.plan as Plan || Plan.FREE;
   
-  // Get appropriate price based on billing period
-  const getPrice = (planName: string, basePrice: number) => {
-    if (planName === Plan.TRIAL) {
-      return 'Free for 7 days';
+  // Calculate annual pricing (20% discount)
+  const getPrice = (basePrice: number) => {
+    if (isAnnual) {
+      // Apply annual discount
+      const annualPrice = basePrice * 12 * 0.8;
+      return `$${annualPrice.toFixed(2)}/year`;
     }
-    
-    if (planName === Plan.ANNUAL) {
-      return `$${basePrice}/year`;
-    }
-    
-    return basePrice === 0 ? 'Free' : `$${basePrice}/month`;
+    return basePrice === 0 ? 'Free' : `$${basePrice.toFixed(2)}/month`;
   };
   
   const handleUpgrade = async (plan: Plan) => {
@@ -39,12 +35,12 @@ export default function SubscriptionPlans() {
     setLoading(plan);
     
     try {
-      // This will redirect to Stripe checkout
+      // This will be replaced with actual payment processing
       await subscriptionService.upgradePlan(plan);
       
       toast({
         title: 'Success!',
-        description: `Redirecting to checkout for the ${plan} plan.`,
+        description: `Your plan has been updated to ${plan}.`,
       });
     } catch (error) {
       toast({
@@ -61,7 +57,7 @@ export default function SubscriptionPlans() {
     <div className="container py-12 mx-auto">
       <div className="text-center mb-12">
         <h1 className="text-3xl font-bold mb-2">Choose Your Plan</h1>
-        <p className="text-gray-600 mb-6">Start with a 7-day trial, then choose your preferred billing</p>
+        <p className="text-gray-600 mb-6">Select the plan that best fits your needs</p>
         
         <div className="flex items-center justify-center mb-8">
           <span className={`mr-3 ${!isAnnual ? 'font-semibold' : ''}`}>Monthly</span>
@@ -76,20 +72,15 @@ export default function SubscriptionPlans() {
             />
           </button>
           <span className={`ml-3 ${isAnnual ? 'font-semibold' : ''}`}>
-            Annual <span className="text-green-600 text-xs font-medium">Save 15%</span>
+            Annual <span className="text-green-600 text-xs font-medium">Save 20%</span>
           </span>
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {Object.entries(PLAN_FEATURES).map(([planName, features]) => {
           const plan = planName as Plan;
           const isCurrent = plan === currentPlan;
-          
-          // Skip showing annual plan if monthly is selected and vice versa
-          if ((isAnnual && plan === Plan.MONTHLY) || (!isAnnual && plan === Plan.ANNUAL)) {
-            return null;
-          }
           
           return (
             <Card 
@@ -97,21 +88,10 @@ export default function SubscriptionPlans() {
               className={`border-2 ${isCurrent ? 'border-blue-500' : 'border-gray-200'}`}
             >
               <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>{planName}</CardTitle>
-                  {plan === Plan.TRIAL && (
-                    <div className="bg-blue-100 text-blue-800 text-xs font-medium inline-flex items-center px-2 py-1 rounded">
-                      <CalendarClock size={14} className="mr-1" />
-                      7 days
-                    </div>
-                  )}
-                </div>
+                <CardTitle>{planName}</CardTitle>
                 <CardDescription>
                   <div className="mt-2 text-2xl font-bold">
-                    {getPrice(planName, features.price)}
-                  </div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    {features.description}
+                    {getPrice(features.price)}
                   </div>
                 </CardDescription>
               </CardHeader>
@@ -158,9 +138,7 @@ export default function SubscriptionPlans() {
                   disabled={isCurrent || loading === plan}
                   onClick={() => handleUpgrade(plan)}
                 >
-                  {loading === plan ? 'Processing...' : 
-                   isCurrent ? 'Current Plan' : 
-                   plan === Plan.TRIAL ? 'Start Free Trial' : 'Upgrade'}
+                  {loading === plan ? 'Processing...' : isCurrent ? 'Current Plan' : 'Upgrade'}
                 </Button>
               </CardFooter>
             </Card>

@@ -6,14 +6,14 @@ import {
   insertBrainDumpSchema, insertProblemTreeSchema, insertDraftedPlanSchema, 
   insertClarityLabSchema, insertWeeklyReflectionSchema, insertMonthlyCheckInSchema, 
   insertPrioritySchema, insertDecisionSchema, insertOfferSchema, insertOfferNoteSchema 
-} from "../shared/prisma-schema.js";
+} from "../shared/schema.js";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
-import { authenticate, generateToken } from "./middleware/auth.js";
+import { authenticate } from "./middleware/auth.js";
 import { register, login, getProfile, updateProfile } from "./controllers/auth.controller.js";
-// Removed subscription controller import and middleware
-// import { createCheckoutSession, handleWebhook } from "./controllers/subscription.controller.js";
+import { createCheckoutSession, handleWebhook } from "./controllers/subscription.controller.js";
+import { checkSubscriptionLimits } from "./middleware/subscription.js";
 import { authLimiter, strictApiLimiter } from "./middleware/rate-limit.js";
 
 /**
@@ -58,104 +58,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/register', authLimiter, register);
   app.post('/api/auth/login', authLimiter, login);
   
-  // Development-only direct login route (bypasses password checks)
-  app.post('/api/auth/dev-login', async (req: Request, res: Response) => {
-    try {
-      const { username } = req.body;
-      console.log(`[Dev Login] Login attempt for user: ${username}`);
-      
-      if (!username) {
-        return res.status(400).json({ message: 'Username is required' });
-      }
-      
-      // IMPORTANT: For development purposes, if username is 'demo', always create a temporary user
-      if (username === 'demo') {
-        console.log(`[Dev Login] Creating temporary demo user for dev-login`);
-        
-        // Create a temporary demo user
-        const demoUser = {
-          id: 999,
-          username: 'demo',
-          name: 'Demo User',
-          email: 'demo@example.com',
-          plan: 'Trial',
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-        
-        // Generate JWT token
-        const token = generateToken(demoUser.id);
-        
-        console.log(`[Dev Login] Generated token for demo user: ${token}`);
-        
-        return res.json({
-          user: demoUser,
-          token
-        });
-      }
-      
-      // Find user by username (for non-demo users)
-      const user = await storage.getUserByUsername(username);
-      if (!user) {
-        console.log(`[Dev Login] User not found: ${username}`);
-        return res.status(401).json({ message: 'User not found' });
-      }
-      
-      console.log(`[Dev Login] Login successful for user: ${user.id}`);
-      
-      // Remove password from response
-      const { password, ...userWithoutPassword } = user;
-      
-      // Generate JWT token
-      const token = generateToken(user.id);
-      console.log(`[Dev Login] Generated token: ${token}`);
-      
-      return res.json({
-        user: userWithoutPassword,
-        token
-      });
-    } catch (error) {
-      console.error('[Dev Login] Error:', error);
-      return res.status(500).json({ message: 'Error during dev login' });
-    }
-  });
-  
   // User routes
   app.get('/api/user/profile', authenticate, getProfile);
   app.put('/api/user/profile', authenticate, updateProfile);
   
-  // ADDED FIX: Match the route the client is actually using - with direct demo user handler
-  // Special direct demo user handler without authentication for '/api/auth/profile'
-  app.get('/api/auth/profile', (req, res) => {
-    console.log('EMERGENCY DIRECT HANDLER for /api/auth/profile');
-    // Always return a demo user for this specific route
-    const demoUser = {
-      id: 999,
-      username: 'demo',
-      name: 'Demo User (Fixed Profile)',
-      email: 'demo@example.com',
-      plan: 'Trial',
-      initials: 'DU',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    return res.json(demoUser);
-  });
-  app.put('/api/auth/profile', authenticate, updateProfile);
+  // Subscription routes - these are sensitive operations so add strict rate limiting
+  app.post('/api/subscriptions/create-checkout', authenticate, strictApiLimiter, createCheckoutSession);
   
-  // Subscription routes removed
-  // app.post('/api/subscriptions/create-checkout', authenticate, strictApiLimiter, createCheckoutSession);
-  
-  // Stripe webhook handler removed
-  // app.post('/api/webhooks/stripe', 
-  //   express.raw({ type: 'application/json' }),
-  //   handleWebhook
-  // );
+  // Stripe webhook handler - needs raw body, but no rate limiting as it's from Stripe
+  app.post('/api/webhooks/stripe', 
+    express.raw({ type: 'application/json' }),
+    handleWebhook
+  );
 
   // Current user endpoint (using authenticated middleware)
   app.get('/api/user', authenticate, getProfile);
 
-  // Brain Dump endpoints - original moved below with emergency handlers
+  // Brain Dump endpoints
+  app.get('/api/brain-dump', authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId;
+      let brainDump = await storage.getBrainDumpByUserId(userId);
+      
+      // If no brain dump exists, create an empty one
+      if (!brainDump) {
+        brainDump = await storage.createBrainDump({
+          userId,
+          content: ""
+        });
+      }
+      
+      res.json(brainDump);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching brain dump" });
+    }
+  });
 
   app.put('/api/brain-dump/:id', authenticate, async (req: Request, res: Response) => {
     try {
@@ -184,42 +121,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // EMERGENCY DIRECT HANDLER for brain dump
-  app.get('/api/brain-dump', (req: Request, res: Response) => {
-    console.log('EMERGENCY DIRECT HANDLER for /api/brain-dump');
-    const brainDump = {
-      id: 1,
-      userId: 999,
-      content: "This is a sample brain dump content for demo user.",
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    return res.json(brainDump);
-  });
-
-  // EMERGENCY DIRECT HANDLER for problem trees
-  app.get('/api/problem-trees', (req: Request, res: Response) => {
-    console.log('EMERGENCY DIRECT HANDLER for /api/problem-trees');
-    const problemTrees = [
-      {
-        id: 1,
-        userId: 999,
-        title: "Sample Problem Tree",
-        description: "This is a sample problem tree for demonstration.",
-        rootProblem: "Main issue that needs solving",
-        causes: ["Cause 1", "Cause 2", "Cause 3"],
-        effects: ["Effect 1", "Effect 2"],
-        possibleSolutions: ["Solution A", "Solution B"],
-        status: "active",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
-    return res.json(problemTrees);
-  });
-
-  // Original Problem Tree endpoint - kept for reference
-  app.get('/api/problem-trees-original', authenticate, cacheMiddleware('problem-trees', 300), async (req: Request, res: Response) => {
+  // Problem Tree endpoints
+  app.get('/api/problem-trees', authenticate, cacheMiddleware('problem-trees', 300), async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
       const problemTrees = await storage.getProblemTrees(userId);
@@ -257,7 +160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/problem-trees', authenticate, async (req: Request, res: Response) => {
+  app.post('/api/problem-trees', authenticate, checkSubscriptionLimits('problemTrees'), async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
       const data = {
@@ -320,30 +223,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // EMERGENCY DIRECT HANDLER for drafted plans
-  app.get('/api/drafted-plans', (req: Request, res: Response) => {
-    console.log('EMERGENCY DIRECT HANDLER for /api/drafted-plans');
-    const draftedPlans = [
-      {
-        id: 1,
-        userId: 999,
-        title: "Sample Drafted Plan",
-        description: "This is a sample drafted plan for demonstration.",
-        actionItems: ["Action 1", "Action 2", "Action 3"],
-        timeline: "2 weeks",
-        resources: ["Resource A", "Resource B"],
-        status: "active",
-        comments: 0,
-        attachments: 0,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
-    return res.json(draftedPlans);
-  });
-
-  // Original Drafted Plans endpoints
-  app.get('/api/drafted-plans-original', authenticate, async (req: Request, res: Response) => {
+  // Drafted Plans endpoints
+  app.get('/api/drafted-plans', authenticate, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
       const draftedPlans = await storage.getDraftedPlans(userId);
@@ -376,7 +257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/drafted-plans', authenticate, async (req: Request, res: Response) => {
+  app.post('/api/drafted-plans', authenticate, checkSubscriptionLimits('draftedPlans'), async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
       const data = {
@@ -439,38 +320,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // EMERGENCY DIRECT HANDLER for Clarity Lab
-  app.get('/api/clarity-labs', (req: Request, res: Response) => {
-    console.log('EMERGENCY DIRECT HANDLER for /api/clarity-labs');
-    const clarityLabs = [
-      {
-        id: 1,
-        userId: 999,
-        title: "Sample Clarity Lab Entry",
-        content: "This is a sample clarity lab entry for demonstration.",
-        category: "goals",
-        priority: 1,
-        status: "active",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 2,
-        userId: 999,
-        title: "Sample Vision Entry",
-        content: "This is a sample vision entry for demonstration.",
-        category: "vision",
-        priority: 2,
-        status: "active",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
-    return res.json(clarityLabs);
-  });
-
-  // Original Clarity Lab endpoints
-  app.get('/api/clarity-labs-original', authenticate, async (req: Request, res: Response) => {
+  // Clarity Lab endpoints
+  app.get('/api/clarity-labs', authenticate, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
       const category = req.query.category as string | undefined;
@@ -948,7 +799,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/offers', authenticate, async (req: Request, res: Response) => {
+  app.post('/api/offers', authenticate, checkSubscriptionLimits('offers'), async (req: Request, res: Response) => {
     try {
       const userId = (req as any).userId;
       const data = {

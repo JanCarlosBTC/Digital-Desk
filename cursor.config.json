@@ -18,54 +18,7 @@
       "server/vite.ts",
       "package.json",
       "tsconfig.json",
-      "tsconfig.server.json",
-      "drizzle.config.ts"
+      "tsconfig.server.json"
     ]
-  },
-  "development": {
-    "environmentConfigGuide": {
-      "replit": "Digital Desk is configured to run in Replit. Use the Start application workflow to run the application.",
-      "instructions": [
-        "Always use 0.0.0.0 instead of localhost for host bindings",
-        "Use relative paths from project root instead of absolute paths",
-        "Do not modify Vite configuration files",
-        "Do not modify package.json directly; use the package manager tool instead",
-        "Do not use Docker or containerization"
-      ]
-    },
-    "databaseGuide": {
-      "type": "PostgreSQL",
-      "orm": "Prisma",
-      "notes": [
-        "The project has migrated from Drizzle ORM to Prisma ORM",
-        "Do not use Drizzle ORM methods or imports",
-        "Use environment variable DATABASE_URL to connect to the database",
-        "Avoid database migrations through direct SQL; use Prisma migrations instead"
-      ]
-    },
-    "apiGuide": {
-      "authentication": "JWT-based authentication via server/middleware/auth.js",
-      "routing": "Express routes defined in server/routes.ts",
-      "dataAccess": "Use PrismaStorage implementation in server/prisma-storage.ts"
-    },
-    "uiGuide": {
-      "framework": "React with TypeScript",
-      "styling": "Tailwind CSS with ShadCN UI components",
-      "featureNotes": [
-        "Do not use localhost in API calls; use relative paths instead",
-        "Use subscription-service.ts for subscription features",
-        "Use LoadingState components for loading states",
-        "Prefer functional components with hooks",
-        "Use the context API for state management across components"
-      ]
-    },
-    "workflowGuide": {
-      "startCommand": "npm run dev",
-      "notes": [
-        "The application is configured to run using Replit workflows",
-        "Do not manually start the server from the terminal",
-        "The workflow will restart automatically on file changes"
-      ]
-    }
   }
 }

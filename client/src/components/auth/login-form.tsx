@@ -34,7 +34,6 @@ interface LoginFormProps {
 export function LoginForm({ onSuccess, redirectTo }: LoginFormProps) {
   const { login } = useUser();
   const { toast } = useToast();
-  const [_, setLocation] = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize form with validation
@@ -51,56 +50,32 @@ export function LoginForm({ onSuccess, redirectTo }: LoginFormProps) {
     setIsSubmitting(true);
     
     try {
-      console.log(`[LoginForm] Attempting login for user: ${data.username}`);
+      const success = await login(data.username, data.password);
       
-      // Make API request to login endpoint directly
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      
-      console.log(`[LoginForm] Login response status: ${response.status}`);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.log('[LoginForm] Login failed:', errorData);
-        throw new Error(errorData.message || 'Invalid username or password');
-      }
-      
-      const result = await response.json();
-      console.log('[LoginForm] Login successful, token received:', !!result.token);
-      
-      // Store the token
-      if (result.token) {
-        // Use the authService directly to store the token
-        const { authService } = await import('@/services/auth-service');
-        authService.setToken(result.token);
-        console.log('[LoginForm] Token stored in local storage');
-      }
-      
-      toast({
-        title: 'Login successful',
-        description: 'Welcome back!',
-      });
-      
-      if (onSuccess) {
-        onSuccess();
-      }
-      
-      if (redirectTo) {
-        setLocation(redirectTo);
+      if (success) {
+        toast({
+          title: 'Login successful',
+          description: 'Welcome back!',
+        });
         
-        // Force a page reload to ensure the token is properly loaded
-        setTimeout(() => {
-          window.location.reload();
-        }, 100);
+        if (onSuccess) {
+          onSuccess();
+        }
+        
+        if (redirectTo) {
+          window.location.href = redirectTo;
+        }
+      } else {
+        toast({
+          title: 'Login failed',
+          description: 'Invalid username or password',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
-      console.error('[LoginForm] Login error:', error);
       toast({
-        title: 'Login failed',
-        description: error instanceof Error ? error.message : 'Invalid username or password',
+        title: 'Login error',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred',
         variant: 'destructive',
       });
     } finally {
