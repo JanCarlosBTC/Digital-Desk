@@ -140,13 +140,3 @@ We've recently made several optimizations to improve performance and user experi
 3. **Database Issues:**
    - Use the provided SQL execution tool for database inspection
    - Check Prisma Client errors for detailed database error information
-
-### Subscription Testing
-
-The system now uses a simplified subscription model:
-
-- **Trial Plan:** 7-day free trial with limited features
-- **Monthly Plan:** $28/month with unlimited features
-- **Annual Plan:** $285.60/year (15% discount) with unlimited features
-
-To test subscription features, navigate to `/subscription-plans` 
