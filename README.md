@@ -11,15 +11,6 @@ Digital Desk's documentation has been organized into several focused guides:
 - **[PRISMA-GUIDE.md](./PRISMA-GUIDE.md)** - Prisma ORM usage and best practices
 - **[COMPONENT-GUIDE.md](./COMPONENT-GUIDE.md)** - UI component usage and patterns
 
-## Documentation
-
-Digital Desk's documentation has been organized into several focused guides:
-
-- **Main README (this file)** - Overview, environment setup, and general architecture
-- **[ERROR-HANDLING.md](./ERROR-HANDLING.md)** - Comprehensive error handling guide
-- **[PRISMA-GUIDE.md](./PRISMA-GUIDE.md)** - Prisma ORM usage and best practices
-- **[COMPONENT-GUIDE.md](./COMPONENT-GUIDE.md)** - UI component usage and patterns
-
 ## Features
 
 - **Thinking Desk**: Organized space for brainstorming and working through complex problems

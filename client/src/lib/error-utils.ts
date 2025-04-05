@@ -1,3 +1,14 @@
+/**
+ * Error Utilities
+ * 
+ * This file provides utilities for handling errors throughout the application,
+ * including error classification, error enhancement, and a custom hook for consistent
+ * error handling with toast notifications.
+ * 
+ * For comprehensive documentation on error handling strategies, categories, and best practices,
+ * refer to the ERROR-HANDLING.md file in the root directory.
+ */
+
 import { useToast } from "@/hooks/use-toast";
 import { useCallback, useState, useEffect } from "react";
 import { ApiError } from "./api-utils";
