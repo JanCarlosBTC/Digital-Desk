@@ -2,6 +2,24 @@
 
 A comprehensive, digital workspace for entrepreneurs to organize their thoughts, brainstorm effectively, and make strategic decisions.
 
+## Documentation
+
+Digital Desk's documentation has been organized into several focused guides:
+
+- **Main README (this file)** - Overview, environment setup, and general architecture
+- **[ERROR-HANDLING.md](./ERROR-HANDLING.md)** - Comprehensive error handling guide
+- **[PRISMA-GUIDE.md](./PRISMA-GUIDE.md)** - Prisma ORM usage and best practices
+- **[COMPONENT-GUIDE.md](./COMPONENT-GUIDE.md)** - UI component usage and patterns
+
+## Documentation
+
+Digital Desk's documentation has been organized into several focused guides:
+
+- **Main README (this file)** - Overview, environment setup, and general architecture
+- **[ERROR-HANDLING.md](./ERROR-HANDLING.md)** - Comprehensive error handling guide
+- **[PRISMA-GUIDE.md](./PRISMA-GUIDE.md)** - Prisma ORM usage and best practices
+- **[COMPONENT-GUIDE.md](./COMPONENT-GUIDE.md)** - UI component usage and patterns
+
 ## Features
 
 - **Thinking Desk**: Organized space for brainstorming and working through complex problems
@@ -14,29 +32,19 @@ A comprehensive, digital workspace for entrepreneurs to organize their thoughts,
 We've recently made several optimizations to improve performance and user experience:
 
 1. **Responsive UI Improvements**:
-   - Enhanced Offer Vault component with proper responsive design
-   - Optimized mobile navigation with touch-friendly interactions
-   - Added proper responsive card layouts and grid system
+   - Enhanced responsive design across components including the Offer Vault, mobile navigation, and card layouts
 
 2. **Performance Optimizations**:
-   - Implemented memoization in the app layout to prevent unnecessary re-renders
+   - Implemented memoization strategies (app layout, React.memo for key components)
    - Used LazyMotion for framer-motion to load animations on demand
    - Added debounced window resize handlers in the responsive hooks
-   - Implemented component memoization with React.memo for key components
 
-3. **Error Handling Improvements**:
-   - Completely revamped error boundary with better error categorization
-   - Added user-friendly error messages based on error type
-   - Implemented error IDs for better tracking and debugging
-   - Added comprehensive error recovery strategies
-
-4. **User Experience Enhancements**:
-   - Better loading indicators in multiple components
-   - Added proper empty states with helpful messages
+3. **User Experience Enhancements**:
+   - Better loading indicators and empty states with helpful messages
    - Implemented consistent status badges and icons
    - Improved form validation with helpful descriptions
 
-5. **Accessibility Improvements**:
+4. **Accessibility Improvements**:
    - Added proper aria attributes to navigation components
    - Better keyboard navigation support
    - Improved color contrast for text elements
@@ -97,6 +105,9 @@ We've recently made several optimizations to improve performance and user experi
 2. **Error Handling:**
    - Use the Error Boundary component for catching rendering errors
    - Handle API errors with proper user feedback using toast notifications
+   - Implement user-friendly error messages based on error type
+   - Include error IDs for tracking and debugging
+   - Follow recovery strategies based on error category
 
 3. **Subscription Features:**
    - Follow the simplified subscription model (Trial, Monthly, Annual)
@@ -104,25 +115,23 @@ We've recently made several optimizations to improve performance and user experi
 
 ### Replit-Specific Best Practices
 
-1. **Backend URLs:**
+1. **Environment Configuration:**
    - Always use relative URLs for API endpoints (e.g., `/api/offers` not `http://localhost:3000/api/offers`)
    - Use `0.0.0.0` instead of `localhost` for host bindings
-
-2. **File Path References:**
    - Use relative paths from project root instead of absolute paths
    - Never reference `/repo/` in your code
 
-3. **Protected Files:**
+2. **Protected Files:**
    - Do not modify Vite configuration files (`vite.config.ts`, `server/vite.ts`)
    - Do not modify TypeScript configuration (`tsconfig.json`, `tsconfig.server.json`)
    - Do not modify Replit configuration files (`.replit`, `replit.nix`)
 
-4. **Database Operations:**
+3. **Database Operations:**
    - Use Prisma methods for database operations
    - Avoid direct SQL queries where possible
    - Use Prisma migrations for schema changes
 
-5. **Performance Considerations:**
+4. **Performance Considerations:**
    - Use React.memo for expensive components
    - Leverage React Query's caching capabilities
    - Use proper code splitting with lazy loading
@@ -149,4 +158,4 @@ The system now uses a simplified subscription model:
 - **Monthly Plan:** $28/month with unlimited features
 - **Annual Plan:** $285.60/year (15% discount) with unlimited features
 
-To test subscription features, navigate to `/subscription-plans` 
+To test subscription features, navigate to `/subscription-plans`

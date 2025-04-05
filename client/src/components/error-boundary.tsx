@@ -1,3 +1,13 @@
+/**
+ * Error Boundary Component
+ * 
+ * A React error boundary that catches JavaScript errors anywhere in the child component tree,
+ * logs those errors, and displays a fallback UI instead of crashing the component tree.
+ * 
+ * For detailed documentation on error handling strategies, categories, and best practices,
+ * refer to the ERROR-HANDLING.md file in the root directory.
+ */
+
 import React from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';

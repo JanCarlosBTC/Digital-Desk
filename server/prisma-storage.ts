@@ -1,3 +1,13 @@
+/**
+ * Prisma Storage Implementation
+ * 
+ * This file implements the IStorage interface using Prisma ORM.
+ * It provides the data access layer for all Digital Desk entities.
+ * 
+ * For comprehensive documentation on Prisma usage, data access patterns,
+ * and troubleshooting, refer to the PRISMA-GUIDE.md file in the root directory.
+ */
+
 import { IStorage } from './storage.js';
 import prisma from './prisma.js';
 import {

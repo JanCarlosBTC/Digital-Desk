@@ -1,3 +1,13 @@
+/**
+ * Prisma Client Configuration
+ * 
+ * This file initializes and exports a singleton instance of Prisma Client
+ * used throughout the application for database access.
+ * 
+ * For comprehensive documentation on Prisma usage, best practices, and troubleshooting,
+ * refer to the PRISMA-GUIDE.md file in the root directory.
+ */
+
 import { PrismaClient } from '@prisma/client';
 
 // Create a single instance of Prisma Client

@@ -9,6 +9,9 @@
  * 
  * Using these components ensures consistency across the application
  * and reduces code duplication.
+ * 
+ * For detailed documentation on component patterns and best practices,
+ * refer to the COMPONENT-GUIDE.md file in the root directory.
  */
 
 import React from 'react';
