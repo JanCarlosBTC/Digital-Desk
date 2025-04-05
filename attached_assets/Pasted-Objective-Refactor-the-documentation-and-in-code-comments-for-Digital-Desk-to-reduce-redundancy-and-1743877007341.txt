@@ -1,0 +1,22 @@
+Objective:
+Refactor the documentation and in-code comments for Digital Desk to reduce redundancy and improve clarity.
+
+Tasks:
+	1.	Consolidate Documentation Sections:
+	•	Recent Optimizations:
+	•	Merge the “Responsive UI Improvements” bullets into one clear statement (e.g., “Enhanced responsive design across components including the Offer Vault, mobile navigation, and card layouts”).
+	•	Combine performance optimizations that mention memoization (e.g., merge the app layout memoization and React.memo usage into one bullet).
+	•	Consolidate error handling improvements by merging the “Error Handling Improvements” section with similar instructions in the “Component Guidelines” section. Create one unified section for error handling that covers error boundaries, user-friendly error messages, error IDs, and recovery strategies.
+	•	Replit-Specific Best Practices:
+	•	Consolidate the guidelines on file path references, backend URL usage, and configuration file protection into a single, streamlined list. Remove any duplicate or overlapping instructions.
+	2.	Refactor In-Code Documentation:
+	•	Review comments and headers in the code (both frontend and backend) to ensure they reference the updated, consolidated documentation.
+	•	Move any redundant or duplicated in-code explanations into the centralized documentation (e.g., shared utilities or common practices should be documented once in the README or a dedicated documentation file in the repo).
+	3.	Ensure Consistency and Clarity:
+	•	Verify that all references to configuration settings (e.g., environment variables, package management) and best practices (e.g., performance optimizations, error handling) are consistent between the README and in-code comments.
+	•	Remove any outdated instructions (such as references to the deprecated Drizzle ORM) and update them to reflect the current stack (Prisma ORM).
+	4.	Testing and Version Control:
+	•	After making changes, thoroughly test the application to ensure functionality remains unaffected.
+	•	Use a clear commit message such as:
+Refactor documentation and code comments to consolidate redundant sections and improve clarity
+	•	Review the consolidated documentation to ensure that all necessary details are preserved and that instructions are clear for new developers.
