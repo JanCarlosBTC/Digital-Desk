@@ -43,6 +43,7 @@ function parseAndValidateId(id: string | undefined, res: Response): number | und
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Error handling middleware for Zod validation errors
+  // See ERROR-HANDLING.md for comprehensive error handling strategies
   const handleZodError = (error: unknown, res: Response): Response => {
     if (error instanceof ZodError) {
       const validationError = fromZodError(error);

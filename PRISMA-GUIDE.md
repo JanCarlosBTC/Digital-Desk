@@ -1,6 +1,6 @@
 # Prisma Guide for Digital Desk
 
-This is a quick reference guide for working with Prisma ORM in Digital Desk.
+This is a comprehensive reference guide for working with Prisma ORM in Digital Desk.
 
 ## Key Files
 
@@ -69,13 +69,11 @@ WHERE table_name = 'User';
 SELECT * FROM "User" LIMIT 10;
 ```
 
-## Migration from Drizzle
+## Note on ORM Usage
 
-The application has migrated from Drizzle ORM to Prisma ORM. Key differences:
+This application uses Prisma ORM exclusively. Key points to remember:
 
-1. **Type System:** Prisma has stricter typing than Drizzle
-2. **Optional Fields:** Handle null/undefined consistently 
-3. **Relations:** Use include/select in Prisma vs relation in Drizzle
-4. **JSON Data:** Prisma handles JSON fields differently
-
-Do not attempt to use Drizzle methods or migration tools with the Prisma schema.
+1. **Prisma Methods Only:** Use only Prisma methods for database access
+2. **Strict Typing:** Ensure data types match Prisma schema definitions
+3. **Relations:** Access related data using Prisma's include/select features
+4. **Schema Changes:** Use only Prisma migration methods (`prisma db push`)

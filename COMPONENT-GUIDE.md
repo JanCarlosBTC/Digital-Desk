@@ -46,7 +46,7 @@ The `EmptyState` component provides a consistent way to display when no data is 
 
 ### Error States
 
-The `ErrorState` component displays error messages with optional retry functionality.
+The `ErrorState` component displays error messages with optional retry functionality. See [ERROR-HANDLING.md](./ERROR-HANDLING.md) for the comprehensive error handling guide.
 
 #### Usage:
 
@@ -271,15 +271,15 @@ return (
 
 ## Best Practices
 
-1. **Consistent Error Handling**
-   - Use ErrorState components for all error states
-   - Include retry functionality where applicable
-   - Use toast notifications for transient errors
-
+1. **Error Handling**
+   - See [ERROR-HANDLING.md](./ERROR-HANDLING.md) for the comprehensive error handling guide
+   - Use ErrorState components for appropriate error use cases
+   - Wrap critical components with ErrorBoundary
+   
 2. **Loading States**
    - Always show loading indicators during data fetching
-   - Use appropriate loading variants for the content type
-   - Maintain consistent layout during loading states
+   - Use appropriate loading variants for the content type (`<LoadingState variant="card|list|default" />`)
+   - Maintain consistent layout during loading to prevent layout shifts
 
 3. **Empty States**
    - Provide clear messaging for empty states
