@@ -121,10 +121,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Problem Tree endpoints
-  app.get('/api/problem-trees', authenticate, cacheMiddleware('problem-trees', 300), async (req: Request, res: Response) => {
+  app.get('/api/problem-trees', cacheMiddleware('problem-trees', 300), async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).userId;
-      const problemTrees = await storage.getProblemTrees(userId);
+      // Default user ID of 1 since we removed auth
+      const problemTrees = await storage.getProblemTrees(1);
       return res.json(problemTrees);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching problem trees" });
