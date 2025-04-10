@@ -1,176 +1,96 @@
 import { User } from '@shared/schema';
-import { ApiError } from '@/lib/api-utils';
+import { storageService } from './storage-service'; // Assuming the new service is in the same directory
 
 /**
- * API endpoints for authentication 
+ * Simplified storage service for user preferences
  */
-const AUTH_ENDPOINTS = {
-  LOGIN: '/api/auth/login',
-  REGISTER: '/api/auth/register',
-  USER: '/api/user',
-  LOGOUT: '/api/auth/logout',
-  RESET_PASSWORD: '/api/auth/reset-password',
-};
+class StorageService {
+  private storageKey = 'userPreferences';
 
-/**
- * Login request parameters
- */
-export interface LoginRequest {
-  username: string;
-  password: string;
+  /**
+   * Get stored preferences
+   */
+  getPreferences(): any {
+    const stored = localStorage.getItem(this.storageKey);
+    return stored ? JSON.parse(stored) : {};
+  }
+
+  /**
+   * Save preferences
+   */
+  savePreferences(data: any): void {
+    localStorage.setItem(this.storageKey, JSON.stringify(data));
+  }
+
+  /**
+   * Clear all stored data
+   */
+  clearStorage(): void {
+    localStorage.removeItem(this.storageKey);
+  }
 }
 
-/**
- * Login response with user data and token
- */
-export interface LoginResponse {
-  user: User;
-  token: string;
-}
+// Export singleton instance
+export const storageService = new StorageService();
 
-/**
- * Registration request parameters
- */
-export interface RegisterRequest {
-  username: string;
-  password: string;
-  name: string;
-  email: string;
-}
-
-/**
- * Reset password request
- */
-export interface ResetPasswordRequest {
-  email: string;
-}
 
 /**
  * Authentication service for user management
- * - Handles login, logout, registration
- * - Saves and retrieves tokens from local storage
+ * - Handles login, logout, registration using only local storage
  */
 class AuthService {
-  private tokenKey = 'authToken';
-  
+  private userKey = 'currentUser';
+
   /**
-   * Get the stored authentication token
+   * Get the stored user data
    */
-  getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
+  getUser(): User | null {
+    const stored = localStorage.getItem(this.userKey);
+    return stored ? JSON.parse(stored) : null;
   }
-  
+
   /**
-   * Set the authentication token in local storage
+   * Save user data
    */
-  setToken(token: string): void {
-    localStorage.setItem(this.tokenKey, token);
+  saveUser(user: User): void {
+    localStorage.setItem(this.userKey, JSON.stringify(user));
   }
-  
+
   /**
-   * Clear the authentication token
+   * Clear the user data
    */
-  clearToken(): void {
-    localStorage.removeItem(this.tokenKey);
+  clearUser(): void {
+    localStorage.removeItem(this.userKey);
   }
-  
+
   /**
    * Check if user is logged in
    */
   isLoggedIn(): boolean {
-    return !!this.getToken();
+    return !!this.getUser();
   }
-  
+
   /**
-   * Login a user
-   * Currently a placeholder that will be implemented with real authentication
+   * Login a user (simplified to local storage)
    */
-  async login(data: LoginRequest): Promise<LoginResponse> {
-    try {
-      // This is a placeholder - will be properly implemented later
-      // Normally this would make a real API request
-      const token = 'demo_token';
-      this.setToken(token);
-      
-      // Mock user response
-      const user: User = {
-        id: 1,
-        username: data.username,
-        name: 'Demo User',
-        initials: 'DU',
-        plan: 'Premium',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      
-      return { user, token };
-    } catch (error) {
-      this.clearToken();
-      throw error;
-    }
+  login(user: User): void {
+    this.saveUser(user);
   }
-  
-  /**
-   * Register a new user
-   * This is a placeholder for the future implementation
-   */
-  async register(data: RegisterRequest): Promise<User> {
-    try {
-      // This will make a real API request in the future
-      throw new Error('Registration not yet implemented');
-    } catch (error) {
-      throw error;
-    }
-  }
-  
+
   /**
    * Logout the current user
    */
-  async logout(): Promise<void> {
-    // Clear token regardless of API response
-    this.clearToken();
-    
-    try {
-      // Would normally make an API request to invalidate the token on the server
-      // This is a placeholder
-    } catch (error) {
-      console.error('Error during logout:', error);
-    }
+  logout(): void {
+    this.clearUser();
   }
-  
+
   /**
    * Get the current user data
    */
-  async getCurrentUser(): Promise<User> {
-    try {
-      // This will make a real API request in the future
-      // For now it just returns a mock user
-      return {
-        id: 1,
-        username: 'demo',
-        name: 'Demo User',
-        initials: 'DU',
-        plan: 'Premium',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-    } catch (error) {
-      throw error;
-    }
-  }
-  
-  /**
-   * Request a password reset
-   */
-  async resetPassword(data: ResetPasswordRequest): Promise<void> {
-    try {
-      // This will make a real API request in the future
-      throw new Error('Password reset not yet implemented');
-    } catch (error) {
-      throw error;
-    }
+  getCurrentUser(): User | null {
+    return this.getUser();
   }
 }
 
 // Export a singleton instance
-export const authService = new AuthService(); 
+export const authService = new AuthService();

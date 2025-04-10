@@ -10,11 +10,7 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
-import { authenticate } from "./middleware/auth.js";
-import { register, login, getProfile, updateProfile } from "./controllers/auth.controller.js";
-import { createCheckoutSession, handleWebhook } from "./controllers/subscription.controller.js";
-import { checkSubscriptionLimits } from "./middleware/subscription.js";
-import { authLimiter, strictApiLimiter } from "./middleware/rate-limit.js";
+import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
 
 /**
  * Helper function to safely parse an ID from request parameters
@@ -55,16 +51,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.status(500).json({ message: "An unexpected error occurred" });
   };
 
-  // Auth routes - don't need authentication middleware but need rate limiting
-  app.post('/api/auth/register', authLimiter, register);
-  app.post('/api/auth/login', authLimiter, login);
-  
-  // User routes
-  app.get('/api/user/profile', authenticate, getProfile);
-  app.put('/api/user/profile', authenticate, updateProfile);
-  
-  // Subscription routes - these are sensitive operations so add strict rate limiting
-  app.post('/api/subscriptions/create-checkout', authenticate, strictApiLimiter, createCheckoutSession);
+  // Base routes without auth
+  app.get('/api/brain-dump', async (req, res) => {
+    try {
+      const brainDump = await storage.getBrainDumpByUserId(1); // Default user
+      res.json(brainDump || { content: "" });
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching brain dump" });
+    }
+  });
   
   // Stripe webhook handler - needs raw body, but no rate limiting as it's from Stripe
   app.post('/api/webhooks/stripe', 
