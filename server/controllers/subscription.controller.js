@@ -56,43 +56,10 @@ export const createCheckoutSession = async (req, res) => {
   }
 };
 
+/**
+ * Note: Subscription functionality has been removed.
+ * This is just a stub that returns a success response.
+ */
 export const handleWebhook = async (req, res) => {
-  const signature = req.headers['stripe-signature'];
-  
-  try {
-    const event = stripe.webhooks.constructEvent(
-      req.body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET || 'whsec_test_secret'
-    );
-    
-    switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object;
-        const userId = parseInt(session.metadata.userId);
-        const plan = session.metadata.plan;
-        
-        // Update user's subscription plan
-        await storage.updateUser(userId, { plan });
-        break;
-      }
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object;
-        // Handle subscription updates
-        console.log('Subscription updated:', subscription.id);
-        break;
-      }
-      case 'customer.subscription.deleted': {
-        const subscription = event.data.object;
-        // Handle subscription cancellation
-        console.log('Subscription cancelled:', subscription.id);
-        break;
-      }
-    }
-    
-    res.json({ received: true });
-  } catch (error) {
-    console.error('Webhook error:', error);
-    res.status(400).send(`Webhook Error: ${error.message}`);
-  }
+  res.json({ received: true, message: "Subscription functionality removed" });
 }; 

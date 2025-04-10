@@ -6,52 +6,24 @@ import { useUser } from '@/context/user-context';
 import { subscriptionService, Plan, PLAN_FEATURES } from '@/services/subscription-service';
 import { toast } from '@/hooks/use-toast';
 
+import { useEffect } from 'react';
+import { useLocation } from 'wouter';
+
 export default function SubscriptionPlans() {
-  const { user } = useUser();
-  const [isAnnual, setIsAnnual] = useState(false);
-  const [loading, setLoading] = useState<Plan | null>(null);
+  const [_, setLocation] = useLocation();
   
-  const currentPlan = user?.plan as Plan || Plan.FREE;
-  
-  // Calculate annual pricing (20% discount)
-  const getPrice = (basePrice: number) => {
-    if (isAnnual) {
-      // Apply annual discount
-      const annualPrice = basePrice * 12 * 0.8;
-      return `$${annualPrice.toFixed(2)}/year`;
-    }
-    return basePrice === 0 ? 'Free' : `$${basePrice.toFixed(2)}/month`;
-  };
-  
-  const handleUpgrade = async (plan: Plan) => {
-    if (plan === currentPlan) {
-      toast({
-        title: 'Current Plan',
-        description: `You are already on the ${plan} plan.`,
-      });
-      return;
-    }
+  // Redirect to home page since subscriptions have been removed
+  useEffect(() => {
+    toast({
+      title: 'Subscription Plans Removed',
+      description: 'All features are now available to all users for free.',
+    });
     
-    setLoading(plan);
-    
-    try {
-      // This will be replaced with actual payment processing
-      await subscriptionService.upgradePlan(plan);
-      
-      toast({
-        title: 'Success!',
-        description: `Your plan has been updated to ${plan}.`,
-      });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update subscription. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(null);
-    }
-  };
+    // Redirect after showing toast
+    setTimeout(() => {
+      setLocation('/');
+    }, 1500);
+  }, []);
   
   return (
     <div className="container py-12 mx-auto">

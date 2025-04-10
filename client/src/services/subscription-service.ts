@@ -2,54 +2,18 @@ import { authService } from './auth-service';
 import { subscriptionApi } from './api-service';
 
 /**
- * Available subscription plans
+ * Available subscription plans - now only a single plan is available
  */
 export enum Plan {
-  FREE = 'Free',
-  BASIC = 'Basic',
-  PREMIUM = 'Premium',
-  ENTERPRISE = 'Enterprise'
+  FREE = 'Free'
 }
 
 /**
- * Plan features and limits
+ * Plan features and limits - all features are unlimited
  */
 export const PLAN_FEATURES = {
   [Plan.FREE]: {
     price: 0,
-    offerLimit: 3,
-    problemTreeLimit: 5,
-    draftedPlanLimit: 3,
-    includesExport: false,
-    includesTemplates: false,
-    includesCollaboration: false,
-    includesAPI: false,
-    storageLimit: '100MB',
-  },
-  [Plan.BASIC]: {
-    price: 9.99,
-    offerLimit: 10,
-    problemTreeLimit: 20,
-    draftedPlanLimit: 10,
-    includesExport: true,
-    includesTemplates: false,
-    includesCollaboration: false,
-    includesAPI: false,
-    storageLimit: '1GB',
-  },
-  [Plan.PREMIUM]: {
-    price: 19.99,
-    offerLimit: 50,
-    problemTreeLimit: 100,
-    draftedPlanLimit: 50,
-    includesExport: true,
-    includesTemplates: true,
-    includesCollaboration: true,
-    includesAPI: false,
-    storageLimit: '10GB',
-  },
-  [Plan.ENTERPRISE]: {
-    price: 49.99,
     offerLimit: -1, // Unlimited
     problemTreeLimit: -1, // Unlimited
     draftedPlanLimit: -1, // Unlimited
@@ -57,7 +21,7 @@ export const PLAN_FEATURES = {
     includesTemplates: true,
     includesCollaboration: true,
     includesAPI: true,
-    storageLimit: '100GB',
+    storageLimit: 'Unlimited',
   }
 };
 
