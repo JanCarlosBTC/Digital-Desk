@@ -47,13 +47,8 @@ class SubscriptionService {
    * Get the current user's plan
    */
   async getCurrentPlan(): Promise<Plan> {
-    try {
-      const userData = await authService.getCurrentUser();
-      return (userData.plan as Plan) || Plan.FREE;
-    } catch (error) {
-      console.error('Error getting current plan:', error);
-      return Plan.FREE; // Default to free plan on error
-    }
+    // Always return FREE plan since subscription plans have been removed
+    return Plan.FREE;
   }
   
   /**
