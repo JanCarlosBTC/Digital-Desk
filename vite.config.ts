@@ -6,6 +6,10 @@ import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 // CommonJS compatible exports
 const config = defineConfig({
+  server: {
+    host: '0.0.0.0',
+    allowedHosts: ['2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev', 'localhost']
+  },
   plugins: [
     react(),
     runtimeErrorOverlay(),
