@@ -8,6 +8,13 @@ const api = axios.create({
   }
 });
 
+export const subscriptionApi = {
+  createCheckoutSession: async (plan: string) => {
+    const response = await api.post('/subscription/create-checkout-session', { plan });
+    return response.data;
+  }
+};
+
 // Add custom error handling if needed
 api.interceptors.response.use(
   (response) => response,
