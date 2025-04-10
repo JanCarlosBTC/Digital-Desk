@@ -293,7 +293,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) return;
+      if (parsedId === undefined) {
+        return res.status(400).json({ message: "Invalid ID" });
+      }
 
       const deleted = await storage.deleteWeeklyReflection(parsedId);
       if (!deleted) {
