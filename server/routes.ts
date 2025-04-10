@@ -13,40 +13,22 @@ import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
 
 /**
  * Helper function to safely parse an ID from request parameters
- * 
- * @param id The ID string to parse
- * @param res The response object to return errors through
- * @returns The parsed ID if valid, or undefined if an error was sent
  */
 function parseAndValidateId(id: string | undefined, res: Response): number | undefined {
   if (id === undefined) {
     res.status(400).json({ message: "ID parameter is required" });
     return undefined;
   }
-
-  // Ensure id is a string before parsing
   const idStr = String(id);
   const parsedId = parseInt(idStr);
-
   if (isNaN(parsedId)) {
     res.status(400).json({ message: "Invalid ID format" });
     return undefined;
-  }
-
-  return parsedId;
-}
-
-function parseId(id: string): number {
-  const parsedId = parseInt(id, 10);
-  if (isNaN(parsedId)) {
-    throw new Error('Invalid ID format');
   }
   return parsedId;
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Error handling middleware for Zod validation errors
-  // See ERROR-HANDLING.md for comprehensive error handling strategies
   const handleZodError = (error: unknown, res: Response): Response => {
     if (error instanceof ZodError) {
       const validationError = fromZodError(error);
@@ -57,17 +39,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     return res.status(500).json({ message: "An unexpected error occurred" });
   };
-
-  // Base routes without auth
-  app.get('/api/brain-dump', async (req, res) => {
-    try {
-      const brainDump = await storage.getBrainDumpByUserId(1); // Default user
-      res.json(brainDump || { content: "" });
-    } catch (error) {
-      res.status(500).json({ message: "Error fetching brain dump" });
-    }
-  });
-
 
   // Brain Dump endpoints
   app.get('/api/brain-dump', async (req: Request, res: Response) => {
@@ -177,7 +148,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
   // Drafted Plans endpoints - Simplified
   app.get('/api/drafted-plans', async (req: Request, res: Response) => {
     try {
@@ -229,7 +199,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ message: "Error deleting drafted plan" });
     }
   });
-
 
   // Clarity Lab endpoints - Simplified
   app.get('/api/clarity-labs', async (req: Request, res: Response) => {
@@ -284,7 +253,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
   // Weekly Reflections endpoints - Simplified
   app.get('/api/weekly-reflections', async (req: Request, res: Response) => {
     try {
@@ -336,7 +304,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ message: "Error deleting weekly reflection" });
     }
   });
-
 
   // Monthly Check-ins endpoints - Simplified
   app.get('/api/monthly-check-ins', async (req: Request, res: Response) => {
@@ -405,7 +372,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
   // Priorities endpoints - Simplified
   app.get('/api/priorities', async (req: Request, res: Response) => {
     try {
@@ -457,7 +423,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ message: "Error deleting priority" });
     }
   });
-
 
   // Decision Log endpoints - Simplified
   app.get('/api/decisions', cacheMiddleware('decisions', 300), async (req: Request, res: Response) => {
@@ -511,7 +476,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-
   // Offer Vault endpoints - Simplified
   app.get('/api/offers', async (req: Request, res: Response) => {
     try {
@@ -563,7 +527,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ message: "Error deleting offer" });
     }
   });
-
 
   // Offer Notes endpoints - Simplified
   app.get('/api/offer-notes', async (req: Request, res: Response) => {
