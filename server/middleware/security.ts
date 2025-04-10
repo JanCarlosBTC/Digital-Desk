@@ -77,8 +77,8 @@ export function sanitizeInput(req: Request, _res: Response, next: NextFunction) 
  */
 export function bruteForceProtection(
   windowMs = 15 * 60 * 1000, // 15 minutes
-  maxFailures = 5,
-  blockDuration = 30 * 60 * 1000 // 30 minutes
+  maxFailures = process.env.NODE_ENV === 'development' ? 15 : 5,
+  blockDuration = process.env.NODE_ENV === 'development' ? 5 * 60 * 1000 : 30 * 60 * 1000 // 5 minutes in dev, 30 in prod
 ) {
   // In-memory storage of failed attempts (should use Redis in production)
   const failedAttempts: Record<string, { count: number, blockedUntil?: number }> = {};
