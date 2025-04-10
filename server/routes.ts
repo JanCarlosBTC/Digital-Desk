@@ -10,7 +10,10 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
-import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
+import { authenticate } from "./middleware/auth.js";
+import { checkSubscriptionLimits } from "./middleware/subscription.js";
+import { handleWebhook } from "./controllers/subscription.controller.js";
+import { getProfile } from "./controllers/auth.controller.js";
 
 /**
  * Helper function to safely parse an ID from request parameters
