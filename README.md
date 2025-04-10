@@ -26,9 +26,9 @@ We've recently made several optimizations to improve performance and user experi
    - Enhanced responsive design across components including the Offer Vault, mobile navigation, and card layouts
 
 2. **Performance Optimizations**:
-   - Implemented memoization strategies (app layout, React.memo for key components)
+   - Implemented memoization strategies in app layout and key components with React.memo
    - Used LazyMotion for framer-motion to load animations on demand
-   - Added debounced window resize handlers in the responsive hooks
+   - Added debounced window resize handlers in responsive hooks
 
 3. **User Experience Enhancements**:
    - Better loading indicators and empty states with helpful messages
@@ -72,7 +72,7 @@ We've recently made several optimizations to improve performance and user experi
 
 - **ORM:** Prisma is used as the ORM for database access
 - **Implementation:** Use the PrismaStorage implementation in `server/prisma-storage.ts`
-- **Important:** The project has migrated from Drizzle ORM to Prisma ORM. Do not use Drizzle methods
+- **Documentation:** Refer to [PRISMA-GUIDE.md](./PRISMA-GUIDE.md) for detailed information
 
 #### API Structure
 
@@ -94,11 +94,8 @@ We've recently made several optimizations to improve performance and user experi
    - Example: `<LoadingState variant="skeleton" count={3} />`
 
 2. **Error Handling:**
-   - Use the Error Boundary component for catching rendering errors
-   - Handle API errors with proper user feedback using toast notifications
-   - Implement user-friendly error messages based on error type
-   - Include error IDs for tracking and debugging
-   - Follow recovery strategies based on error category
+   - See [ERROR-HANDLING.md](./ERROR-HANDLING.md) for the comprehensive error handling guide
+   - Always wrap critical components with the ErrorBoundary component
 
 3. **Subscription Features:**
    - Follow the simplified subscription model (Trial, Monthly, Annual)
@@ -106,21 +103,18 @@ We've recently made several optimizations to improve performance and user experi
 
 ### Replit-Specific Best Practices
 
-1. **Environment Configuration:**
-   - Always use relative URLs for API endpoints (e.g., `/api/offers` not `http://localhost:3000/api/offers`)
+1. **Environment & Path Configuration:**
+   - Use relative URLs for API endpoints (e.g., `/api/offers` not `http://localhost:3000/api/offers`)
    - Use `0.0.0.0` instead of `localhost` for host bindings
-   - Use relative paths from project root instead of absolute paths
-   - Never reference `/repo/` in your code
+   - Use relative paths from project root and never reference `/repo/` in code
 
-2. **Protected Files:**
-   - Do not modify Vite configuration files (`vite.config.ts`, `server/vite.ts`)
-   - Do not modify TypeScript configuration (`tsconfig.json`, `tsconfig.server.json`)
-   - Do not modify Replit configuration files (`.replit`, `replit.nix`)
+2. **Protected Files & Configuration:**
+   - Never modify system configuration files: Vite (`vite.config.ts`, `server/vite.ts`), TypeScript (`tsconfig.json`, `tsconfig.server.json`), or Replit (`.replit`, `replit.nix`)
+   - Use Replit package manager tool instead of directly modifying `package.json`
 
 3. **Database Operations:**
-   - Use Prisma methods for database operations
-   - Avoid direct SQL queries where possible
-   - Use Prisma migrations for schema changes
+   - Use Prisma methods for database operations (see [PRISMA-GUIDE.md](./PRISMA-GUIDE.md))
+   - Use Prisma migrations for schema changes (`npx prisma db push`)
 
 4. **Performance Considerations:**
    - Use React.memo for expensive components
