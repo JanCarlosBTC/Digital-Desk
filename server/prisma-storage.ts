@@ -384,6 +384,18 @@ export class PrismaStorage implements IStorage {
     return updatedWeeklyReflection;
   }
 
+  async deleteWeeklyReflection(id: number): Promise<boolean> {
+    try {
+      await prisma.weeklyReflection.delete({
+        where: { id }
+      });
+      return true;
+    } catch (error) {
+      console.error('Error deleting weekly reflection:', error);
+      return false;
+    }
+  }
+
   // Monthly Check-in methods
   async getMonthlyCheckIns(userId: number): Promise<MonthlyCheckIn[]> {
     // First get all check-ins from the database

@@ -50,6 +50,7 @@ export interface IStorage {
   getWeeklyReflection(id: number): Promise<WeeklyReflection | undefined>;
   createWeeklyReflection(weeklyReflection: InsertWeeklyReflection): Promise<WeeklyReflection>;
   updateWeeklyReflection(id: number, weeklyReflection: Partial<InsertWeeklyReflection>): Promise<WeeklyReflection | undefined>;
+  deleteWeeklyReflection(id: number): Promise<boolean>;
 
   // Monthly Check-in methods
   getMonthlyCheckIns(userId: number): Promise<MonthlyCheckIn[]>;
@@ -495,6 +496,25 @@ export class MemStorage implements IStorage {
     });
 
     return updated;
+  }
+
+  async deleteWeeklyReflection(id: number): Promise<boolean> {
+    const existing = this.weeklyReflections.get(id);
+    if (!existing) return false;
+
+    const deleted = this.weeklyReflections.delete(id);
+
+    if (deleted) {
+      await this.logActivity({
+        userId: existing.userId,
+        type: "delete",
+        entityType: "WeeklyReflection",
+        entityName: `Weekly Reflection ${id}`,
+        metadata: {}
+      });
+    }
+
+    return deleted;
   }
 
   // Monthly Check-in methods

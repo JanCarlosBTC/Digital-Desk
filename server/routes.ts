@@ -58,7 +58,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       const validatedData = insertBrainDumpSchema.parse(data);
       const brainDump = await storage.createBrainDump(validatedData);
-      res.status(201).json(brainDump);
+      return res.status(201).json(brainDump);
     } catch (error) {
       return handleZodError(error, res);
     }
@@ -108,7 +108,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       const validatedData = insertProblemTreeSchema.parse(data);
       const problemTree = await storage.createProblemTree(validatedData);
-      res.status(201).json(problemTree);
+      return res.status(201).json(problemTree);
     } catch (error) {
       return handleZodError(error, res);
     }
@@ -297,11 +297,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid ID" });
       }
 
-      const deleted = await storage.getWeeklyReflection(parsedId);
-return res.json({ success: true, data: deleted });
-      if (!deleted) {
+      const reflectionExists = await storage.getWeeklyReflection(parsedId);
+      if (!reflectionExists) {
         return res.status(404).json({ message: "Weekly reflection not found" });
       }
+      
+      // Now try to delete it
+      const deleted = await storage.deleteWeeklyReflection(parsedId);
+      if (!deleted) {
+        return res.status(500).json({ message: "Failed to delete weekly reflection" });
+      }
+      
       return res.status(204).end();
     } catch (error) {
       return res.status(500).json({ message: "Error deleting weekly reflection" });
