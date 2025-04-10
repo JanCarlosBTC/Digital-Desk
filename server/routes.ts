@@ -10,10 +10,6 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
-import { authenticate } from "./middleware/auth.js";
-import { checkSubscriptionLimits } from "./middleware/subscription.js";
-import { handleWebhook } from "./controllers/subscription.controller.js";
-import { getProfile } from "./controllers/auth.controller.js";
 
 /**
  * Helper function to safely parse an ID from request parameters
@@ -27,16 +23,24 @@ function parseAndValidateId(id: string | undefined, res: Response): number | und
     res.status(400).json({ message: "ID parameter is required" });
     return undefined;
   }
-  
+
   // Ensure id is a string before parsing
   const idStr = String(id);
   const parsedId = parseInt(idStr);
-  
+
   if (isNaN(parsedId)) {
     res.status(400).json({ message: "Invalid ID format" });
     return undefined;
   }
-  
+
+  return parsedId;
+}
+
+function parseId(id: string): number {
+  const parsedId = parseInt(id, 10);
+  if (isNaN(parsedId)) {
+    throw new Error('Invalid ID format');
+  }
   return parsedId;
 }
 
@@ -63,48 +67,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error fetching brain dump" });
     }
   });
-  
-  // Stripe webhook handler - needs raw body, but no rate limiting as it's from Stripe
-  app.post('/api/webhooks/stripe', 
-    express.raw({ type: 'application/json' }),
-    handleWebhook
-  );
 
-  // Current user endpoint (using authenticated middleware)
-  app.get('/api/user', authenticate, getProfile);
 
   // Brain Dump endpoints
-  app.get('/api/brain-dump', authenticate, async (req: Request, res: Response) => {
+  app.get('/api/brain-dump', async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).userId;
-      let brainDump = await storage.getBrainDumpByUserId(userId);
-      
-      // If no brain dump exists, create an empty one
-      if (!brainDump) {
-        brainDump = await storage.createBrainDump({
-          userId,
-          content: ""
-        });
-      }
-      
-      res.json(brainDump);
+      const brainDump = await storage.getBrainDumpByUserId(1); // Default user ID
+      res.json(brainDump || {content: ""});
     } catch (error) {
       res.status(500).json({ message: "Error fetching brain dump" });
     }
   });
 
-  app.put('/api/brain-dump/:id', authenticate, async (req: Request, res: Response) => {
+  app.post('/api/brain-dump', async (req: Request, res: Response) => {
+    try {
+      const data = {
+        userId: 1,
+        content: req.body.content
+      };
+      const validatedData = insertBrainDumpSchema.parse(data);
+      const brainDump = await storage.createBrainDump(validatedData);
+      res.status(201).json(brainDump);
+    } catch (error) {
+      return handleZodError(error, res);
+    }
+  });
+
+  app.put('/api/brain-dump/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { content } = req.body;
       
-      // Parse and validate ID
       const parsedId = parseAndValidateId(id, res);
       if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
+        return; 
       }
       
-      // Validate content
       if (content === undefined || content === null) {
         return res.status(400).json({ message: "Content is required" });
       }
@@ -120,10 +118,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
   // Problem Tree endpoints
   app.get('/api/problem-trees', cacheMiddleware('problem-trees', 300), async (req: Request, res: Response) => {
     try {
-      // Default user ID of 1 since we removed auth
       const problemTrees = await storage.getProblemTrees(1);
       return res.json(problemTrees);
     } catch (error) {
@@ -131,389 +129,238 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/problem-trees/:id', authenticate, async (req: Request, res: Response) => {
+  app.post('/api/problem-trees', clearCacheMiddleware('problem-trees'), async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
-      
-      // Use helper function to parse and validate ID
-      const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      const userId = (req as any).userId;
-      const problemTree = await storage.getProblemTree(parsedId);
-      
-      if (!problemTree) {
-        return res.status(404).json({ message: "Problem tree not found" });
-      }
-      
-      // Authorization check - only allow access to own data
-      if (problemTree.userId !== userId) {
-        return res.status(403).json({ message: "Unauthorized access to resource" });
-      }
-      
-      return res.json(problemTree);
-    } catch (error) {
-      return res.status(500).json({ message: "Error fetching problem tree" });
-    }
-  });
-
-  app.post('/api/problem-trees', authenticate, checkSubscriptionLimits('problemTrees'), async (req: Request, res: Response) => {
-    try {
-      const userId = (req as any).userId;
       const data = {
-        ...req.body,
-        userId
+        userId: 1,
+        ...req.body
       };
-      
       const validatedData = insertProblemTreeSchema.parse(data);
       const problemTree = await storage.createProblemTree(validatedData);
-      
-      return res.status(201).json(problemTree);
+      res.status(201).json(problemTree);
     } catch (error) {
       return handleZodError(error, res);
     }
   });
 
-  app.put('/api/problem-trees/:id', authenticate, async (req: Request, res: Response) => {
+  app.put('/api/problem-trees/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
-      
-      // Use helper function to parse and validate ID
+
       const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      const userId = (req as any).userId;
+      if (parsedId === undefined) return;
+
       const updatedProblemTree = await storage.updateProblemTree(parsedId, data);
       if (!updatedProblemTree) {
         return res.status(404).json({ message: "Problem tree not found" });
       }
-      
       return res.json(updatedProblemTree);
     } catch (error) {
       return res.status(500).json({ message: "Error updating problem tree" });
     }
   });
 
-  app.delete('/api/problem-trees/:id', authenticate, async (req: Request, res: Response) => {
+  app.delete('/api/problem-trees/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      
-      // Use helper function to parse and validate ID
       const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      const userId = (req as any).userId;
+      if (parsedId === undefined) return;
+
       const deleted = await storage.deleteProblemTree(parsedId);
-      
       if (!deleted) {
         return res.status(404).json({ message: "Problem tree not found" });
       }
-      
       return res.status(204).end();
     } catch (error) {
       return res.status(500).json({ message: "Error deleting problem tree" });
     }
   });
 
-  // Drafted Plans endpoints
-  app.get('/api/drafted-plans', authenticate, async (req: Request, res: Response) => {
+
+  // Drafted Plans endpoints - Simplified
+  app.get('/api/drafted-plans', async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).userId;
-      const draftedPlans = await storage.getDraftedPlans(userId);
+      const draftedPlans = await storage.getDraftedPlans(1);
       res.json(draftedPlans);
     } catch (error) {
       res.status(500).json({ message: "Error fetching drafted plans" });
     }
   });
-
-  app.get('/api/drafted-plans/:id', authenticate, async (req: Request, res: Response) => {
+  app.post('/api/drafted-plans', async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
-      
-      // Use helper function to parse and validate ID
-      const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      const userId = (req as any).userId;
-      const draftedPlan = await storage.getDraftedPlan(parsedId);
-      
-      if (!draftedPlan) {
-        return res.status(404).json({ message: "Drafted plan not found" });
-      }
-      
-      return res.json(draftedPlan);
-    } catch (error) {
-      return res.status(500).json({ message: "Error fetching drafted plan" });
-    }
-  });
-
-  app.post('/api/drafted-plans', authenticate, checkSubscriptionLimits('draftedPlans'), async (req: Request, res: Response) => {
-    try {
-      const userId = (req as any).userId;
-      const data = {
-        ...req.body,
-        userId
-      };
-      
+      const data = { userId: 1, ...req.body };
       const validatedData = insertDraftedPlanSchema.parse(data);
       const draftedPlan = await storage.createDraftedPlan(validatedData);
-      
       res.status(201).json(draftedPlan);
     } catch (error) {
       handleZodError(error, res);
     }
   });
-
-  app.put('/api/drafted-plans/:id', authenticate, async (req: Request, res: Response) => {
+  app.put('/api/drafted-plans/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
-      
-      // Use helper function to parse and validate ID
+
       const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      const userId = (req as any).userId;
+      if (parsedId === undefined) return;
+
       const updatedDraftedPlan = await storage.updateDraftedPlan(parsedId, data);
       if (!updatedDraftedPlan) {
         return res.status(404).json({ message: "Drafted plan not found" });
       }
-      
       return res.json(updatedDraftedPlan);
     } catch (error) {
       return res.status(500).json({ message: "Error updating drafted plan" });
     }
   });
-
-  app.delete('/api/drafted-plans/:id', authenticate, async (req: Request, res: Response) => {
+  app.delete('/api/drafted-plans/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      
-      // Use helper function to parse and validate ID
       const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      const userId = (req as any).userId;
+      if (parsedId === undefined) return;
+
       const deleted = await storage.deleteDraftedPlan(parsedId);
-      
       if (!deleted) {
         return res.status(404).json({ message: "Drafted plan not found" });
       }
-      
       return res.status(204).end();
     } catch (error) {
       return res.status(500).json({ message: "Error deleting drafted plan" });
     }
   });
 
-  // Clarity Lab endpoints
-  app.get('/api/clarity-labs', authenticate, async (req: Request, res: Response) => {
+
+  // Clarity Lab endpoints - Simplified
+  app.get('/api/clarity-labs', async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).userId;
       const category = req.query.category as string | undefined;
-      const clarityLabs = await storage.getClarityLabs(userId, category);
+      const clarityLabs = await storage.getClarityLabs(1, category);
       res.json(clarityLabs);
     } catch (error) {
       res.status(500).json({ message: "Error fetching clarity labs" });
     }
   });
-
-  app.get('/api/clarity-labs/:id', authenticate, async (req: Request, res: Response) => {
+  app.post('/api/clarity-labs', async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
-      
-      // Use helper function to parse and validate ID
-      const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      const userId = (req as any).userId;
-      const clarityLab = await storage.getClarityLab(parsedId);
-      
-      if (!clarityLab) {
-        return res.status(404).json({ message: "Clarity lab entry not found" });
-      }
-      
-      return res.json(clarityLab);
-    } catch (error) {
-      return res.status(500).json({ message: "Error fetching clarity lab entry" });
-    }
-  });
-
-  app.post('/api/clarity-labs', authenticate, async (req: Request, res: Response) => {
-    try {
-      const userId = (req as any).userId;
-      const data = {
-        ...req.body,
-        userId
-      };
-      
+      const data = { userId: 1, ...req.body };
       const validatedData = insertClarityLabSchema.parse(data);
       const clarityLab = await storage.createClarityLab(validatedData);
-      
       res.status(201).json(clarityLab);
     } catch (error) {
       handleZodError(error, res);
     }
   });
-
-  app.put('/api/clarity-labs/:id', authenticate, async (req: Request, res: Response) => {
+  app.put('/api/clarity-labs/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
-      
-      // Use helper function to parse and validate ID
+
       const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      const userId = (req as any).userId;
+      if (parsedId === undefined) return;
+
       const updatedClarityLab = await storage.updateClarityLab(parsedId, data);
       if (!updatedClarityLab) {
         return res.status(404).json({ message: "Clarity lab entry not found" });
       }
-      
       return res.json(updatedClarityLab);
     } catch (error) {
       return res.status(500).json({ message: "Error updating clarity lab entry" });
     }
   });
-
-  app.delete('/api/clarity-labs/:id', authenticate, async (req: Request, res: Response) => {
+  app.delete('/api/clarity-labs/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      
-      // Use helper function to parse and validate ID
       const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      const userId = (req as any).userId;
+      if (parsedId === undefined) return;
+
       const deleted = await storage.deleteClarityLab(parsedId);
-      
       if (!deleted) {
         return res.status(404).json({ message: "Clarity lab entry not found" });
       }
-      
       return res.status(204).end();
     } catch (error) {
       return res.status(500).json({ message: "Error deleting clarity lab entry" });
     }
   });
 
-  // Weekly Reflections endpoints
-  app.get('/api/weekly-reflections', authenticate, async (req: Request, res: Response) => {
+
+  // Weekly Reflections endpoints - Simplified
+  app.get('/api/weekly-reflections', async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).userId;
-      const weeklyReflections = await storage.getWeeklyReflections(userId);
+      const weeklyReflections = await storage.getWeeklyReflections(1);
       return res.json(weeklyReflections);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching weekly reflections" });
     }
   });
-
-  app.get('/api/weekly-reflections/:id', authenticate, async (req: Request, res: Response) => {
+  app.post('/api/weekly-reflections', async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
-      
-      // Use helper function to parse and validate ID
-      const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      const userId = (req as any).userId;
-      const weeklyReflection = await storage.getWeeklyReflection(parsedId);
-      
-      if (!weeklyReflection) {
-        return res.status(404).json({ message: "Weekly reflection not found" });
-      }
-      
-      return res.json(weeklyReflection);
+      const data = { userId: 1, ...req.body };
+      const validatedData = insertWeeklyReflectionSchema.parse(data);
+      const weeklyReflection = await storage.createWeeklyReflection(validatedData);
+      return res.status(201).json(weeklyReflection);
     } catch (error) {
-      return res.status(500).json({ message: "Error fetching weekly reflection" });
+      return handleZodError(error, res);
     }
   });
-
-  app.post('/api/weekly-reflections', authenticate, async (req: Request, res: Response) => {
-    try {
-      const userId = (req as any).userId;
-      const data = {
-        ...req.body,
-        userId
-      };
-      
-      console.log("Received weekly reflection data:", data);
-      
-      try {
-        const validatedData = insertWeeklyReflectionSchema.parse(data);
-        const weeklyReflection = await storage.createWeeklyReflection(validatedData);
-        return res.status(201).json(weeklyReflection);
-      } catch (zodError) {
-        console.error("Weekly reflection validation error:", zodError);
-        return handleZodError(zodError, res);
-      }
-    } catch (error) {
-      console.error("Unexpected error in weekly reflection creation:", error);
-      return res.status(500).json({ message: "Error creating weekly reflection" });
-    }
-  });
-
-  app.put('/api/weekly-reflections/:id', authenticate, async (req: Request, res: Response) => {
+  app.put('/api/weekly-reflections/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
-      
-      // Use helper function to parse and validate ID
+
       const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      const userId = (req as any).userId;
+      if (parsedId === undefined) return;
+
       const updatedWeeklyReflection = await storage.updateWeeklyReflection(parsedId, data);
       if (!updatedWeeklyReflection) {
         return res.status(404).json({ message: "Weekly reflection not found" });
       }
-      
       return res.json(updatedWeeklyReflection);
     } catch (error) {
       return res.status(500).json({ message: "Error updating weekly reflection" });
     }
   });
-
-  // Monthly Check-ins endpoints
-  app.get('/api/monthly-check-ins', authenticate, async (req: Request, res: Response) => {
+  app.delete('/api/weekly-reflections/:id', async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).userId;
-      const monthlyCheckIns = await storage.getMonthlyCheckIns(userId);
+      const { id } = req.params;
+      const parsedId = parseAndValidateId(id, res);
+      if (parsedId === undefined) return;
+
+      const deleted = await storage.deleteWeeklyReflection(parsedId);
+      if (!deleted) {
+        return res.status(404).json({ message: "Weekly reflection not found" });
+      }
+      return res.status(204).end();
+    } catch (error) {
+      return res.status(500).json({ message: "Error deleting weekly reflection" });
+    }
+  });
+
+
+  // Monthly Check-ins endpoints - Simplified
+  app.get('/api/monthly-check-ins', async (req: Request, res: Response) => {
+    try {
+      const monthlyCheckIns = await storage.getMonthlyCheckIns(1);
       return res.json(monthlyCheckIns);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching monthly check-ins" });
     }
   });
-
-  app.get('/api/monthly-check-ins/:month/:year', authenticate, async (req: Request, res: Response) => {
+  app.post('/api/monthly-check-ins', async (req: Request, res: Response) => {
+    try {
+      const data = { userId: 1, ...req.body };
+      const validatedData = insertMonthlyCheckInSchema.parse(data);
+      const monthlyCheckIn = await storage.createMonthlyCheckIn(validatedData);
+      return res.status(201).json(monthlyCheckIn);
+    } catch (error) {
+      return handleZodError(error, res);
+    }
+  });
+  app.get('/api/monthly-check-ins/:month/:year', async (req: Request, res: Response) => {
     try {
       const { month, year } = req.params;
       
-      // Validate month and year
       const parsedMonth = parseInt(String(month));
       const parsedYear = parseInt(String(year));
       
@@ -525,9 +372,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid year format. Year must be between 2000 and 2100." });
       }
       
-      const userId = (req as any).userId;
       const monthlyCheckIn = await storage.getMonthlyCheckInByMonthYear(
-        userId, 
+        1, 
         parsedMonth, 
         parsedYear
       );
@@ -541,380 +387,210 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ message: "Error fetching monthly check-in" });
     }
   });
-
-  app.post('/api/monthly-check-ins', authenticate, async (req: Request, res: Response) => {
-    try {
-      const userId = (req as any).userId;
-      const data = {
-        ...req.body,
-        userId
-      };
-      
-      const validatedData = insertMonthlyCheckInSchema.parse(data);
-      const monthlyCheckIn = await storage.createMonthlyCheckIn(validatedData);
-      
-      return res.status(201).json(monthlyCheckIn);
-    } catch (error) {
-      return handleZodError(error, res);
-    }
-  });
-
-  app.put('/api/monthly-check-ins/:id', authenticate, async (req: Request, res: Response) => {
+  app.put('/api/monthly-check-ins/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
-      
-      // Use helper function to parse and validate ID
+
       const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      const userId = (req as any).userId;
+      if (parsedId === undefined) return;
+
       const updatedMonthlyCheckIn = await storage.updateMonthlyCheckIn(parsedId, data);
       if (!updatedMonthlyCheckIn) {
         return res.status(404).json({ message: "Monthly check-in not found" });
       }
-      
       return res.json(updatedMonthlyCheckIn);
     } catch (error) {
       return res.status(500).json({ message: "Error updating monthly check-in" });
     }
   });
 
-  // Priorities endpoints
-  app.get('/api/priorities', authenticate, async (req: Request, res: Response) => {
+
+  // Priorities endpoints - Simplified
+  app.get('/api/priorities', async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).userId;
-      const priorities = await storage.getPriorities(userId);
+      const priorities = await storage.getPriorities(1);
       return res.json(priorities);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching priorities" });
     }
   });
-
-  app.post('/api/priorities', authenticate, async (req: Request, res: Response) => {
+  app.post('/api/priorities', async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).userId;
-      const data = {
-        ...req.body,
-        userId
-      };
-      
+      const data = { userId: 1, ...req.body };
       const validatedData = insertPrioritySchema.parse(data);
       const priority = await storage.createPriority(validatedData);
-      
       return res.status(201).json(priority);
     } catch (error) {
       return handleZodError(error, res);
     }
   });
-
-  app.put('/api/priorities/:id', authenticate, async (req: Request, res: Response) => {
+  app.put('/api/priorities/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
-      
-      // Use helper function to parse and validate ID
+
       const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      const userId = (req as any).userId;
+      if (parsedId === undefined) return;
+
       const updatedPriority = await storage.updatePriority(parsedId, data);
       if (!updatedPriority) {
         return res.status(404).json({ message: "Priority not found" });
       }
-      
       return res.json(updatedPriority);
     } catch (error) {
       return res.status(500).json({ message: "Error updating priority" });
     }
   });
-
-  app.delete('/api/priorities/:id', authenticate, async (req: Request, res: Response) => {
+  app.delete('/api/priorities/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      
-      // Use helper function to parse and validate ID
       const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      const userId = (req as any).userId;
+      if (parsedId === undefined) return;
+
       const deleted = await storage.deletePriority(parsedId);
-      
       if (!deleted) {
         return res.status(404).json({ message: "Priority not found" });
       }
-      
       return res.status(204).end();
     } catch (error) {
       return res.status(500).json({ message: "Error deleting priority" });
     }
   });
 
-  // Decision Log endpoints
-  app.get('/api/decisions', authenticate, cacheMiddleware('decisions', 300), async (req: Request, res: Response) => {
+
+  // Decision Log endpoints - Simplified
+  app.get('/api/decisions', cacheMiddleware('decisions', 300), async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).userId;
-      const decisions = await storage.getDecisions(userId);
+      const decisions = await storage.getDecisions(1);
       return res.json(decisions);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching decisions" });
     }
   });
-
-  app.get('/api/decisions/:id', authenticate, async (req: Request, res: Response) => {
+  app.post('/api/decisions', clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
-      
-      // Use helper function to parse and validate ID
-      const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      const userId = (req as any).userId;
-      const decision = await storage.getDecision(parsedId);
-      
-      if (!decision) {
-        return res.status(404).json({ message: "Decision not found" });
-      }
-      
-      return res.json(decision);
-    } catch (error) {
-      return res.status(500).json({ message: "Error fetching decision" });
-    }
-  });
-
-  app.post('/api/decisions', authenticate, clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
-    try {
-      const userId = (req as any).userId;
-      const data = {
-        ...req.body,
-        userId
-      };
-      
+      const data = { userId: 1, ...req.body };
       const validatedData = insertDecisionSchema.parse(data);
       const decision = await storage.createDecision(validatedData);
-      
       return res.status(201).json(decision);
     } catch (error) {
       return handleZodError(error, res);
     }
   });
-
-  app.put('/api/decisions/:id', authenticate, clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
+  app.put('/api/decisions/:id', clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
-      
-      // Use helper function to parse and validate ID
+
       const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      // Get existing decision to detect status changes
-      const userId = (req as any).userId;
-      const existingDecision = await storage.getDecision(parsedId);
-      if (!existingDecision) {
-        return res.status(404).json({ message: "Decision not found" });
-      }
-      
+      if (parsedId === undefined) return;
+
       const updatedDecision = await storage.updateDecision(parsedId, data);
       if (!updatedDecision) {
         return res.status(404).json({ message: "Decision not found after update" });
       }
-      
       return res.json(updatedDecision);
     } catch (error) {
       return res.status(500).json({ message: "Error updating decision" });
     }
   });
-
-  app.delete('/api/decisions/:id', authenticate, clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
+  app.delete('/api/decisions/:id', clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      
-      // Use helper function to parse and validate ID
       const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      // Get the decision before deleting for validation
-      const userId = (req as any).userId;
-      const decision = await storage.getDecision(parsedId);
-      if (!decision) {
-        return res.status(404).json({ message: "Decision not found" });
-      }
-      
+      if (parsedId === undefined) return;
+
       const deleted = await storage.deleteDecision(parsedId);
       if (!deleted) {
         return res.status(404).json({ message: "Decision not found after delete attempt" });
       }
-      
       return res.status(204).end();
     } catch (error) {
       return res.status(500).json({ message: "Error deleting decision" });
     }
   });
 
-  // Offer Vault endpoints
-  app.get('/api/offers', authenticate, async (req: Request, res: Response) => {
+
+  // Offer Vault endpoints - Simplified
+  app.get('/api/offers', async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).userId;
-      const offers = await storage.getOffers(userId);
+      const offers = await storage.getOffers(1);
       return res.json(offers);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching offers" });
     }
   });
-
-  app.get('/api/offers/:id', authenticate, async (req: Request, res: Response) => {
+  app.post('/api/offers', async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
-      
-      // Use helper function to parse and validate ID
-      const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      const userId = (req as any).userId;
-      const offer = await storage.getOffer(parsedId);
-      
-      if (!offer) {
-        return res.status(404).json({ message: "Offer not found" });
-      }
-      
-      return res.json(offer);
-    } catch (error) {
-      return res.status(500).json({ message: "Error fetching offer" });
-    }
-  });
-
-  app.post('/api/offers', authenticate, checkSubscriptionLimits('offers'), async (req: Request, res: Response) => {
-    try {
-      const userId = (req as any).userId;
-      const data = {
-        ...req.body,
-        userId
-      };
-      
+      const data = { userId: 1, ...req.body };
       const validatedData = insertOfferSchema.parse(data);
       const offer = await storage.createOffer(validatedData);
-      
       return res.status(201).json(offer);
     } catch (error) {
       return handleZodError(error, res);
     }
   });
-
-  app.put('/api/offers/:id', authenticate, async (req: Request, res: Response) => {
+  app.put('/api/offers/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
-      
-      // Use helper function to parse and validate ID
+
       const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      // Get existing offer to detect status changes
-      const userId = (req as any).userId;
-      const existingOffer = await storage.getOffer(parsedId);
-      if (!existingOffer) {
-        return res.status(404).json({ message: "Offer not found" });
-      }
-      
+      if (parsedId === undefined) return;
+
       const updatedOffer = await storage.updateOffer(parsedId, data);
       if (!updatedOffer) {
         return res.status(404).json({ message: "Offer not found after update" });
       }
-      
       return res.json(updatedOffer);
     } catch (error) {
       return res.status(500).json({ message: "Error updating offer" });
     }
   });
-
-  app.delete('/api/offers/:id', authenticate, async (req: Request, res: Response) => {
+  app.delete('/api/offers/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      
-      // Use helper function to parse and validate ID
       const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      // Get the offer before deleting for validation
-      const userId = (req as any).userId;
-      const offer = await storage.getOffer(parsedId);
-      if (!offer) {
-        return res.status(404).json({ message: "Offer not found" });
-      }
-      
+      if (parsedId === undefined) return;
+
       const deleted = await storage.deleteOffer(parsedId);
       if (!deleted) {
         return res.status(404).json({ message: "Offer not found after delete attempt" });
       }
-      
       return res.status(204).end();
     } catch (error) {
       return res.status(500).json({ message: "Error deleting offer" });
     }
   });
 
-  // Offer Notes endpoints
-  app.get('/api/offer-notes', authenticate, async (req: Request, res: Response) => {
+
+  // Offer Notes endpoints - Simplified
+  app.get('/api/offer-notes', async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).userId;
-      let offerNotes = await storage.getOfferNotesByUserId(userId);
-      
-      // If no notes exist or the array is empty, create empty notes
+      let offerNotes = await storage.getOfferNotesByUserId(1);
       if (!offerNotes || offerNotes.length === 0) {
-        const newNote = await storage.createOfferNote({
-          userId,
-          content: ""
-        });
+        const newNote = await storage.createOfferNote({ userId: 1, content: "" });
         offerNotes = [newNote];
       }
-      
       return res.json(offerNotes);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching offer notes" });
     }
   });
-
-  app.put('/api/offer-notes/:id', authenticate, async (req: Request, res: Response) => {
+  app.put('/api/offer-notes/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { content } = req.body;
-      
-      // Use helper function to parse and validate ID
       const parsedId = parseAndValidateId(id, res);
-      if (parsedId === undefined) {
-        return; // Error response already sent by the helper function
-      }
-      
-      // Validate content
+      if (parsedId === undefined) return;
       if (content === undefined || content === null) {
         return res.status(400).json({ message: "Content is required" });
       }
-      
-      const userId = (req as any).userId;
       const updatedOfferNote = await storage.updateOfferNote(parsedId, content);
       if (!updatedOfferNote) {
         return res.status(404).json({ message: "Offer notes not found" });
       }
-      
       return res.json(updatedOfferNote);
     } catch (error) {
       return res.status(500).json({ message: "Error updating offer notes" });
