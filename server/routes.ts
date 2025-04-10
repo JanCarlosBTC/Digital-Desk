@@ -297,7 +297,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid ID" });
       }
 
-      const deleted = await storage.deleteWeeklyReflection(parsedId);
+      const deleted = await storage.getWeeklyReflection(parsedId);
+return res.json({ success: true, data: deleted });
       if (!deleted) {
         return res.status(404).json({ message: "Weekly reflection not found" });
       }
