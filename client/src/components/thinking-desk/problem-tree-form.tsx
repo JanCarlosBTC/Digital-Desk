@@ -127,6 +127,12 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
     e.preventDefault();
     console.log("Form submitted");
     
+    await submitForm();
+  };
+  
+  // This function handles the actual form submission logic - can be called from both
+  // direct form submission and from dialog-form's onSubmit
+  const submitForm = async () => {
     if (!validateForm()) {
       console.log("Form validation failed:", errors);
       return;
@@ -265,6 +271,231 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
     }
   };
   
+  // Render the form fields and buttons
+  const renderFormContent = () => (
+    <div className="space-y-6">
+      {/* Title field */}
+      <div className="space-y-2">
+        <label htmlFor="title" className="block text-sm font-medium">
+          Title
+        </label>
+        <Input
+          id="title"
+          placeholder="Give your problem tree a title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className={errors.title ? 'border-destructive' : ''}
+        />
+        {errors.title && (
+          <p className="text-sm font-medium text-destructive">{errors.title}</p>
+        )}
+      </div>
+      
+      {/* Main Problem field */}
+      <div className="space-y-2">
+        <label htmlFor="mainProblem" className="block text-sm font-medium">
+          Main Problem
+        </label>
+        <Textarea
+          id="mainProblem"
+          placeholder="Describe the main problem you're analyzing"
+          value={mainProblem}
+          onChange={(e) => setMainProblem(e.target.value)}
+          className={`min-h-20 ${errors.mainProblem ? 'border-destructive' : ''}`}
+        />
+        {errors.mainProblem && (
+          <p className="text-sm font-medium text-destructive">{errors.mainProblem}</p>
+        )}
+      </div>
+      
+      {/* Sub Problems fields */}
+      <div className="space-y-2">
+        <label className="block text-sm font-medium">
+          Sub Problems
+        </label>
+        {subProblems.map((subProblem, index) => (
+          <div key={`sub-${index}`} className="flex items-center space-x-2">
+            <Input
+              placeholder="Enter a sub-problem"
+              value={subProblem}
+              onChange={(e) => updateField('subProblems', index, e.target.value)}
+              className={errors.subProblems ? 'border-destructive' : ''}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => removeField('subProblems', index)}
+              disabled={subProblems.length <= 1}
+            >
+              Remove
+            </Button>
+          </div>
+        ))}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => addField('subProblems')}
+          className="mt-2"
+        >
+          Add Sub-Problem
+        </Button>
+        {errors.subProblems && (
+          <p className="text-sm font-medium text-destructive">{errors.subProblems}</p>
+        )}
+      </div>
+      
+      {/* Root Causes fields */}
+      <div className="space-y-2">
+        <label className="block text-sm font-medium">
+          Root Causes
+        </label>
+        {rootCauses.map((rootCause, index) => (
+          <div key={`cause-${index}`} className="flex items-center space-x-2">
+            <Input
+              placeholder="Enter a root cause"
+              value={rootCause}
+              onChange={(e) => updateField('rootCauses', index, e.target.value)}
+              className={errors.rootCauses ? 'border-destructive' : ''}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => removeField('rootCauses', index)}
+              disabled={rootCauses.length <= 1}
+            >
+              Remove
+            </Button>
+          </div>
+        ))}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => addField('rootCauses')}
+          className="mt-2"
+        >
+          Add Root Cause
+        </Button>
+        {errors.rootCauses && (
+          <p className="text-sm font-medium text-destructive">{errors.rootCauses}</p>
+        )}
+      </div>
+      
+      {/* Potential Solutions fields */}
+      <div className="space-y-2">
+        <label className="block text-sm font-medium">
+          Potential Solutions
+        </label>
+        {potentialSolutions.map((solution, index) => (
+          <div key={`solution-${index}`} className="flex items-center space-x-2">
+            <Input
+              placeholder="Enter a potential solution"
+              value={solution}
+              onChange={(e) => updateField('potentialSolutions', index, e.target.value)}
+              className={errors.potentialSolutions ? 'border-destructive' : ''}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => removeField('potentialSolutions', index)}
+              disabled={potentialSolutions.length <= 1}
+            >
+              Remove
+            </Button>
+          </div>
+        ))}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => addField('potentialSolutions')}
+          className="mt-2"
+        >
+          Add Solution
+        </Button>
+        {errors.potentialSolutions && (
+          <p className="text-sm font-medium text-destructive">{errors.potentialSolutions}</p>
+        )}
+      </div>
+      
+      {/* Next Actions fields */}
+      <div className="space-y-2">
+        <label className="block text-sm font-medium">
+          Next Actions (Optional)
+        </label>
+        {nextActions.map((action, index) => (
+          <div key={`action-${index}`} className="flex items-center space-x-2">
+            <Input
+              placeholder="Enter a next action"
+              value={action}
+              onChange={(e) => updateField('nextActions', index, e.target.value)}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => removeField('nextActions', index)}
+              disabled={nextActions.length <= 1}
+            >
+              Remove
+            </Button>
+          </div>
+        ))}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => addField('nextActions')}
+          className="mt-2"
+        >
+          Add Action
+        </Button>
+      </div>
+      
+      {/* Form buttons */}
+      <div className="flex justify-between pt-4">
+        <div>
+          {isEditing && (
+            <Button 
+              type="button" 
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isSubmitting || isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          )}
+        </div>
+        <div className="flex space-x-2">
+          <Button 
+            type="button" 
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isSubmitting || isDeleting}
+          >
+            Cancel
+          </Button>
+          <Button 
+            type={isDialog ? "button" : "submit"}
+            onClick={isDialog ? () => submitForm() : undefined}
+            // Use a valid variant instead of "thinkingDesk"
+            variant="default"
+            disabled={isSubmitting || isDeleting}
+          >
+            {isSubmitting 
+              ? isEditing ? "Updating..." : "Creating..." 
+              : isEditing ? "Update" : "Create"
+            }
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+  
   return (
     <div className={`bg-white ${!isDialog ? 'rounded-lg shadow-md p-6 border border-gray-200 sticky top-6' : ''}`}>
       {!isDialog && (
@@ -278,225 +509,14 @@ const ProblemTreeForm = ({ selectedProblemTree, onSuccess, isDialog = false }: P
         </>
       )}
       
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Title field */}
-        <div className="space-y-2">
-          <label htmlFor="title" className="block text-sm font-medium">
-            Title
-          </label>
-          <Input
-            id="title"
-            placeholder="Give your problem tree a title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className={errors.title ? 'border-destructive' : ''}
-          />
-          {errors.title && (
-            <p className="text-sm font-medium text-destructive">{errors.title}</p>
-          )}
-        </div>
-        
-        {/* Main Problem field */}
-        <div className="space-y-2">
-          <label htmlFor="mainProblem" className="block text-sm font-medium">
-            Main Problem
-          </label>
-          <Textarea
-            id="mainProblem"
-            placeholder="Describe the main problem you're analyzing"
-            value={mainProblem}
-            onChange={(e) => setMainProblem(e.target.value)}
-            className={`min-h-20 ${errors.mainProblem ? 'border-destructive' : ''}`}
-          />
-          {errors.mainProblem && (
-            <p className="text-sm font-medium text-destructive">{errors.mainProblem}</p>
-          )}
-        </div>
-        
-        {/* Sub Problems fields */}
-        <div className="space-y-2">
-          <label className="block text-sm font-medium">
-            Sub Problems
-          </label>
-          {subProblems.map((subProblem, index) => (
-            <div key={`sub-${index}`} className="flex items-center space-x-2">
-              <Input
-                placeholder="Enter a sub-problem"
-                value={subProblem}
-                onChange={(e) => updateField('subProblems', index, e.target.value)}
-                className={errors.subProblems ? 'border-destructive' : ''}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => removeField('subProblems', index)}
-                disabled={subProblems.length <= 1}
-              >
-                Remove
-              </Button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addField('subProblems')}
-            className="mt-2"
-          >
-            Add Sub-Problem
-          </Button>
-          {errors.subProblems && (
-            <p className="text-sm font-medium text-destructive">{errors.subProblems}</p>
-          )}
-        </div>
-        
-        {/* Root Causes fields */}
-        <div className="space-y-2">
-          <label className="block text-sm font-medium">
-            Root Causes
-          </label>
-          {rootCauses.map((rootCause, index) => (
-            <div key={`cause-${index}`} className="flex items-center space-x-2">
-              <Input
-                placeholder="Enter a root cause"
-                value={rootCause}
-                onChange={(e) => updateField('rootCauses', index, e.target.value)}
-                className={errors.rootCauses ? 'border-destructive' : ''}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => removeField('rootCauses', index)}
-                disabled={rootCauses.length <= 1}
-              >
-                Remove
-              </Button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addField('rootCauses')}
-            className="mt-2"
-          >
-            Add Root Cause
-          </Button>
-          {errors.rootCauses && (
-            <p className="text-sm font-medium text-destructive">{errors.rootCauses}</p>
-          )}
-        </div>
-        
-        {/* Potential Solutions fields */}
-        <div className="space-y-2">
-          <label className="block text-sm font-medium">
-            Potential Solutions
-          </label>
-          {potentialSolutions.map((solution, index) => (
-            <div key={`solution-${index}`} className="flex items-center space-x-2">
-              <Input
-                placeholder="Enter a potential solution"
-                value={solution}
-                onChange={(e) => updateField('potentialSolutions', index, e.target.value)}
-                className={errors.potentialSolutions ? 'border-destructive' : ''}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => removeField('potentialSolutions', index)}
-                disabled={potentialSolutions.length <= 1}
-              >
-                Remove
-              </Button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addField('potentialSolutions')}
-            className="mt-2"
-          >
-            Add Solution
-          </Button>
-          {errors.potentialSolutions && (
-            <p className="text-sm font-medium text-destructive">{errors.potentialSolutions}</p>
-          )}
-        </div>
-        
-        {/* Next Actions fields */}
-        <div className="space-y-2">
-          <label className="block text-sm font-medium">
-            Next Actions (Optional)
-          </label>
-          {nextActions.map((action, index) => (
-            <div key={`action-${index}`} className="flex items-center space-x-2">
-              <Input
-                placeholder="Enter a next action"
-                value={action}
-                onChange={(e) => updateField('nextActions', index, e.target.value)}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => removeField('nextActions', index)}
-                disabled={nextActions.length <= 1}
-              >
-                Remove
-              </Button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => addField('nextActions')}
-            className="mt-2"
-          >
-            Add Action
-          </Button>
-        </div>
-        
-        {/* Form buttons */}
-        <div className="flex justify-between pt-4">
-          <div>
-            {isEditing && (
-              <Button 
-                type="button" 
-                variant="destructive"
-                onClick={handleDelete}
-                disabled={isSubmitting || isDeleting}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </Button>
-            )}
-          </div>
-          <div className="flex space-x-2">
-            <Button 
-              type="button" 
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isSubmitting || isDeleting}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit"
-              variant="thinkingDesk"
-              disabled={isSubmitting || isDeleting}
-            >
-              {isSubmitting 
-                ? isEditing ? "Updating..." : "Creating..." 
-                : isEditing ? "Update" : "Create"
-              }
-            </Button>
-          </div>
-        </div>
-      </form>
+      {/* When inside a dialog, don't use a form tag since DialogForm already has one */}
+      {isDialog ? (
+        renderFormContent()
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {renderFormContent()}
+        </form>
+      )}
     </div>
   );
 };

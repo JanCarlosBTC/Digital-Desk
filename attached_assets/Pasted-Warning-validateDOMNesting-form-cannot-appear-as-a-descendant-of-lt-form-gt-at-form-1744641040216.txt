@@ -1,0 +1,43 @@
+Warning: validateDOMNesting(...): <form> cannot appear as a descendant of &lt;form&gt;.
+    at form
+    at div
+    at ProblemTreeForm (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/components/thinking-desk/problem-tree-form.tsx:8:28)
+    at div
+    at div
+    at form
+    at div
+    at div
+    at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-4Y7AZP6D.js?v=33400d00:41:13
+    at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-3WMIM4HP.js?v=33400d00:61:7
+    at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-H47YCWBR.js?v=33400d00:52:11
+    at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-H47YCWBR.js?v=33400d00:33:11
+    at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-4Y7AZP6D.js?v=33400d00:41:13
+    at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-FYFXSGAQ.js?v=33400d00:29:5
+    at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QNR25H4B.js?v=33400d00:232:13
+    at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QNR25H4B.js?v=33400d00:155:58
+    at Presence (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5JFKRUWG.js?v=33400d00:24:11)
+    at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QNR25H4B.js?v=33400d00:146:64
+    at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-H47YCWBR.js?v=33400d00:52:11
+    at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-H47YCWBR.js?v=33400d00:33:11
+    at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-4Y7AZP6D.js?v=33400d00:41:13
+    at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-3WMIM4HP.js?v=33400d00:260:22
+    at Presence (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5JFKRUWG.js?v=33400d00:24:11)
+    at Provider (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-TZDMDH4E.js?v=33400d00:38:15)
+    at DialogPortal (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QNR25H4B.js?v=33400d00:109:11)
+    at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/components/ui/dialog.tsx:22:43
+    at Provider (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-TZDMDH4E.js?v=33400d00:38:15)
+    at Dialog (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QNR25H4B.js?v=33400d00:50:5)
+    at DialogForm (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/components/ui/dialog-form.tsx:14:3)
+    at div
+    at ProblemTrees (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/components/thinking-desk/problem-trees.tsx:11:3)
+    at div
+    at div
+    at div
+    at TabNavigation (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/components/tab-navigation.tsx:4:26)
+    at section
+    at ThinkingDesk (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/pages/thinking-desk.tsx:27:37)
+    at Route (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=aa77f094:338:16)
+    at Switch (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=aa77f094:394:17)
+    at Suspense
+    at div
+    at MotionComponent…
