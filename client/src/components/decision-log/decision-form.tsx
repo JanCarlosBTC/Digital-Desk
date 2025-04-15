@@ -128,27 +128,41 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
   // Create or update decision with improved type safety
   const mutation = useMutation<DecisionResponse, Error, FormValues>({
     mutationFn: async (data: FormValues) => {
-      // Format dates for API transmission
-      const formattedData = {
-        ...data,
-        decisionDate: new Date(data.decisionDate),
-        followUpDate: data.followUpDate ? new Date(data.followUpDate) : null,
-      };
+      try {
+        // Format dates for API transmission
+        const formattedData = {
+          ...data,
+          decisionDate: new Date(data.decisionDate),
+          followUpDate: data.followUpDate ? new Date(data.followUpDate) : null,
+        };
 
-      console.log('Submitting decision:', formattedData);
+        console.log('Submitting decision:', formattedData);
 
-      if (selectedDecision) {
-        return apiRequest<DecisionResponse>(
-          'PUT', 
-          `/api/decisions/${selectedDecision.id}`, 
-          formattedData
-        );
-      } else {
-        return apiRequest<DecisionResponse>(
-          'POST', 
-          '/api/decisions', 
-          formattedData
-        );
+        // Ensure category is selected
+        if (!formattedData.category) {
+          throw new Error("Category is required");
+        }
+
+        let response;
+        if (selectedDecision) {
+          response = await apiRequest<DecisionResponse>(
+            'PUT', 
+            `/api/decisions/${selectedDecision.id}`, 
+            formattedData
+          );
+        } else {
+          response = await apiRequest<DecisionResponse>(
+            'POST', 
+            '/api/decisions', 
+            formattedData
+          );
+        }
+        
+        console.log('API response:', response);
+        return response;
+      } catch (error) {
+        console.error('Error in mutation function:', error);
+        throw error;
       }
     },
     onSuccess: (data) => {
@@ -245,6 +259,26 @@ const DecisionForm = ({ selectedDecision, onSuccess, isDialog = false }: Decisio
   });
 
   const onSubmit = (data: FormValues) => {
+    console.log("Form submitted with data:", data);
+    
+    // Validate that all required fields are present
+    if (!data.title || !data.category || !data.decisionDate || !data.why) {
+      console.error("Missing required fields:", {
+        title: !data.title,
+        category: !data.category,
+        decisionDate: !data.decisionDate,
+        why: !data.why
+      });
+      
+      toast({
+        title: "Missing required fields",
+        description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Now mutate with the data
     mutation.mutate(data);
   };
 
