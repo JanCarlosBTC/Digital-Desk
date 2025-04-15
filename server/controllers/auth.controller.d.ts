@@ -1,6 +1,5 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 
-export function register(req: Request, res: Response): Promise<void>;
-export function login(req: Request, res: Response): Promise<void>;
-export function getProfile(req: Request, res: Response): Promise<void>;
-export function updateProfile(req: Request, res: Response): Promise<void>; 
+export function login(req: Request, res: Response): Promise<Response>;
+export function authenticate(req: Request, res: Response, next: NextFunction): void | Response;
+export function getProfile(req: Request, res: Response): Promise<Response>;

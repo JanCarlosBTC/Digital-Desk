@@ -1,135 +1,115 @@
 /**
  * Security Logging Middleware
  * 
- * This module provides specialized logging for security-related events,
- * with different output formats based on the environment (development vs production).
- * In production, logs are written to a security log file for external monitoring.
+ * This module provides functions for logging security-related events
+ * including suspicious activities, authentication attempts, and potential attacks.
+ * 
+ * This is a critical security component that provides visibility into potential threats
+ * and helps with forensic analysis in case of security incidents.
  */
 
-import fs from 'fs';
-import path from 'path';
-import { log } from '../vite.js';
+// Security log levels
+const LOG_LEVELS = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+  critical: 4
+};
 
-// Set up log file path
-const LOG_DIR = path.resolve('./logs');
-const SECURITY_LOG_FILE = path.join(LOG_DIR, 'security.log');
+// Format timestamp for logging
+const getTimestamp = () => {
+  return new Date().toISOString();
+};
 
-// Ensure log directory exists
-if (!fs.existsSync(LOG_DIR)) {
+// Set minimum log level based on environment
+const MIN_LOG_LEVEL = process.env.NODE_ENV === 'production' ? LOG_LEVELS.warn : LOG_LEVELS.info;
+
+// Write to the security log file and/or console
+const logToSecurity = (message, level = 'info') => {
+  // Only log if the message's level is >= minimum level
+  if (LOG_LEVELS[level] >= MIN_LOG_LEVEL) {
+    const logEntry = `[${getTimestamp()}] [${level.toUpperCase()}] ${message}`;
+    
+    // In production, write to security log file. In dev, just console.log
+    if (process.env.NODE_ENV === 'production') {
+      // Ideally we would append to a secure log file here
+      // For now, use console with [security] tag
+      console.log(`[security] ${logEntry}`);
+    } else {
+      // Development environment - log to console
+      console.log(`${new Date().toLocaleTimeString()} [security] ${level === 'critical' ? 'Security critical: ' : ''}${message}`);
+    }
+  }
+};
+
+/**
+ * Log a security event with associated metadata
+ * 
+ * @param {string} message - The log message
+ * @param {string} level - Log level: debug, info, warn, error, critical
+ * @param {Object} metadata - Additional data to log 
+ */
+function logSecurityEvent(message, level = 'info', metadata = {}) {
   try {
-    fs.mkdirSync(LOG_DIR, { recursive: true });
+    const metadataStr = Object.keys(metadata).length > 0 
+      ? ' - ' + Object.entries(metadata)
+          .map(([key, value]) => `${key}: ${value}`)
+          .join(', ')
+      : '';
+    
+    logToSecurity(`${message}${metadataStr}`, level);
   } catch (error) {
-    console.error('Failed to create log directory:', error);
+    console.error('Error writing security log:', error);
   }
 }
 
 /**
- * Log a security event with special formatting
+ * Log suspicious activity from a request
  * 
- * @param {string} message The security message to log
- * @param {string} level The severity level: 'info', 'warn', 'error', 'critical'
- * @param {object} meta Additional metadata about the event
+ * @param {string} message - Description of the suspicious activity
+ * @param {Object} req - Express request object
  */
-export function logSecurityEvent(message, level = 'info', meta = {}) {
-  const timestamp = new Date().toISOString();
-  const logEntry = {
-    timestamp,
-    level,
-    message,
-    ...meta
+function logSuspiciousActivity(message, req) {
+  const metadata = {
+    ip: req.ip,
+    method: req.method,
+    path: req.path,
+    userAgent: req.get('user-agent') || 'unknown',
+    timestamp: new Date().toISOString()
   };
   
-  // Console output in development for debugging
-  if (process.env.NODE_ENV !== 'production') {
-    const color = {
-      'info': '\x1b[34m', // blue
-      'warn': '\x1b[33m', // yellow
-      'error': '\x1b[31m', // red
-      'critical': '\x1b[41m\x1b[37m' // white on red background
-    }[level] || '\x1b[0m';
-    
-    console.log(`${color}[SECURITY:${level.toUpperCase()}]\x1b[0m ${message}`);
-    if (Object.keys(meta).length > 0) {
-      console.log('  Details:', meta);
-    }
-    
-    // Also log to vite console for easier visibility
-    log(`[SECURITY:${level.toUpperCase()}] ${message}`, 'security');
-    
-    return;
+  // Add authentication information if available
+  if (req.userId) {
+    metadata.userId = req.userId;
   }
   
-  // In production, write to security log file
-  try {
-    const logString = JSON.stringify(logEntry) + '\\n';
-    fs.appendFileSync(SECURITY_LOG_FILE, logString);
-  } catch (error) {
-    console.error('Failed to write to security log:', error);
-  }
+  logSecurityEvent(`Suspicious activity: ${message}`, 'warn', metadata);
 }
 
 /**
- * Log an authentication attempt (success or failure)
+ * Log an authentication attempt with outcome
  * 
- * @param {boolean} success Whether the authentication succeeded
- * @param {string} username The username that attempted to authenticate
- * @param {string} ip The IP address of the client
- * @param {string} userAgent The user agent string
- * @param {string} reason The reason for failure (if applicable)
+ * @param {string} username - The username that attempted authentication 
+ * @param {boolean} success - Whether authentication succeeded
+ * @param {Object} req - Express request object
  */
-export function logAuthAttempt(success, username, ip, userAgent, reason = null) {
-  const level = success ? 'info' : 'warn';
-  const message = success 
-    ? `Successful authentication for user ${username}` 
-    : `Failed authentication attempt for user ${username}`;
-    
-  logSecurityEvent(message, level, {
-    event: 'authentication',
-    success,
+function logAuthAttempt(username, success, req) {
+  const outcome = success ? 'successful' : 'failed';
+  
+  const metadata = {
+    ip: req.ip,
     username,
-    ip,
-    userAgent,
-    ...(reason ? { reason } : {})
-  });
+    userAgent: req.get('user-agent') || 'unknown'
+  };
+  
+  const level = success ? 'info' : 'warn';
+  
+  logSecurityEvent(`Authentication ${outcome} for user: ${username}`, level, metadata);
 }
 
-/**
- * Log suspicious activity that might indicate a security issue
- * 
- * @param {string} activity Description of the suspicious activity
- * @param {object} request Express request object
- */
-export function logSuspiciousActivity(activity, request) {
-  logSecurityEvent(`Suspicious activity: ${activity}`, 'warn', {
-    event: 'suspicious_activity',
-    ip: request.ip,
-    method: request.method,
-    path: request.path,
-    userAgent: request.get('user-agent') || 'unknown',
-    referrer: request.get('referer') || 'unknown'
-  });
-}
-
-/**
- * Log a security violation (confirmed security issue)
- * 
- * @param {string} violation Description of the security violation
- * @param {object} request Express request object
- */
-export function logSecurityViolation(violation, request) {
-  logSecurityEvent(`Security violation: ${violation}`, 'error', {
-    event: 'security_violation',
-    ip: request.ip,
-    method: request.method,
-    path: request.path,
-    userAgent: request.get('user-agent') || 'unknown',
-    referrer: request.get('referer') || 'unknown',
-    headers: Object.keys(request.headers).reduce((acc, key) => {
-      // Avoid logging sensitive headers like cookies or auth tokens
-      if (!['cookie', 'authorization', 'proxy-authorization'].includes(key.toLowerCase())) {
-        acc[key] = request.headers[key];
-      }
-      return acc;
-    }, {})
-  });
-}
+module.exports = {
+  logSecurityEvent,
+  logSuspiciousActivity,
+  logAuthAttempt
+};

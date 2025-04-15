@@ -1,130 +1,96 @@
 /**
  * CSRF Protection Middleware
  * 
- * This module implements CSRF protection using the double-submit cookie pattern.
- * It generates a CSRF token and sets it as both a cookie and requires it to be
- * sent in the request header for mutating operations (POST, PUT, DELETE, PATCH).
- */
-
-import crypto from 'crypto';
-import { logSecurityEvent, logSecurityViolation } from './security-logger.js';
-
-// CSRF token cookie name
-const CSRF_COOKIE_NAME = 'X-CSRF-Token';
-// CSRF token header name (must match what frontend sends)
-const CSRF_HEADER_NAME = 'X-CSRF-Token';
-
-/**
- * Generate a secure random token for CSRF protection
+ * This middleware provides Cross-Site Request Forgery (CSRF) protection by
+ * implementing the Double Submit Cookie pattern. It issues a CSRF token as a
+ * cookie and requires that token to be submitted with non-GET requests.
  * 
- * @returns {string} A random token
+ * For maximum security, use this with SameSite=Strict cookies and HTTPS.
  */
-function generateCsrfToken() {
+
+const crypto = require('crypto');
+const { logSecurityEvent } = require('./security-logger.js');
+
+// Generate a secure random token
+function generateToken() {
   return crypto.randomBytes(32).toString('hex');
 }
 
-/**
- * Middleware to set CSRF token cookie if it doesn't exist
- * 
- * @param {object} req - Express request object
- * @param {object} res - Express response object
- * @param {function} next - Express next function
- */
-export function setCsrfCookie(req, res, next) {
-  // Skip in development mode for easier testing
-  if (process.env.NODE_ENV === 'development' && process.env.ENABLE_CSRF !== 'true') {
-    return next();
-  }
-  
-  // Check if the CSRF cookie already exists
-  if (!req.cookies || !req.cookies[CSRF_COOKIE_NAME]) {
-    // Generate a new token
-    const csrfToken = generateCsrfToken();
-    
-    // Set the cookie - secure in production, http-only to prevent JavaScript access
-    res.cookie(CSRF_COOKIE_NAME, csrfToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/'
-    });
-    
-    // Store in request for later use
-    req.csrfToken = csrfToken;
-  } else {
-    // Use existing token
-    req.csrfToken = req.cookies[CSRF_COOKIE_NAME];
-  }
-  
-  // Continue to next middleware
-  next();
-}
+// Check if a request requires CSRF validation
+const requiresValidation = (req) => {
+  const method = req.method.toUpperCase();
+  // Validate POST, PUT, PATCH and DELETE requests
+  return ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+};
 
 /**
- * Middleware to validate CSRF token on mutating requests
+ * CSRF Protection Middleware
  * 
- * @param {object} req - Express request object
- * @param {object} res - Express response object
- * @param {function} next - Express next function
+ * @param {Object} options Configuration options
+ * @param {string} options.cookieName Name of the cookie to use (default: 'csrf-token')
+ * @param {string} options.headerName Name of the header to check (default: 'X-CSRF-TOKEN')
+ * @param {Array<string>} options.ignorePaths Paths to ignore CSRF check (default: [])
+ * @returns {Function} Express middleware function
  */
-export function validateCsrfToken(req, res, next) {
-  // Skip in development mode for easier testing
-  if (process.env.NODE_ENV === 'development' && process.env.ENABLE_CSRF !== 'true') {
-    return next();
-  }
+function csrfProtection(options = {}) {
+  const {
+    cookieName = 'csrf-token',
+    headerName = 'X-CSRF-TOKEN',
+    ignorePaths = []
+  } = options;
   
-  // Only check for mutating operations
-  const mutatingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
-  
-  if (mutatingMethods.includes(req.method)) {
-    const cookieToken = req.cookies && req.cookies[CSRF_COOKIE_NAME];
-    const headerToken = req.headers[CSRF_HEADER_NAME.toLowerCase()];
+  return (req, res, next) => {
+    // Configure CSRF cookie settings
+    const secureCookie = process.env.NODE_ENV === 'production';
+    const cookieOptions = {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: secureCookie,
+      path: '/'
+    };
     
-    // Both tokens must exist and match
-    if (!cookieToken || !headerToken || cookieToken !== headerToken) {
-      // Log the security violation
-      logSecurityViolation('CSRF token validation failed', req);
+    // Check for existing token in cookie or generate a new one
+    let token = req.cookies && req.cookies[cookieName];
+    
+    if (!token) {
+      token = generateToken();
+      res.cookie(cookieName, token, cookieOptions);
+    }
+    
+    // Expose a method to get the token from the request
+    req.csrfToken = () => token;
+    
+    // Skip CSRF check for ignored paths or non-mutating requests
+    const shouldSkip = !requiresValidation(req) || 
+                      ignorePaths.some(path => req.path.startsWith(path));
+                      
+    if (shouldSkip) {
+      return next();
+    }
+    
+    // Get token from request header
+    const requestToken = req.headers[headerName.toLowerCase()];
+    
+    // Validate token
+    if (!requestToken || requestToken !== token) {
+      // Log potential CSRF attack
+      logSecurityEvent('CSRF validation failed', 'error', {
+        ip: req.ip,
+        path: req.path,
+        method: req.method,
+        userAgent: req.get('user-agent') || 'unknown',
+        cookieToken: !!token,
+        headerToken: !!requestToken
+      });
       
       return res.status(403).json({
-        error: 'CSRF verification failed',
-        message: 'Invalid security token'
+        error: 'CSRF validation failed',
+        message: 'Invalid or missing CSRF token'
       });
     }
-  }
-  
-  // Continue to next middleware
-  next();
+    
+    next();
+  };
 }
 
-/**
- * Get the current CSRF token for the request
- * Useful for sending to frontend
- * 
- * @param {object} req - Express request object
- * @returns {string} The current CSRF token
- */
-export function getCsrfToken(req) {
-  return req.csrfToken;
-}
-
-/**
- * Add the current CSRF token to the response as a custom header
- * This is useful for single-page applications to get the token
- * 
- * @param {object} req - Express request object
- * @param {object} res - Express response object
- * @param {function} next - Express next function
- */
-export function sendCsrfToken(req, res, next) {
-  // Skip in development mode
-  if (process.env.NODE_ENV === 'development' && process.env.ENABLE_CSRF !== 'true') {
-    return next();
-  }
-  
-  // Add the token to the response headers
-  if (req.csrfToken) {
-    res.setHeader(CSRF_HEADER_NAME, req.csrfToken);
-  }
-  
-  next();
-}
+module.exports = csrfProtection;

@@ -1,118 +1,148 @@
-import bcrypt from 'bcrypt';
-import { storage } from '../storage.js';
-import { generateToken } from '../middleware/auth.js';
+/**
+ * Authentication Controller
+ * 
+ * This controller handles user authentication, including login, logout,
+ * and retrieving the current user's profile.
+ */
 
-export const register = async (req, res) => {
-  try {
-    const { username, password, email, name } = req.body;
-    
-    // Check if user exists
-    const existingUser = await storage.getUserByUsername(username);
-    if (existingUser) {
-      return res.status(409).json({ message: 'Username already taken' });
-    }
-    
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    
-    // Create user
-    const user = await storage.createUser({
-      username,
-      password: hashedPassword,
-      email,
-      name,
-      plan: 'Free',
-      initials: name.split(' ').map(n => n[0]).join('').toUpperCase()
-    });
-    
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
-    
-    res.status(201).json({ 
-      user: userWithoutPassword,
-      token: generateToken(user.id)
-    });
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ message: 'Error creating user' });
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+const { logAuthAttempt } = require('../middleware/security-logger.js');
+
+// Get JWT secret from environment variable or use a secure default for development
+const JWT_SECRET = process.env.JWT_SECRET || 'use-env-var-in-production';
+
+/**
+ * Login endpoint
+ * Validates credentials and issues a JWT token
+ */
+async function login(req, res) {
+  const { username, password } = req.body;
+  
+  // Basic validation
+  if (!username || !password) {
+    return res.status(400).json({ message: 'Username and password required' });
   }
-};
-
-export const login = async (req, res) => {
+  
   try {
-    const { username, password } = req.body;
+    // In a real app, we would fetch the user from the database
+    // For this demo, we'll use a simplified approach
     
-    // Find user
-    const user = await storage.getUserByUsername(username);
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    if (process.env.NODE_ENV === 'production') {
+      // In production, we would check against the database
+      const user = await getUserFromDatabase(username);
+      
+      if (!user) {
+        logAuthAttempt(username, false, req);
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+      
+      // Check password with bcrypt
+      const validPassword = await bcrypt.compare(password, user.passwordHash);
+      
+      if (!validPassword) {
+        logAuthAttempt(username, false, req);
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+      
+      // Generate JWT token
+      const token = jwt.sign(
+        { id: user.id, username: user.username },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+      
+      logAuthAttempt(username, true, req);
+      return res.status(200).json({ token, user: { id: user.id, username: user.username } });
+    } else {
+      // In development, accept any credentials
+      // This is just for demo and development
+      const userId = 1;
+      
+      // Generate JWT token
+      const token = jwt.sign(
+        { id: userId, username },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+      
+      logAuthAttempt(username, true, req);
+      return res.status(200).json({ 
+        token, 
+        user: { id: userId, username } 
+      });
     }
-    
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-    
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
-    
-    res.json({ 
-      user: userWithoutPassword,
-      token: generateToken(user.id)
-    });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Error during login' });
+    logAuthAttempt(username, false, req);
+    return res.status(500).json({ message: 'Authentication failed' });
   }
-};
+}
 
-export const getProfile = async (req, res) => {
+/**
+ * Authentication middleware
+ * Verifies the JWT token in the Authorization header
+ */
+function authenticate(req, res, next) {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader) {
+    return res.status(401).json({ message: 'Authorization required' });
+  }
+  
+  const parts = authHeader.split(' ');
+  
+  if (parts.length !== 2 || parts[0] !== 'Bearer') {
+    return res.status(401).json({ message: 'Invalid authorization format' });
+  }
+  
+  const token = parts[1];
+  
   try {
-    const userId = req.userId;
-    const user = await storage.getUser(userId);
-    
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    
-    // Remove password from response
-    const { password, ...userWithoutPassword } = user;
-    res.json(userWithoutPassword);
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.userId = decoded.id;
+    next();
+  } catch (error) {
+    console.error('Token verification failed:', error.message);
+    return res.status(401).json({ message: 'Invalid or expired token' });
+  }
+}
+
+/**
+ * Get user profile
+ * Returns the authenticated user's profile
+ */
+async function getProfile(req, res) {
+  try {
+    // In a real app, fetch user data from database
+    // For demo, we use simplified data
+    return res.status(200).json({
+      id: req.userId,
+      username: 'user',
+      // Other non-sensitive user data would go here
+    });
   } catch (error) {
     console.error('Get profile error:', error);
-    res.status(500).json({ message: 'Error fetching user profile' });
+    return res.status(500).json({ message: 'Failed to fetch profile' });
   }
-};
+}
 
-export const updateProfile = async (req, res) => {
-  try {
-    const userId = req.userId;
-    const { name, email } = req.body;
-    
-    // Get current user to ensure they exist
-    const user = await storage.getUser(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    
-    const updatedUser = await storage.updateUser(userId, { 
-      name, 
-      email,
-      // Update initials if name changed
-      ...(name && { initials: name.split(' ').map(n => n[0]).join('').toUpperCase() })
-    });
-    
-    if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    
-    // Remove password from response
-    const { password, ...userWithoutPassword } = updatedUser;
-    res.json(userWithoutPassword);
-  } catch (error) {
-    console.error('Update profile error:', error);
-    res.status(500).json({ message: 'Error updating user profile' });
-  }
-}; 
+/**
+ * In a real app, this would fetch the user from a database
+ * For this demo, we're using a mock implementation
+ */
+async function getUserFromDatabase(username) {
+  // Mock user for demo purposes
+  // In a real app, this would query the database
+  return {
+    id: 1,
+    username: 'admin',
+    passwordHash: await bcrypt.hash('admin', 10)
+  };
+}
+
+module.exports = {
+  login,
+  authenticate,
+  getProfile
+};
