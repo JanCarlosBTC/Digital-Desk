@@ -12,6 +12,16 @@ import { fromZodError } from "zod-validation-error";
 import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
 import { authenticate } from "./middleware/auth.js";
 import { login, getProfile } from "./controllers/auth.controller.js";
+import { withAuth, withAuthAndUser, withDevAuth } from "./middleware/auth-wrapper.js";
+
+// Extend the Express Request type to include userId property
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: number;
+    }
+  }
+}
 
 /**
  * Helper function to safely parse an ID from request parameters
@@ -45,10 +55,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Brain Dump endpoints
   app.get('/api/brain-dump', async (req: Request, res: Response) => {
     try {
-      const brainDump = await storage.getBrainDumpByUserId(1); // Default user ID
-      res.json(brainDump || {content: ""});
+      // SECURITY: Production should use real user ID from auth
+      // In development, we can use a default user ID
+      const userId = process.env.NODE_ENV === 'production' 
+        ? (req.userId || -1) // Will return 404 if not authenticated
+        : 1; // Default user in development
+        
+      const brainDump = await storage.getBrainDumpByUserId(userId);
+      
+      // Only return data if found
+      if (!brainDump && process.env.NODE_ENV === 'production') {
+        return res.status(404).json({ message: "Brain dump not found" });
+      }
+      
+      return res.json(brainDump || {content: ""});
     } catch (error) {
-      res.status(500).json({ message: "Error fetching brain dump" });
+      return res.status(500).json({ message: "Error fetching brain dump" });
     }
   });
 
@@ -154,9 +176,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/drafted-plans', async (req: Request, res: Response) => {
     try {
       const draftedPlans = await storage.getDraftedPlans(1);
-      res.json(draftedPlans);
+      return res.json(draftedPlans);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching drafted plans" });
+      return res.status(500).json({ message: "Error fetching drafted plans" });
     }
   });
   app.post('/api/drafted-plans', async (req: Request, res: Response) => {
@@ -164,9 +186,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const data = { userId: 1, ...req.body };
       const validatedData = insertDraftedPlanSchema.parse(data);
       const draftedPlan = await storage.createDraftedPlan(validatedData);
-      res.status(201).json(draftedPlan);
+      return res.status(201).json(draftedPlan);
     } catch (error) {
-      handleZodError(error, res);
+      return handleZodError(error, res);
     }
   });
   app.put('/api/drafted-plans/:id', async (req: Request, res: Response) => {
@@ -207,9 +229,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const category = req.query.category as string | undefined;
       const clarityLabs = await storage.getClarityLabs(1, category);
-      res.json(clarityLabs);
+      return res.json(clarityLabs);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching clarity labs" });
+      return res.status(500).json({ message: "Error fetching clarity labs" });
     }
   });
   app.post('/api/clarity-labs', async (req: Request, res: Response) => {
@@ -217,9 +239,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const data = { userId: 1, ...req.body };
       const validatedData = insertClarityLabSchema.parse(data);
       const clarityLab = await storage.createClarityLab(validatedData);
-      res.status(201).json(clarityLab);
+      return res.status(201).json(clarityLab);
     } catch (error) {
-      handleZodError(error, res);
+      return handleZodError(error, res);
     }
   });
   app.put('/api/clarity-labs/:id', async (req: Request, res: Response) => {
@@ -578,7 +600,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/auth/profile', authenticate, getProfile);
   
   // Development-only routes with proper security checks
-  app.post('/api/auth/dev-login', (req, res) => {
+  app.post('/api/auth/dev-login', async (req, res) => {
     // SECURITY CHECK: Only allow this endpoint in development
     if (process.env.NODE_ENV === 'production') {
       console.error('Attempt to access dev-login in production environment!');
@@ -588,16 +610,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Log dev login attempt for security tracking
     console.warn(`[SECURITY] Dev login endpoint accessed from ${req.ip}`);
     
-    // Import dynamically to prevent availability in production builds
-    import('./controllers/dev-auth.controller.js')
-      .then(module => {
-        // Call the devLogin handler
-        return module.devLogin(req, res);
-      })
-      .catch(error => {
-        console.error('Failed to load dev auth controller:', error);
-        return res.status(500).json({ message: 'Internal server error' });
-      });
+    try {
+      // Import dynamically to prevent availability in production builds
+      const devAuthModule = await import('./controllers/dev-auth.controller.js');
+      
+      // Call the devLogin handler
+      return devAuthModule.devLogin(req, res);
+    } catch (error) {
+      console.error('Failed to load dev auth controller:', error);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
   });
 
   const httpServer = createServer(app);

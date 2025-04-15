@@ -8,6 +8,8 @@ import { hostBypassMiddleware } from './host-bypass.js';
 import { standardApiLimiter } from './rate-limit.js';
 import { securityHeaders, sanitizeInput, bruteForceProtection } from './security.js';
 import { securityMonitoring } from './monitoring.js';
+// Temporarily comment out CSRF until we complete the implementation
+// import { csrfProtection } from './csrf.js';
 import { log } from '../vite.js';
 
 /**
@@ -47,6 +49,30 @@ export function setupMiddleware(app: Express): void {
   
   // Sanitize all input data
   app.use(sanitizeInput);
+  
+  // Apply CSRF protection for state-changing operations
+  // This must be after session setup but before routes
+  /*
+  if (process.env.NODE_ENV === 'production') {
+    // In production, always apply CSRF protection
+    const [setCsrf, validateCsrf] = csrfProtection();
+    app.use(setCsrf);
+    app.use(validateCsrf);
+    log('CSRF protection enabled in production mode', 'middleware');
+  } else {
+    // In development, make it optional based on environment variable
+    if (process.env.ENABLE_CSRF === 'true') {
+      const [setCsrf, validateCsrf] = csrfProtection();
+      app.use(setCsrf);
+      app.use(validateCsrf);
+      log('CSRF protection enabled in development mode', 'middleware');
+    } else {
+      log('CSRF protection disabled in development mode', 'middleware');
+    }
+  }
+  */
+  // CSRF protection will be implemented in a future update
+  log('CSRF protection is pending implementation', 'middleware');
   
   // Custom middleware components
   app.use(hostBypassMiddleware);
