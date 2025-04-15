@@ -17,18 +17,17 @@ import { log } from '../vite.js';
  */
 export function withAuth(handler) {
   return function(req, res, next) {
-    // Check if req.userId exists (it's set by the JWT auth middleware)
-    const hasAuth = !!req.userId;
+    // In development mode, always use userId=1 without checking auth
+    if (process.env.NODE_ENV !== 'production') {
+      log(`[DEV] Using default userId=1 for request to ${req.path}`, 'auth');
+      req.userId = req.userId || 1;
+      return handler(req, res, next);
+    }
     
-    if (!hasAuth) {
-      if (process.env.NODE_ENV === 'production') {
-        log(`[SECURITY] Unauthorized access attempt to ${req.path} from ${req.ip}`, 'auth');
-        return res.status(401).json({ message: 'Authentication required' });
-      } else {
-        // In development, use userId=1 for testing if no auth mechanism available
-        log(`[DEV] Using default userId=1 for unauthenticated request to ${req.path}`, 'auth');
-        req.userId = 1;
-      }
+    // In production, verify that userId exists
+    if (!req.userId) {
+      log(`[SECURITY] Unauthorized access attempt to ${req.path} from ${req.ip}`, 'auth');
+      return res.status(401).json({ message: 'Authentication required' });
     }
     
     return handler(req, res, next);
@@ -44,24 +43,17 @@ export function withAuth(handler) {
  */
 export function withAuthAndUser(handler) {
   return function(req, res, next) {
-    // Check if req.userId exists (it's set by the JWT auth middleware)
-    const hasAuth = !!req.userId;
-    
-    if (!hasAuth) {
-      if (process.env.NODE_ENV === 'production') {
-        log(`[SECURITY] Unauthorized access attempt to ${req.path} from ${req.ip}`, 'auth');
-        return res.status(401).json({ message: 'Authentication required' });
-      } else {
-        // In development, use userId=1 for testing if no auth mechanism available
-        log(`[DEV] Using default userId=1 for unauthenticated request to ${req.path}`, 'auth');
-        req.userId = 1;
-      }
+    // In development mode, always use userId=1 without checking auth
+    if (process.env.NODE_ENV !== 'production') {
+      log(`[DEV] Using default userId=1 for request to ${req.path}`, 'auth');
+      req.userId = req.userId || 1;
+      return handler(req, res, next);
     }
     
-    // Ensure we have a userId (either from auth mechanism or dev default)
+    // In production, verify that userId exists
     if (!req.userId) {
-      log(`[SECURITY] Missing user context for authenticated request to ${req.path}`, 'auth');
-      return res.status(500).json({ message: 'Invalid user context' });
+      log(`[SECURITY] Unauthorized access attempt to ${req.path} from ${req.ip}`, 'auth');
+      return res.status(401).json({ message: 'Authentication required' });
     }
     
     return handler(req, res, next);
