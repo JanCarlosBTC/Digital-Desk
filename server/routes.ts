@@ -71,10 +71,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }));
 
-  app.post('/api/brain-dump', async (req: Request, res: Response) => {
+  app.post('/api/brain-dump', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const data = {
-        userId: 1,
+        userId: req.userId as number, // User ID comes from auth middleware
         content: req.body.content
       };
       const validatedData = insertBrainDumpSchema.parse(data);
@@ -83,9 +83,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return handleZodError(error, res);
     }
-  });
+  }));
 
-  app.put('/api/brain-dump/:id', async (req: Request, res: Response) => {
+  app.put('/api/brain-dump/:id', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { content } = req.body;
@@ -99,6 +99,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Content is required" });
       }
       
+      // Validate user owns this brain dump (in production)
+      if (process.env.NODE_ENV === 'production') {
+        // Use getBrainDumpByUserId which is available in the storage interface
+        const existingBrainDump = await storage.getBrainDumpByUserId(req.userId as number);
+        if (!existingBrainDump || existingBrainDump.id !== parsedId) {
+          return res.status(403).json({ message: "Not authorized to update this brain dump" });
+        }
+      }
+      
       const updatedBrainDump = await storage.updateBrainDump(parsedId, content);
       if (!updatedBrainDump) {
         return res.status(404).json({ message: "Brain dump not found" });
@@ -108,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return res.status(500).json({ message: "Error updating brain dump" });
     }
-  });
+  }));
 
 
   // Problem Tree endpoints
@@ -454,32 +463,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Decision Log endpoints - Simplified
-  app.get('/api/decisions', cacheMiddleware('decisions', 300), async (req: Request, res: Response) => {
+  // Decision Log endpoints - Protected with auth wrapper
+  app.get('/api/decisions', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const decisions = await storage.getDecisions(1);
+      const decisions = await storage.getDecisions(req.userId as number);
       return res.json(decisions);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching decisions" });
     }
-  });
-  app.post('/api/decisions', clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
+  }));
+  
+  app.post('/api/decisions', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const data = { userId: 1, ...req.body };
+      const data = { 
+        userId: req.userId as number, 
+        ...req.body 
+      };
       const validatedData = insertDecisionSchema.parse(data);
       const decision = await storage.createDecision(validatedData);
+      // Clear cache after creating new decision
+      clearCacheMiddleware('decisions')(req, res, () => {});
       return res.status(201).json(decision);
     } catch (error) {
       return handleZodError(error, res);
     }
-  });
-  app.put('/api/decisions/:id', clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
+  }));
+  app.put('/api/decisions/:id', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
 
       const parsedId = parseAndValidateId(id, res);
       if (parsedId === undefined) return;
+      
+      // Clear cache before updating
+      clearCacheMiddleware('decisions')(req, res, () => {});
+      
+      // In production, verify user owns this decision
+      if (process.env.NODE_ENV === 'production') {
+        const decision = await storage.getDecision(parsedId);
+        if (!decision || decision.userId !== req.userId) {
+          return res.status(403).json({ message: "Not authorized to update this decision" });
+        }
+      }
 
       const updatedDecision = await storage.updateDecision(parsedId, data);
       if (!updatedDecision) {
@@ -489,12 +515,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return res.status(500).json({ message: "Error updating decision" });
     }
-  });
-  app.delete('/api/decisions/:id', clearCacheMiddleware('decisions'), async (req: Request, res: Response) => {
+  }));
+  
+  app.delete('/api/decisions/:id', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const parsedId = parseAndValidateId(id, res);
       if (parsedId === undefined) return;
+      
+      // Clear cache before deleting
+      clearCacheMiddleware('decisions')(req, res, () => {});
+      
+      // In production, verify user owns this decision
+      if (process.env.NODE_ENV === 'production') {
+        const decision = await storage.getDecision(parsedId);
+        if (!decision || decision.userId !== req.userId) {
+          return res.status(403).json({ message: "Not authorized to delete this decision" });
+        }
+      }
 
       const deleted = await storage.deleteDecision(parsedId);
       if (!deleted) {
@@ -504,7 +542,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return res.status(500).json({ message: "Error deleting decision" });
     }
-  });
+  }));
 
   // Offer Vault endpoints - Simplified
   app.get('/api/offers', async (req: Request, res: Response) => {
