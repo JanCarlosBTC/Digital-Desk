@@ -10,6 +10,8 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
+import { authenticate } from "./middleware/auth.js";
+import { login, getProfile } from "./controllers/auth.controller.js";
 
 /**
  * Helper function to safely parse an ID from request parameters
@@ -567,6 +569,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return res.status(500).json({ message: "Error updating offer notes" });
     }
+  });
+
+  // =========== Authentication Endpoints ===========
+  
+  // Standard auth routes
+  app.post('/api/auth/login', login);
+  app.get('/api/auth/profile', authenticate, getProfile);
+  
+  // Development-only routes with proper security checks
+  app.post('/api/auth/dev-login', (req, res) => {
+    // SECURITY CHECK: Only allow this endpoint in development
+    if (process.env.NODE_ENV === 'production') {
+      console.error('Attempt to access dev-login in production environment!');
+      return res.status(404).json({ message: 'Endpoint not found' });
+    }
+    
+    // Log dev login attempt for security tracking
+    console.warn(`[SECURITY] Dev login endpoint accessed from ${req.ip}`);
+    
+    // Import dynamically to prevent availability in production builds
+    import('./controllers/dev-auth.controller.js')
+      .then(module => {
+        // Call the devLogin handler
+        return module.devLogin(req, res);
+      })
+      .catch(error => {
+        console.error('Failed to load dev auth controller:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+      });
   });
 
   const httpServer = createServer(app);
