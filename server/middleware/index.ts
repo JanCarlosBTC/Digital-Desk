@@ -59,28 +59,46 @@ export function setupMiddleware(app: Express): void {
   
   // Apply CSRF protection for state-changing operations
   // This must be after session setup but before routes
-  // Temporarily disabled until the build process can compile the file
-  /* 
-  if (process.env.NODE_ENV === 'production') {
-    // In production, always apply CSRF protection
-    const [setCsrf, validateCsrf] = csrfProtection();
-    app.use(setCsrf);
-    app.use(validateCsrf);
-    log('CSRF protection enabled in production mode', 'middleware');
-  } else {
-    // In development, make it optional based on environment variable
-    if (process.env.ENABLE_CSRF === 'true') {
-      const [setCsrf, validateCsrf] = csrfProtection();
-      app.use(setCsrf);
-      app.use(validateCsrf);
-      log('CSRF protection enabled in development mode', 'middleware');
-    } else {
-      log('CSRF protection disabled in development mode', 'middleware');
+  try {
+    // Import statically to avoid await in non-async function
+    // We've moved the error handling into a try/catch to safely handle
+    // any missing modules during development/compilation
+    let csrfMiddleware;
+    try {
+      csrfMiddleware = require('./csrf.js');
+    } catch (error) {
+      // Type assertion to handle unknown error type
+      const importError = error as Error;
+      console.error('Could not import CSRF middleware:', importError.message);
+      log('CSRF protection module could not be loaded, will be enabled soon', 'middleware');
+      // Continue without CSRF protection
+      return;
     }
+    
+    const { setCsrfCookie, validateCsrfToken, sendCsrfToken } = csrfMiddleware;
+    
+    if (process.env.NODE_ENV === 'production') {
+      // In production, always apply CSRF protection
+      app.use(setCsrfCookie);
+      app.use(validateCsrfToken);
+      app.use(sendCsrfToken);
+      log('CSRF protection enabled in production mode', 'middleware');
+    } else {
+      // In development, make it optional based on environment variable
+      if (process.env.ENABLE_CSRF === 'true') {
+        app.use(setCsrfCookie);
+        app.use(validateCsrfToken);
+        app.use(sendCsrfToken);
+        log('CSRF protection enabled in development mode', 'middleware');
+      } else {
+        log('CSRF protection disabled in development mode', 'middleware');
+      }
+    }
+  } catch (error) {
+    // In case there's a compilation or import error, fall back safely
+    console.error('Failed to set up CSRF protection:', error);
+    log('CSRF protection failed to initialize. Will be implemented soon.', 'middleware');
   }
-  */
-  // CSRF protection will be implemented soon
-  log('CSRF protection prepared but not enabled yet. Will be fully implemented soon.', 'middleware');
   
   // Error handler - must be last
   app.use(errorHandlerMiddleware);

@@ -1,20 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
 
 /**
- * Middleware that sets a CSRF token in the session and as a cookie
+ * Middleware to set a CSRF token cookie if one doesn't exist
  */
-export function setCsrfToken(req: Request, res: Response, next: NextFunction): void;
+export function setCsrfCookie(req: Request, res: Response, next: NextFunction): void;
 
 /**
- * Middleware that validates the CSRF token from the request against the session token
+ * Middleware to validate CSRF tokens on mutating requests (POST, PUT, DELETE, PATCH)
  */
 export function validateCsrfToken(req: Request, res: Response, next: NextFunction): void;
 
 /**
- * Helper function that returns both middlewares as a pair
- * @returns An array of both middlewares [setCsrfToken, validateCsrfToken]
+ * Get the current CSRF token for the request
+ * @param req Request object
+ * @returns The current CSRF token
  */
-export function csrfProtection(): [
-  (req: Request, res: Response, next: NextFunction) => void,
-  (req: Request, res: Response, next: NextFunction) => void
-];
+export function getCsrfToken(req: Request): string;
+
+/**
+ * Add the CSRF token to response headers for SPA applications
+ */
+export function sendCsrfToken(req: Request, res: Response, next: NextFunction): void;

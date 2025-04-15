@@ -544,32 +544,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }));
 
-  // Offer Vault endpoints - Simplified
-  app.get('/api/offers', async (req: Request, res: Response) => {
+  // Offer Vault endpoints - Secured with auth wrapper
+  app.get('/api/offers', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const offers = await storage.getOffers(1);
+      const offers = await storage.getOffers(req.userId as number);
       return res.json(offers);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching offers" });
     }
-  });
-  app.post('/api/offers', async (req: Request, res: Response) => {
+  }));
+  
+  app.post('/api/offers', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const data = { userId: 1, ...req.body };
+      const data = { 
+        userId: req.userId as number, 
+        ...req.body 
+      };
       const validatedData = insertOfferSchema.parse(data);
       const offer = await storage.createOffer(validatedData);
       return res.status(201).json(offer);
     } catch (error) {
       return handleZodError(error, res);
     }
-  });
-  app.put('/api/offers/:id', async (req: Request, res: Response) => {
+  }));
+  app.put('/api/offers/:id', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
 
       const parsedId = parseAndValidateId(id, res);
       if (parsedId === undefined) return;
+      
+      // In production, verify user owns this offer
+      if (process.env.NODE_ENV === 'production') {
+        const offer = await storage.getOffer(parsedId);
+        if (!offer || offer.userId !== req.userId) {
+          return res.status(403).json({ message: "Not authorized to update this offer" });
+        }
+      }
 
       const updatedOffer = await storage.updateOffer(parsedId, data);
       if (!updatedOffer) {
@@ -579,12 +591,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return res.status(500).json({ message: "Error updating offer" });
     }
-  });
-  app.delete('/api/offers/:id', async (req: Request, res: Response) => {
+  }));
+  
+  app.delete('/api/offers/:id', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const parsedId = parseAndValidateId(id, res);
       if (parsedId === undefined) return;
+      
+      // In production, verify user owns this offer
+      if (process.env.NODE_ENV === 'production') {
+        const offer = await storage.getOffer(parsedId);
+        if (!offer || offer.userId !== req.userId) {
+          return res.status(403).json({ message: "Not authorized to delete this offer" });
+        }
+      }
 
       const deleted = await storage.deleteOffer(parsedId);
       if (!deleted) {
@@ -594,39 +615,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return res.status(500).json({ message: "Error deleting offer" });
     }
-  });
+  }));
 
-  // Offer Notes endpoints - Simplified
-  app.get('/api/offer-notes', async (req: Request, res: Response) => {
+  // Offer Notes endpoints - Secured with auth wrapper
+  app.get('/api/offer-notes', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      let offerNotes = await storage.getOfferNotesByUserId(1);
+      let offerNotes = await storage.getOfferNotesByUserId(req.userId as number);
+      
+      // Create empty notes if none exist
       if (!offerNotes || offerNotes.length === 0) {
-        const newNote = await storage.createOfferNote({ userId: 1, content: "" });
+        const newNote = await storage.createOfferNote({ 
+          userId: req.userId as number, 
+          content: "" 
+        });
         offerNotes = [newNote];
       }
+      
       return res.json(offerNotes);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching offer notes" });
     }
-  });
-  app.put('/api/offer-notes/:id', async (req: Request, res: Response) => {
+  }));
+  
+  app.put('/api/offer-notes/:id', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { content } = req.body;
+      
       const parsedId = parseAndValidateId(id, res);
       if (parsedId === undefined) return;
+      
       if (content === undefined || content === null) {
         return res.status(400).json({ message: "Content is required" });
       }
+      
+      // In production, verify user owns these notes
+      if (process.env.NODE_ENV === 'production') {
+        // Fetch all user's notes to check ownership
+        const userNotes = await storage.getOfferNotesByUserId(req.userId as number);
+        const noteExists = userNotes.some(note => note.id === parsedId);
+        
+        if (!noteExists) {
+          return res.status(403).json({ message: "Not authorized to update these notes" });
+        }
+      }
+      
       const updatedOfferNote = await storage.updateOfferNote(parsedId, content);
       if (!updatedOfferNote) {
         return res.status(404).json({ message: "Offer notes not found" });
       }
+      
       return res.json(updatedOfferNote);
     } catch (error) {
       return res.status(500).json({ message: "Error updating offer notes" });
     }
-  });
+  }));
 
   // =========== Authentication Endpoints ===========
   
@@ -636,23 +679,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Development-only routes with proper security checks
   app.post('/api/auth/dev-login', async (req, res) => {
+    // Import security logging for this sensitive endpoint
+    // Using require instead of dynamic import to avoid TypeScript issues
+    const { logSecurityEvent, logSuspiciousActivity } = require('./middleware/security-logger.js');
+    
     // SECURITY CHECK: Only allow this endpoint in development
     if (process.env.NODE_ENV === 'production') {
-      console.error('Attempt to access dev-login in production environment!');
+      // Log critical security event - someone is trying to access dev features in prod
+      logSecurityEvent('Attempt to access dev-login in production environment!', 'critical', {
+        ip: req.ip,
+        method: req.method,
+        path: req.path,
+        userAgent: req.get('user-agent') || 'unknown'
+      });
+      
+      // Don't reveal that the endpoint exists at all in production
       return res.status(404).json({ message: 'Endpoint not found' });
     }
     
-    // Log dev login attempt for security tracking
-    console.warn(`[SECURITY] Dev login endpoint accessed from ${req.ip}`);
+    // Log dev login attempt for security tracking (non-critical in dev environment)
+    logSecurityEvent(`Development login endpoint accessed`, 'warn', {
+      ip: req.ip,
+      method: req.method,
+      path: req.path,
+      userAgent: req.get('user-agent') || 'unknown',
+      username: req.body.username || 'unknown'
+    });
     
     try {
-      // Import dynamically to prevent availability in production builds
-      const devAuthModule = await import('./controllers/dev-auth.controller.js');
+      // For simpler development and to avoid import issues
+      const { devLogin } = require('./controllers/dev-auth.controller.js');
       
       // Call the devLogin handler
-      return devAuthModule.devLogin(req, res);
+      return devLogin(req, res);
     } catch (error) {
       console.error('Failed to load dev auth controller:', error);
+      
+      // Log the failure for security monitoring
+      logSuspiciousActivity('Failed to load dev auth controller', req);
+      
       return res.status(500).json({ message: 'Internal server error' });
     }
   });
