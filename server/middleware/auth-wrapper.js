@@ -17,8 +17,10 @@ import { log } from '../vite.js';
  */
 export function withAuth(handler) {
   return function(req, res, next) {
-    // Check if user is authenticated via session or token
-    if (!req.isAuthenticated && !req.isAuthenticated()) {
+    // Check if req.userId exists (it's set by the JWT auth middleware)
+    const hasAuth = !!req.userId;
+    
+    if (!hasAuth) {
       if (process.env.NODE_ENV === 'production') {
         log(`[SECURITY] Unauthorized access attempt to ${req.path} from ${req.ip}`, 'auth');
         return res.status(401).json({ message: 'Authentication required' });
@@ -42,8 +44,10 @@ export function withAuth(handler) {
  */
 export function withAuthAndUser(handler) {
   return function(req, res, next) {
-    // Check if user is authenticated via session or token
-    if (!req.isAuthenticated && !req.isAuthenticated()) {
+    // Check if req.userId exists (it's set by the JWT auth middleware)
+    const hasAuth = !!req.userId;
+    
+    if (!hasAuth) {
       if (process.env.NODE_ENV === 'production') {
         log(`[SECURITY] Unauthorized access attempt to ${req.path} from ${req.ip}`, 'auth');
         return res.status(401).json({ message: 'Authentication required' });

@@ -120,90 +120,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }));
 
 
-  // Problem Tree endpoints
-  app.get('/api/problem-trees', cacheMiddleware('problem-trees', 300), async (req: Request, res: Response) => {
+  // Problem Tree endpoints - secured with auth wrapper
+  app.get('/api/problem-trees', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const problemTrees = await storage.getProblemTrees(1);
+      const problemTrees = await storage.getProblemTrees(req.userId as number);
       return res.json(problemTrees);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching problem trees" });
     }
-  });
+  }));
 
-  app.post('/api/problem-trees', clearCacheMiddleware('problem-trees'), async (req: Request, res: Response) => {
+  app.post('/api/problem-trees', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const data = {
-        userId: 1,
+        userId: req.userId as number,
         ...req.body
       };
       const validatedData = insertProblemTreeSchema.parse(data);
       const problemTree = await storage.createProblemTree(validatedData);
+      
+      // Clear cache after creating new problem tree
+      clearCacheMiddleware('problem-trees')(req, res, () => {});
+      
       return res.status(201).json(problemTree);
     } catch (error) {
       return handleZodError(error, res);
     }
-  });
+  }));
 
-  app.put('/api/problem-trees/:id', async (req: Request, res: Response) => {
+  app.put('/api/problem-trees/:id', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
 
       const parsedId = parseAndValidateId(id, res);
       if (parsedId === undefined) return;
+      
+      // In production, verify user owns this problem tree
+      if (process.env.NODE_ENV === 'production') {
+        const problemTree = await storage.getProblemTree(parsedId);
+        if (!problemTree || problemTree.userId !== req.userId) {
+          return res.status(403).json({ message: "Not authorized to update this problem tree" });
+        }
+      }
 
       const updatedProblemTree = await storage.updateProblemTree(parsedId, data);
       if (!updatedProblemTree) {
         return res.status(404).json({ message: "Problem tree not found" });
       }
+      
+      // Clear cache after update
+      clearCacheMiddleware('problem-trees')(req, res, () => {});
+      
       return res.json(updatedProblemTree);
     } catch (error) {
       return res.status(500).json({ message: "Error updating problem tree" });
     }
-  });
+  }));
 
-  app.delete('/api/problem-trees/:id', async (req: Request, res: Response) => {
+  app.delete('/api/problem-trees/:id', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const parsedId = parseAndValidateId(id, res);
       if (parsedId === undefined) return;
+      
+      // In production, verify user owns this problem tree
+      if (process.env.NODE_ENV === 'production') {
+        const problemTree = await storage.getProblemTree(parsedId);
+        if (!problemTree || problemTree.userId !== req.userId) {
+          return res.status(403).json({ message: "Not authorized to delete this problem tree" });
+        }
+      }
 
       const deleted = await storage.deleteProblemTree(parsedId);
       if (!deleted) {
         return res.status(404).json({ message: "Problem tree not found" });
       }
+      
+      // Clear cache after deletion
+      clearCacheMiddleware('problem-trees')(req, res, () => {});
+      
       return res.status(204).end();
     } catch (error) {
       return res.status(500).json({ message: "Error deleting problem tree" });
     }
-  });
+  }));
 
-  // Drafted Plans endpoints - Simplified
-  app.get('/api/drafted-plans', async (req: Request, res: Response) => {
+  // Drafted Plans endpoints - Secured with auth wrapper
+  app.get('/api/drafted-plans', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const draftedPlans = await storage.getDraftedPlans(1);
+      const draftedPlans = await storage.getDraftedPlans(req.userId as number);
       return res.json(draftedPlans);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching drafted plans" });
     }
-  });
-  app.post('/api/drafted-plans', async (req: Request, res: Response) => {
+  }));
+  
+  app.post('/api/drafted-plans', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const data = { userId: 1, ...req.body };
+      const data = { 
+        userId: req.userId as number, 
+        ...req.body 
+      };
       const validatedData = insertDraftedPlanSchema.parse(data);
       const draftedPlan = await storage.createDraftedPlan(validatedData);
       return res.status(201).json(draftedPlan);
     } catch (error) {
       return handleZodError(error, res);
     }
-  });
-  app.put('/api/drafted-plans/:id', async (req: Request, res: Response) => {
+  }));
+  
+  app.put('/api/drafted-plans/:id', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
 
       const parsedId = parseAndValidateId(id, res);
       if (parsedId === undefined) return;
+      
+      // In production, verify user owns this drafted plan
+      if (process.env.NODE_ENV === 'production') {
+        const draftedPlan = await storage.getDraftedPlan(parsedId);
+        if (!draftedPlan || draftedPlan.userId !== req.userId) {
+          return res.status(403).json({ message: "Not authorized to update this drafted plan" });
+        }
+      }
 
       const updatedDraftedPlan = await storage.updateDraftedPlan(parsedId, data);
       if (!updatedDraftedPlan) {
@@ -213,12 +254,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return res.status(500).json({ message: "Error updating drafted plan" });
     }
-  });
-  app.delete('/api/drafted-plans/:id', async (req: Request, res: Response) => {
+  }));
+  
+  app.delete('/api/drafted-plans/:id', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const parsedId = parseAndValidateId(id, res);
       if (parsedId === undefined) return;
+      
+      // In production, verify user owns this drafted plan
+      if (process.env.NODE_ENV === 'production') {
+        const draftedPlan = await storage.getDraftedPlan(parsedId);
+        if (!draftedPlan || draftedPlan.userId !== req.userId) {
+          return res.status(403).json({ message: "Not authorized to delete this drafted plan" });
+        }
+      }
 
       const deleted = await storage.deleteDraftedPlan(parsedId);
       if (!deleted) {
@@ -228,35 +278,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return res.status(500).json({ message: "Error deleting drafted plan" });
     }
-  });
+  }));
 
-  // Clarity Lab endpoints - Simplified
-  app.get('/api/clarity-labs', async (req: Request, res: Response) => {
+  // Clarity Lab endpoints - Secured with auth wrapper
+  app.get('/api/clarity-labs', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const category = req.query.category as string | undefined;
-      const clarityLabs = await storage.getClarityLabs(1, category);
+      const clarityLabs = await storage.getClarityLabs(req.userId as number, category);
       return res.json(clarityLabs);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching clarity labs" });
     }
-  });
-  app.post('/api/clarity-labs', async (req: Request, res: Response) => {
+  }));
+  
+  app.post('/api/clarity-labs', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const data = { userId: 1, ...req.body };
+      const data = { 
+        userId: req.userId as number, 
+        ...req.body 
+      };
       const validatedData = insertClarityLabSchema.parse(data);
       const clarityLab = await storage.createClarityLab(validatedData);
       return res.status(201).json(clarityLab);
     } catch (error) {
       return handleZodError(error, res);
     }
-  });
-  app.put('/api/clarity-labs/:id', async (req: Request, res: Response) => {
+  }));
+  
+  app.put('/api/clarity-labs/:id', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
 
       const parsedId = parseAndValidateId(id, res);
       if (parsedId === undefined) return;
+      
+      // In production, verify user owns this clarity lab entry
+      if (process.env.NODE_ENV === 'production') {
+        const clarityLab = await storage.getClarityLab(parsedId);
+        if (!clarityLab || clarityLab.userId !== req.userId) {
+          return res.status(403).json({ message: "Not authorized to update this clarity lab entry" });
+        }
+      }
 
       const updatedClarityLab = await storage.updateClarityLab(parsedId, data);
       if (!updatedClarityLab) {
@@ -266,12 +329,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return res.status(500).json({ message: "Error updating clarity lab entry" });
     }
-  });
-  app.delete('/api/clarity-labs/:id', async (req: Request, res: Response) => {
+  }));
+  
+  app.delete('/api/clarity-labs/:id', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const parsedId = parseAndValidateId(id, res);
       if (parsedId === undefined) return;
+      
+      // In production, verify user owns this clarity lab entry
+      if (process.env.NODE_ENV === 'production') {
+        const clarityLab = await storage.getClarityLab(parsedId);
+        if (!clarityLab || clarityLab.userId !== req.userId) {
+          return res.status(403).json({ message: "Not authorized to delete this clarity lab entry" });
+        }
+      }
 
       const deleted = await storage.deleteClarityLab(parsedId);
       if (!deleted) {
@@ -281,7 +353,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return res.status(500).json({ message: "Error deleting clarity lab entry" });
     }
-  });
+  }));
 
   // Weekly Reflections endpoints - Simplified
   app.get('/api/weekly-reflections', async (req: Request, res: Response) => {
