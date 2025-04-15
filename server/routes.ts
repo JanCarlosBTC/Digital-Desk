@@ -355,32 +355,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }));
 
-  // Weekly Reflections endpoints - Simplified
-  app.get('/api/weekly-reflections', async (req: Request, res: Response) => {
+  // Weekly Reflections endpoints - Secured with auth wrapper
+  app.get('/api/weekly-reflections', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const weeklyReflections = await storage.getWeeklyReflections(1);
+      const weeklyReflections = await storage.getWeeklyReflections(req.userId as number);
       return res.json(weeklyReflections);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching weekly reflections" });
     }
-  });
-  app.post('/api/weekly-reflections', async (req: Request, res: Response) => {
+  }));
+  
+  app.post('/api/weekly-reflections', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const data = { userId: 1, ...req.body };
+      const data = { 
+        userId: req.userId as number, 
+        ...req.body 
+      };
       const validatedData = insertWeeklyReflectionSchema.parse(data);
       const weeklyReflection = await storage.createWeeklyReflection(validatedData);
       return res.status(201).json(weeklyReflection);
     } catch (error) {
       return handleZodError(error, res);
     }
-  });
-  app.put('/api/weekly-reflections/:id', async (req: Request, res: Response) => {
+  }));
+  
+  app.put('/api/weekly-reflections/:id', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
 
       const parsedId = parseAndValidateId(id, res);
       if (parsedId === undefined) return;
+      
+      // In production, verify user owns this weekly reflection
+      if (process.env.NODE_ENV === 'production') {
+        const weeklyReflection = await storage.getWeeklyReflection(parsedId);
+        if (!weeklyReflection || weeklyReflection.userId !== req.userId) {
+          return res.status(403).json({ message: "Not authorized to update this weekly reflection" });
+        }
+      }
 
       const updatedWeeklyReflection = await storage.updateWeeklyReflection(parsedId, data);
       if (!updatedWeeklyReflection) {
@@ -390,8 +403,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return res.status(500).json({ message: "Error updating weekly reflection" });
     }
-  });
-  app.delete('/api/weekly-reflections/:id', async (req: Request, res: Response) => {
+  }));
+  
+  app.delete('/api/weekly-reflections/:id', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const parsedId = parseAndValidateId(id, res);
@@ -399,9 +413,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid ID" });
       }
 
-      const reflectionExists = await storage.getWeeklyReflection(parsedId);
-      if (!reflectionExists) {
-        return res.status(404).json({ message: "Weekly reflection not found" });
+      // In production, verify user owns this weekly reflection
+      if (process.env.NODE_ENV === 'production') {
+        const reflectionExists = await storage.getWeeklyReflection(parsedId);
+        if (!reflectionExists || reflectionExists.userId !== req.userId) {
+          return res.status(403).json({ message: "Not authorized to delete this weekly reflection" });
+        }
+      } else {
+        // In development, just check if it exists
+        const reflectionExists = await storage.getWeeklyReflection(parsedId);
+        if (!reflectionExists) {
+          return res.status(404).json({ message: "Weekly reflection not found" });
+        }
       }
       
       // Now try to delete it
@@ -414,28 +437,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return res.status(500).json({ message: "Error deleting weekly reflection" });
     }
-  });
+  }));
 
-  // Monthly Check-ins endpoints - Simplified
-  app.get('/api/monthly-check-ins', async (req: Request, res: Response) => {
+  // Monthly Check-ins endpoints - Secured with auth wrapper
+  app.get('/api/monthly-check-ins', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const monthlyCheckIns = await storage.getMonthlyCheckIns(1);
+      const monthlyCheckIns = await storage.getMonthlyCheckIns(req.userId as number);
       return res.json(monthlyCheckIns);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching monthly check-ins" });
     }
-  });
-  app.post('/api/monthly-check-ins', async (req: Request, res: Response) => {
+  }));
+  
+  app.post('/api/monthly-check-ins', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const data = { userId: 1, ...req.body };
+      const data = { 
+        userId: req.userId as number, 
+        ...req.body 
+      };
       const validatedData = insertMonthlyCheckInSchema.parse(data);
       const monthlyCheckIn = await storage.createMonthlyCheckIn(validatedData);
       return res.status(201).json(monthlyCheckIn);
     } catch (error) {
       return handleZodError(error, res);
     }
-  });
-  app.get('/api/monthly-check-ins/:month/:year', async (req: Request, res: Response) => {
+  }));
+  
+  app.get('/api/monthly-check-ins/:month/:year', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { month, year } = req.params;
       
@@ -451,7 +479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const monthlyCheckIn = await storage.getMonthlyCheckInByMonthYear(
-        1, 
+        req.userId as number, 
         parsedMonth, 
         parsedYear
       );
@@ -464,14 +492,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return res.status(500).json({ message: "Error fetching monthly check-in" });
     }
-  });
-  app.put('/api/monthly-check-ins/:id', async (req: Request, res: Response) => {
+  }));
+  
+  app.put('/api/monthly-check-ins/:id', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
 
       const parsedId = parseAndValidateId(id, res);
       if (parsedId === undefined) return;
+      
+      // In production, verify user owns this monthly check-in
+      if (process.env.NODE_ENV === 'production') {
+        // Get monthly check-ins for user to verify ownership
+        const userCheckIns = await storage.getMonthlyCheckIns(req.userId as number);
+        const checkInExists = userCheckIns.some(checkIn => checkIn.id === parsedId);
+        
+        if (!checkInExists) {
+          return res.status(403).json({ message: "Not authorized to update this monthly check-in" });
+        }
+      }
 
       const updatedMonthlyCheckIn = await storage.updateMonthlyCheckIn(parsedId, data);
       if (!updatedMonthlyCheckIn) {
@@ -481,34 +521,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return res.status(500).json({ message: "Error updating monthly check-in" });
     }
-  });
+  }));
 
-  // Priorities endpoints - Simplified
-  app.get('/api/priorities', async (req: Request, res: Response) => {
+  // Priorities endpoints - Secured with auth wrapper
+  app.get('/api/priorities', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const priorities = await storage.getPriorities(1);
+      const priorities = await storage.getPriorities(req.userId as number);
       return res.json(priorities);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching priorities" });
     }
-  });
-  app.post('/api/priorities', async (req: Request, res: Response) => {
+  }));
+  
+  app.post('/api/priorities', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const data = { userId: 1, ...req.body };
+      const data = { 
+        userId: req.userId as number, 
+        ...req.body 
+      };
       const validatedData = insertPrioritySchema.parse(data);
       const priority = await storage.createPriority(validatedData);
       return res.status(201).json(priority);
     } catch (error) {
       return handleZodError(error, res);
     }
-  });
-  app.put('/api/priorities/:id', async (req: Request, res: Response) => {
+  }));
+  
+  app.put('/api/priorities/:id', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const data = req.body;
 
       const parsedId = parseAndValidateId(id, res);
       if (parsedId === undefined) return;
+      
+      // In production, verify user owns this priority
+      if (process.env.NODE_ENV === 'production') {
+        // Get all user priorities to verify ownership
+        const userPriorities = await storage.getPriorities(req.userId as number);
+        const priorityExists = userPriorities.some(priority => priority.id === parsedId);
+        
+        if (!priorityExists) {
+          return res.status(403).json({ message: "Not authorized to update this priority" });
+        }
+      }
 
       const updatedPriority = await storage.updatePriority(parsedId, data);
       if (!updatedPriority) {
@@ -518,12 +574,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return res.status(500).json({ message: "Error updating priority" });
     }
-  });
-  app.delete('/api/priorities/:id', async (req: Request, res: Response) => {
+  }));
+  
+  app.delete('/api/priorities/:id', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const parsedId = parseAndValidateId(id, res);
       if (parsedId === undefined) return;
+      
+      // In production, verify user owns this priority
+      if (process.env.NODE_ENV === 'production') {
+        // Get all user priorities to verify ownership
+        const userPriorities = await storage.getPriorities(req.userId as number);
+        const priorityExists = userPriorities.some(priority => priority.id === parsedId);
+        
+        if (!priorityExists) {
+          return res.status(403).json({ message: "Not authorized to delete this priority" });
+        }
+      }
 
       const deleted = await storage.deletePriority(parsedId);
       if (!deleted) {
@@ -533,7 +601,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return res.status(500).json({ message: "Error deleting priority" });
     }
-  });
+  }));
 
   // Decision Log endpoints - Protected with auth wrapper
   app.get('/api/decisions', withAuthAndUser(async (req: Request, res: Response) => {
