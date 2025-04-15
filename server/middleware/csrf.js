@@ -1,84 +1,93 @@
 /**
  * CSRF Protection Middleware
  * 
- * This middleware implements Cross-Site Request Forgery (CSRF) protection
- * for state-changing operations (POST, PUT, DELETE).
- * 
- * It uses a double-submit cookie pattern: a CSRF token is stored in both a cookie
- * and sent to the client for inclusion in request headers or form submissions.
+ * This middleware implements Cross-Site Request Forgery protection
+ * through the double-submit cookie pattern with a CSRF token.
  */
 
 import crypto from 'crypto';
 
-// Token name constants
-const CSRF_COOKIE_NAME = 'XSRF-TOKEN';
-const CSRF_HEADER_NAME = 'X-XSRF-TOKEN';
-
-/**
- * Generates a secure random token for CSRF protection
- * @returns {string} A random token
- */
-function generateToken() {
+// Generate a random CSRF token
+function generateCsrfToken() {
   return crypto.randomBytes(32).toString('hex');
 }
 
-/**
- * Sets a CSRF token in the response cookies and makes it available to the client
- */
+// Set the CSRF token as cookie and expose it in response header
 export function setCsrfToken(req, res, next) {
-  // Create a new token if one doesn't exist
-  if (!req.cookies || !req.cookies[CSRF_COOKIE_NAME]) {
-    const token = generateToken();
-    
-    // Set the cookie with appropriate security settings
-    res.cookie(CSRF_COOKIE_NAME, token, {
-      sameSite: 'strict',  // Prevent CSRF
-      httpOnly: false,     // Client JS needs to read this
-      secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-      path: '/',           // Available across the application
+  // Skip for GET, HEAD, OPTIONS methods (safe methods)
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    return next();
+  }
+
+  // Generate a new token if one doesn't exist
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = generateCsrfToken();
+  }
+  
+  // Set token in cookie (httpOnly: false so JS can read it)
+  res.cookie('csrf-token', req.session.csrfToken, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/'
+  });
+  
+  // Also add it as a response header for API clients
+  res.setHeader('X-CSRF-Token', req.session.csrfToken);
+  
+  next();
+}
+
+// Validate the CSRF token from request against the session token
+export function validateCsrfToken(req, res, next) {
+  // Skip for GET, HEAD, OPTIONS methods (safe methods)
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    return next();
+  }
+
+  // Skip in development unless explicitly enabled
+  if (process.env.NODE_ENV !== 'production' && process.env.ENABLE_CSRF !== 'true') {
+    return next();
+  }
+  
+  // Get the token from header, body, or query
+  const clientToken = 
+    req.headers['x-csrf-token'] || 
+    req.body._csrf || 
+    req.query._csrf;
+  
+  // No token provided
+  if (!clientToken) {
+    console.warn(`[SECURITY] CSRF token missing in request from ${req.ip}`);
+    return res.status(403).json({ 
+      message: 'CSRF token required',
+      error: 'CSRF_TOKEN_MISSING'
     });
   }
   
+  // No session token for comparison
+  if (!req.session.csrfToken) {
+    console.warn(`[SECURITY] No CSRF token in session for request from ${req.ip}`);
+    return res.status(403).json({ 
+      message: 'CSRF validation failed',
+      error: 'CSRF_SESSION_EXPIRED'
+    });
+  }
+  
+  // Token mismatch
+  if (clientToken !== req.session.csrfToken) {
+    console.warn(`[SECURITY] CSRF token mismatch for request from ${req.ip}`);
+    return res.status(403).json({ 
+      message: 'CSRF validation failed',
+      error: 'CSRF_TOKEN_INVALID'
+    });
+  }
+  
+  // Success - continue to the route handler
   next();
 }
 
-/**
- * Validates the CSRF token from the request header against the cookie value
- * for all state-changing methods (POST, PUT, DELETE)
- */
-export function validateCsrfToken(req, res, next) {
-  // Skip validation for non-state-changing methods
-  const safeMethod = /^(GET|HEAD|OPTIONS|TRACE)$/.test(req.method);
-  if (safeMethod) {
-    return next();
-  }
-  
-  // Skip for development environment if enabled
-  if (process.env.NODE_ENV !== 'production' && process.env.DISABLE_CSRF === 'true') {
-    console.warn('[SECURITY] CSRF protection disabled in development mode');
-    return next();
-  }
-  
-  // Get the token from the cookie
-  const cookieToken = req.cookies ? req.cookies[CSRF_COOKIE_NAME] : null;
-  
-  // Get the token from the request header
-  const headerToken = req.headers[CSRF_HEADER_NAME.toLowerCase()] || req.headers[CSRF_HEADER_NAME] || 
-    req.body && req.body._csrf;
-  
-  // Both tokens must exist and match
-  if (!cookieToken || !headerToken || cookieToken !== headerToken) {
-    console.error(`[SECURITY] CSRF validation failed: token mismatch or missing for ${req.method} ${req.path}`);
-    return res.status(403).json({ message: 'CSRF token validation failed' });
-  }
-  
-  next();
-}
-
-/**
- * Creates middleware that sets and validates CSRF tokens
- * @returns {Array} Array of middleware functions to handle CSRF protection
- */
+// Helper function to create both middlewares as a pair
 export function csrfProtection() {
   return [setCsrfToken, validateCsrfToken];
 }

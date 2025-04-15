@@ -52,19 +52,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return res.status(500).json({ message: "An unexpected error occurred" });
   };
 
-  // Brain Dump endpoints
-  app.get('/api/brain-dump', async (req: Request, res: Response) => {
+  // Brain Dump endpoints - protected with auth wrapper
+  app.get('/api/brain-dump', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      // SECURITY: Production should use real user ID from auth
-      // In development, we can use a default user ID
-      const userId = process.env.NODE_ENV === 'production' 
-        ? (req.userId || -1) // Will return 404 if not authenticated
-        : 1; // Default user in development
-        
+      // User ID comes from auth middleware - will always have a value due to withAuthAndUser
+      const userId = req.userId as number;
+      
       const brainDump = await storage.getBrainDumpByUserId(userId);
       
       // Only return data if found
-      if (!brainDump && process.env.NODE_ENV === 'production') {
+      if (!brainDump) {
         return res.status(404).json({ message: "Brain dump not found" });
       }
       
@@ -72,7 +69,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       return res.status(500).json({ message: "Error fetching brain dump" });
     }
-  });
+  }));
 
   app.post('/api/brain-dump', async (req: Request, res: Response) => {
     try {

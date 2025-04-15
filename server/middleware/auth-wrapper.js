@@ -1,75 +1,88 @@
 /**
- * Authentication Middleware Wrapper
+ * Authentication Wrapper Middleware
  * 
- * A secure middleware layer that extracts the authenticated user ID from the request
- * and provides it to API route handlers, eliminating hardcoded user IDs.
+ * This module provides middleware wrappers to enforce authentication
+ * and user context on API routes. It helps secure routes by ensuring
+ * users are authenticated before accessing resources.
  */
 
-import { authenticate } from './auth.js';
-
-/**
- * Creates an authenticated route handler for APIs that require authentication
- * 
- * @param {Function} handler - The original route handler function 
- * @returns {Function} A wrapped handler that includes authentication
- */
-export const withAuth = (handler) => {
-  return (req, res, next) => {
-    // First authenticate the request
-    authenticate(req, res, (err) => {
-      if (err) return next(err);
-      
-      // If authentication failed, the authenticate middleware would have
-      // already sent the appropriate response
-      if (!req.userId) return;
-      
-      // Call the original handler with the authenticated request
-      return handler(req, res, next);
-    });
-  };
-};
+import { log } from '../vite.js';
 
 /**
- * Creates a wrapper around an API endpoint to add authentication
- * and inject the user ID from the authenticated token instead of using hardcoded IDs
+ * Middleware that enforces authentication but doesn't require user context
+ * Use this for endpoints that need authentication but don't need user data
  * 
- * @param {Function} handler - The original API handler function
- * @returns {Function} A wrapped handler that includes authentication and user ID injection
+ * @param {Function} handler The route handler to wrap with authentication
+ * @returns {Function} A wrapped route handler with authentication check
  */
-export const withAuthAndUser = (handler) => {
-  return withAuth((req, res, next) => {
-    // Override any user ID in the request body with the authenticated user ID
-    if (req.body && typeof req.body === 'object') {
-      req.body.userId = req.userId;
+export function withAuth(handler) {
+  return function(req, res, next) {
+    // Check if user is authenticated via session or token
+    if (!req.isAuthenticated && !req.isAuthenticated()) {
+      if (process.env.NODE_ENV === 'production') {
+        log(`[SECURITY] Unauthorized access attempt to ${req.path} from ${req.ip}`, 'auth');
+        return res.status(401).json({ message: 'Authentication required' });
+      } else {
+        // In development, use userId=1 for testing if no auth mechanism available
+        log(`[DEV] Using default userId=1 for unauthenticated request to ${req.path}`, 'auth');
+        req.userId = 1;
+      }
     }
     
-    // Continue to the original handler
     return handler(req, res, next);
-  });
-};
+  };
+}
 
 /**
- * Development-only middleware that simulates authentication
- * Only for use in development environments
+ * Middleware that enforces authentication AND requires valid user context
+ * Use this for endpoints that need to access or modify user-specific data
  * 
- * @param {number} userId - The user ID to simulate
- * @returns {Function} Middleware function
+ * @param {Function} handler The route handler to wrap with authentication and user check
+ * @returns {Function} A wrapped route handler with authentication and user check
  */
-export const withDevAuth = (userId = 1) => {
-  return (req, res, next) => {
-    // SECURITY CHECK: Only allow in development
-    if (process.env.NODE_ENV === 'production') {
-      console.error('Attempt to use development authentication in production');
-      return res.status(401).json({ message: 'Unauthorized' });
+export function withAuthAndUser(handler) {
+  return function(req, res, next) {
+    // Check if user is authenticated via session or token
+    if (!req.isAuthenticated && !req.isAuthenticated()) {
+      if (process.env.NODE_ENV === 'production') {
+        log(`[SECURITY] Unauthorized access attempt to ${req.path} from ${req.ip}`, 'auth');
+        return res.status(401).json({ message: 'Authentication required' });
+      } else {
+        // In development, use userId=1 for testing if no auth mechanism available
+        log(`[DEV] Using default userId=1 for unauthenticated request to ${req.path}`, 'auth');
+        req.userId = 1;
+      }
     }
     
-    // Inject the user ID
-    req.userId = userId;
+    // Ensure we have a userId (either from auth mechanism or dev default)
+    if (!req.userId) {
+      log(`[SECURITY] Missing user context for authenticated request to ${req.path}`, 'auth');
+      return res.status(500).json({ message: 'Invalid user context' });
+    }
     
-    // Log the use of development authentication
-    console.warn(`[SECURITY] Using development authentication (userId: ${userId})`);
-    
-    // Continue
-    return next();
+    return handler(req, res, next);
   };
-};
+}
+
+/**
+ * Development-only middleware for testing with a specific user ID
+ * This should NEVER be used in production
+ * 
+ * @param {number} userId The user ID to use for the request (defaults to 1)
+ * @returns {Function} A route handler that injects the specified user ID
+ */
+export function withDevAuth(userId = 1) {
+  return function(req, res, next) {
+    if (process.env.NODE_ENV === 'production') {
+      log(`[SECURITY] Attempt to use dev auth in production for ${req.path}`, 'auth');
+      return res.status(404).json({ message: 'Endpoint not found' });
+    }
+    
+    // Inject the user ID for development testing
+    req.userId = userId;
+    log(`[DEV] Using injected userId=${userId} for request to ${req.path}`, 'auth');
+    
+    // Pass through to the next middleware/route handler
+    next();
+  };
+}
