@@ -196,7 +196,7 @@ const ProblemTreeList = memo(function ProblemTreeList({
               <SelectTrigger className="h-10 w-[180px]">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" className="bg-white shadow-lg" style={{zIndex: 1000}}>
                 <SelectItem value="title">Title</SelectItem>
                 <SelectItem value="updatedAt">Last Updated</SelectItem>
                 <SelectItem value="createdAt">Date Created</SelectItem>

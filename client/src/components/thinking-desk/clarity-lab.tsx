@@ -276,7 +276,7 @@ const ClarityLabComponent = ({ showNewEntry = false, onDialogClose }: ClarityLab
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent position="popper" className="bg-white shadow-lg" style={{zIndex: 1000}}>
                       <SelectItem value="Lesson">Lesson Learned</SelectItem>
                       <SelectItem value="Workflow">Workflow</SelectItem>
                       <SelectItem value="Solution">Solution</SelectItem>
