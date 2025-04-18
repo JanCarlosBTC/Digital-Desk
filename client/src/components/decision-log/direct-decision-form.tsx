@@ -27,32 +27,52 @@ const DirectDecisionForm: React.FC<DirectDecisionFormProps> = ({
     }
   }, [selectedDecision]);
 
-  // Direct form submission handler
-  const handleFormSubmit = (e: React.FormEvent) => {
+  // Extract the form values directly from the DOM
+  const extractFormDataFromDOM = () => {
+    const title = document.getElementById('title') as HTMLInputElement;
+    const category = document.getElementById('category') as HTMLSelectElement;
+    const decisionDate = document.getElementById('decisionDate') as HTMLInputElement;
+    const why = document.getElementById('why') as HTMLTextAreaElement;
+    const alternatives = document.getElementById('alternatives') as HTMLTextAreaElement;
+    const expectedOutcome = document.getElementById('expectedOutcome') as HTMLTextAreaElement;
+    const followUpDate = document.getElementById('followUpDate') as HTMLInputElement;
+    const status = document.getElementById('status') as HTMLSelectElement;
+    const whatDifferent = document.getElementById('whatDifferent') as HTMLTextAreaElement;
+    
+    return {
+      title: title?.value,
+      category: category?.value,
+      decisionDate: decisionDate?.value,
+      why: why?.value,
+      alternatives: alternatives?.value || null,
+      expectedOutcome: expectedOutcome?.value || null,
+      followUpDate: followUpDate?.value || null,
+      status: isEditing ? (status?.value || "Pending") : "Pending",
+      whatDifferent: whatDifferent?.value || null,
+    };
+  };
+
+  // This function will be called in both dialog and non-dialog mode
+  const handleSubmitClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    console.log("Form submitted via native submit event");
     
-    // Extract form data directly
-    const formElement = e.target as HTMLFormElement;
-    const formData = new FormData(formElement);
+    console.log("Submit button clicked");
     
-    // Convert form data to an object
-    const formValues: Record<string, string> = {};
-    formData.forEach((value, key) => {
-      formValues[key] = value.toString();
-    });
-    
+    // Extract form data
+    const formValues = extractFormDataFromDOM();
     console.log("Extracted form data:", formValues);
     
     // Check required fields
-    const requiredFields = ['title', 'category', 'decisionDate', 'why'];
-    const missingFields: string[] = [];
+    const requiredFields = [
+      { name: 'title', value: formValues.title },
+      { name: 'category', value: formValues.category },
+      { name: 'decisionDate', value: formValues.decisionDate },
+      { name: 'why', value: formValues.why }
+    ];
     
-    requiredFields.forEach(field => {
-      if (!formValues[field] || formValues[field].trim() === '') {
-        missingFields.push(field);
-      }
-    });
+    const missingFields = requiredFields
+      .filter(field => !field.value || field.value.trim() === '')
+      .map(field => field.name);
     
     if (missingFields.length > 0) {
       console.error("Missing required fields:", missingFields);
@@ -70,11 +90,11 @@ const DirectDecisionForm: React.FC<DirectDecisionFormProps> = ({
       category: formValues.category,
       decisionDate: formValues.decisionDate,
       why: formValues.why,
-      alternatives: formValues.alternatives || null,
-      expectedOutcome: formValues.expectedOutcome || null,
-      followUpDate: formValues.followUpDate || null,
-      whatDifferent: formValues.whatDifferent || null,
-      status: formValues.status || "Pending"
+      alternatives: formValues.alternatives,
+      expectedOutcome: formValues.expectedOutcome,
+      followUpDate: formValues.followUpDate,
+      whatDifferent: formValues.whatDifferent,
+      status: formValues.status
     };
     
     console.log("Processed data for submission:", processedData);
@@ -115,11 +135,6 @@ const DirectDecisionForm: React.FC<DirectDecisionFormProps> = ({
             : "Your decision has been logged successfully.",
           variant: "success",
         });
-        
-        // Reset form if creating new decision
-        if (!selectedDecision) {
-          formElement.reset();
-        }
         
         // Call onSuccess callback if provided
         if (onSuccess) {
@@ -213,7 +228,7 @@ const DirectDecisionForm: React.FC<DirectDecisionFormProps> = ({
         </>
       )}
 
-      <form onSubmit={handleFormSubmit} className="space-y-8">
+      <div className="space-y-8">
         {/* Basic Information Section */}
         <div>
           <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">Basic Information</h3>
@@ -395,7 +410,8 @@ const DirectDecisionForm: React.FC<DirectDecisionFormProps> = ({
               </button>
             )}
             <button 
-              type="submit"
+              type="button"
+              onClick={handleSubmitClick}
               disabled={isSubmitting}
               className="h-10 px-4 py-2 flex items-center bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
             >
@@ -403,7 +419,7 @@ const DirectDecisionForm: React.FC<DirectDecisionFormProps> = ({
             </button>
           </div>
         </div>
-      </form>
+      </div>
 
       {/* Delete Confirmation Dialog */}
       {showDeleteConfirm && (
