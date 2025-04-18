@@ -371,7 +371,7 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper" className="z-50">
             <SelectItem value="status">Sort by Status</SelectItem>
             <SelectItem value="newest">Newest First</SelectItem>
             <SelectItem value="price-high">Price (High to Low)</SelectItem>
