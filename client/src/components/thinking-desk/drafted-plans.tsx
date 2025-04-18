@@ -346,7 +346,7 @@ const DraftedPlans = ({
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent position="popper" className="bg-white shadow-lg" style={{zIndex: 1000}}>
                           <SelectItem value="Draft">Draft</SelectItem>
                           <SelectItem value="In Progress">In Progress</SelectItem>
                           <SelectItem value="Ready for Review">Ready for Review</SelectItem>
