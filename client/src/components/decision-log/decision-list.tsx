@@ -339,7 +339,7 @@ const DecisionList = ({
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" className="bg-white shadow-lg" style={{zIndex: 1000}}>
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map(category => (
                   <SelectItem key={category} value={category}>
@@ -356,7 +356,7 @@ const DecisionList = ({
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" className="bg-white shadow-lg" style={{zIndex: 1000}}>
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="Pending">Pending</SelectItem>
                 <SelectItem value="Successful">Successful</SelectItem>
@@ -371,7 +371,7 @@ const DecisionList = ({
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="All Time" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" className="bg-white shadow-lg" style={{zIndex: 1000}}>
                 <SelectItem value="all">All Time</SelectItem>
                 <SelectItem value="last30days">Last 30 Days</SelectItem>
                 <SelectItem value="last3months">Last 3 Months</SelectItem>
@@ -386,7 +386,7 @@ const DecisionList = ({
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Sort Order" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" className="bg-white shadow-lg" style={{zIndex: 1000}}>
                 <SelectItem value="newest">Newest First</SelectItem>
                 <SelectItem value="oldest">Oldest First</SelectItem>
               </SelectContent>

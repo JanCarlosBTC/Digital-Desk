@@ -309,7 +309,7 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent>
+                    <SelectContent position="popper" className="bg-white shadow-lg" style={{zIndex: 1000}}>
                       <SelectItem value="Strategy">Strategy</SelectItem>
                       <SelectItem value="Marketing">Marketing</SelectItem>
                       <SelectItem value="Operations">Operations</SelectItem>
@@ -431,7 +431,7 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
                           <SelectValue placeholder="Select the status" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent position="popper" className="bg-white shadow-lg" style={{zIndex: 1000}}>
                         <SelectItem value="Pending">Pending</SelectItem>
                         <SelectItem value="Successful">Successful</SelectItem>
                         <SelectItem value="Failed">Failed</SelectItem>
