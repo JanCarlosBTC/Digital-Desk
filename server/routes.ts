@@ -645,17 +645,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post('/api/decisions', withAuthAndUser(async (req: Request, res: Response) => {
     try {
+      console.log("Received decision creation request with body:", JSON.stringify(req.body, null, 2));
+      
       const data = { 
         userId: req.userId as number, 
         ...req.body 
       };
-      const validatedData = insertDecisionSchema.parse(data);
-      const decision = await storage.createDecision(validatedData);
-      // Clear cache after creating new decision
-      clearCacheMiddleware('decisions')(req, res, () => {});
-      return res.status(201).json(decision);
+      
+      console.log("Processing data for decision validation:", JSON.stringify(data, null, 2));
+      
+      try {
+        const validatedData = insertDecisionSchema.parse(data);
+        console.log("Validation successful, validated data:", JSON.stringify(validatedData, null, 2));
+        
+        const decision = await storage.createDecision(validatedData);
+        console.log("Decision created successfully:", JSON.stringify(decision, null, 2));
+        
+        // Clear cache after creating new decision
+        clearCacheMiddleware('decisions')(req, res, () => {});
+        return res.status(201).json(decision);
+      } catch (validationError) {
+        console.error("Validation error:", validationError);
+        if (validationError instanceof Error) {
+          console.error("Error details:", validationError.message);
+        }
+        return handleZodError(validationError, res);
+      }
     } catch (error) {
-      return handleZodError(error, res);
+      console.error("Unexpected error in decision creation:", error);
+      if (error instanceof Error) {
+        return res.status(500).json({ message: `Error creating decision: ${error.message}` });
+      }
+      return res.status(500).json({ message: "Unknown error occurred creating decision" });
     }
   }));
   app.put('/api/decisions/:id', withAuthAndUser(async (req: Request, res: Response) => {

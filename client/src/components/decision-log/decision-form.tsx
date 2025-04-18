@@ -109,28 +109,54 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
   const mutation = useMutation<DecisionResponse, Error, FormValues>({
     mutationFn: async (data: FormValues) => {
       try {
-        // Format dates for API transmission
+        // Format the form data for API submission
+        // The decisionDate needs to be an ISO string for the backend validation to work
         const formattedData = {
           ...data,
-          decisionDate: new Date(data.decisionDate),
-          followUpDate: data.followUpDate ? new Date(data.followUpDate) : null,
+          // Convert date strings to ISO format as expected by the backend
+          decisionDate: data.decisionDate,
+          followUpDate: data.followUpDate || null,
+          // Ensure optional fields have proper null values rather than undefined
+          alternatives: data.alternatives || null,
+          expectedOutcome: data.expectedOutcome || null,
+          whatDifferent: data.whatDifferent || null,
+          // Provide default status if not specified
+          status: data.status || "Pending"
         };
 
-        console.log('Submitting decision:', formattedData);
+        console.log('Submitting decision with formatted data:', formattedData);
 
-        // Ensure category is selected
+        // Ensure required fields are present
         if (!formattedData.category) {
+          console.error("Category is missing from submission data");
           throw new Error("Category is required");
+        }
+
+        if (!formattedData.title) {
+          console.error("Title is missing from submission data");
+          throw new Error("Title is required");
+        }
+
+        if (!formattedData.decisionDate) {
+          console.error("Decision date is missing from submission data");
+          throw new Error("Decision date is required");
+        }
+
+        if (!formattedData.why) {
+          console.error("Why field is missing from submission data");
+          throw new Error("Reason for decision is required");
         }
 
         let response;
         if (selectedDecision) {
+          console.log(`Updating existing decision ${selectedDecision.id}`);
           response = await apiRequest<DecisionResponse>(
             'PUT', 
             `/api/decisions/${selectedDecision.id}`, 
             formattedData
           );
         } else {
+          console.log('Creating new decision');
           response = await apiRequest<DecisionResponse>(
             'POST', 
             '/api/decisions', 
@@ -142,6 +168,12 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
         return response;
       } catch (error) {
         console.error('Error in mutation function:', error);
+        // Add more detailed error information
+        if (error instanceof Error) {
+          console.error('Error name:', error.name);
+          console.error('Error message:', error.message);
+          console.error('Error stack:', error.stack);
+        }
         throw error;
       }
     },
