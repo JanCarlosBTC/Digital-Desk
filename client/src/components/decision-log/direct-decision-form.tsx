@@ -409,14 +409,16 @@ const DirectDecisionForm: React.FC<DirectDecisionFormProps> = ({
                 Cancel
               </button>
             )}
-            <button 
-              type="button"
-              onClick={handleSubmitClick}
-              disabled={isSubmitting}
-              className="h-10 px-4 py-2 flex items-center bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
-            >
-              {isSubmitting ? "Saving..." : "Save Decision"}
-            </button>
+            {!isDialog && (
+              <button 
+                type="button"
+                onClick={handleSubmitClick}
+                disabled={isSubmitting}
+                className="h-10 px-4 py-2 flex items-center bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
+              >
+                {isSubmitting ? "Saving..." : "Save Decision"}
+              </button>
+            )}
           </div>
         </div>
       </div>

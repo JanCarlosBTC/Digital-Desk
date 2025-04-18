@@ -53,9 +53,60 @@ const DecisionLog = () => {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         size="lg"
+        submitLabel="Save Decision"
         onSubmit={(e) => {
           e.preventDefault();
-          // The form will handle its own submission through DecisionForm
+          // Get a reference to the component instance
+          const formInstance = document.getElementById('title')?.closest('.bg-white');
+          if (formInstance) {
+            // Extract and submit form data
+            const title = document.getElementById('title') as HTMLInputElement;
+            const category = document.getElementById('category') as HTMLSelectElement;
+            const decisionDate = document.getElementById('decisionDate') as HTMLInputElement;
+            const why = document.getElementById('why') as HTMLTextAreaElement;
+            const alternatives = document.getElementById('alternatives') as HTMLTextAreaElement;
+            const expectedOutcome = document.getElementById('expectedOutcome') as HTMLTextAreaElement;
+            const followUpDate = document.getElementById('followUpDate') as HTMLInputElement;
+            
+            if (!title?.value || !category?.value || !decisionDate?.value || !why?.value) {
+              alert("Please fill in all required fields");
+              return;
+            }
+            
+            const formData = {
+              title: title?.value,
+              category: category?.value,
+              decisionDate: decisionDate?.value,
+              why: why?.value,
+              alternatives: alternatives?.value || null,
+              expectedOutcome: expectedOutcome?.value || null,
+              followUpDate: followUpDate?.value || null,
+              status: "Pending",
+              whatDifferent: null,
+            };
+            
+            // Call the API directly
+            const apiEndpoint = selectedDecision 
+              ? `/api/decisions/${selectedDecision.id}`
+              : '/api/decisions';
+            
+            const method = selectedDecision ? 'PUT' : 'POST';
+            
+            fetch(apiEndpoint, {
+              method,
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(formData),
+            })
+            .then(response => response.json())
+            .then(data => {
+              setDialogOpen(false);
+            })
+            .catch(error => {
+              console.error("Error saving decision:", error);
+            });
+          }
         }}
       >
         <DirectDecisionForm 
