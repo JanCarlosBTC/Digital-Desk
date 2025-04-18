@@ -1,0 +1,102 @@
+import { users, type User, type InsertUser, weeklyReflections, type WeeklyReflection, type InsertWeeklyReflection } from "../shared/schema.js";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+import { IStorage } from "./storage"; // Assuming IStorage interface is defined in storage.ts
+
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  // Weekly Reflections methods
+  async getWeeklyReflections(userId: number): Promise<WeeklyReflection[]> {
+    const reflections = await db.select().from(weeklyReflections).where(eq(weeklyReflections.userId, userId));
+    return reflections || [];
+  }
+
+  async getWeeklyReflection(id: number): Promise<WeeklyReflection | undefined> {
+    const [reflection] = await db.select().from(weeklyReflections).where(eq(weeklyReflections.id, id));
+    return reflection || undefined;
+  }
+
+  async createWeeklyReflection(weeklyReflection: InsertWeeklyReflection): Promise<WeeklyReflection> {
+    console.log('Creating weekly reflection:', weeklyReflection);
+    try {
+      const [reflection] = await db
+        .insert(weeklyReflections)
+        .values(weeklyReflection)
+        .returning();
+      console.log('Created reflection:', reflection);
+      return reflection;
+    } catch (error) {
+      console.error('Error creating weekly reflection:', error);
+      throw error;
+    }
+  }
+
+  async updateWeeklyReflection(id: number, weeklyReflection: Partial<InsertWeeklyReflection>): Promise<WeeklyReflection | undefined> {
+    console.log('Updating weekly reflection with ID:', id, 'Data:', weeklyReflection);
+    try {
+      // First check if the reflection exists
+      const existing = await this.getWeeklyReflection(id);
+      if (!existing) {
+        console.log('Weekly reflection not found with ID:', id);
+        return undefined;
+      }
+
+      // Handle weekDate separately if present
+      const updateData: any = { ...weeklyReflection };
+      if (updateData.weekDate && typeof updateData.weekDate === 'string') {
+        updateData.weekDate = new Date(updateData.weekDate);
+      }
+      
+      // Always set updatedAt to the current time
+      updateData.updatedAt = new Date();
+      
+      console.log('Processed data for update:', updateData);
+      
+      const [updatedReflection] = await db
+        .update(weeklyReflections)
+        .set(updateData)
+        .where(eq(weeklyReflections.id, id))
+        .returning();
+      
+      console.log('Updated reflection:', updatedReflection);
+      return updatedReflection;
+    } catch (error) {
+      console.error('Error updating weekly reflection:', error);
+      throw error;
+    }
+  }
+
+  async deleteWeeklyReflection(id: number): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(weeklyReflections)
+        .where(eq(weeklyReflections.id, id))
+        .returning();
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error deleting weekly reflection:', error);
+      return false;
+    }
+  }
+
+  // Implement other methods from IStorage as needed...
+  // You would need to add all the other methods from the IStorage interface
+  // For now, we're focusing on the weekly reflections functionality
+}
