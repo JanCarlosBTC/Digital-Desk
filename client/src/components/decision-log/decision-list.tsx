@@ -97,7 +97,7 @@ const DecisionList = ({
     mutationFn: async (id: number) => {
       return apiRequest<StatusUpdateResponse>(
         'PUT', 
-        API_ENDPOINTS.DECISION(id), 
+        `${API_ENDPOINTS.DECISIONS}/${id}`, 
         { status: "Successful" }
       );
     },
@@ -124,7 +124,7 @@ const DecisionList = ({
     mutationFn: async (id: number) => {
       return apiRequest<StatusUpdateResponse>(
         'PUT', 
-        API_ENDPOINTS.DECISION(id), 
+        `${API_ENDPOINTS.DECISIONS}/${id}`, 
         { status: "Failed" }
       );
     },
@@ -286,8 +286,8 @@ const DecisionList = ({
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(d => 
         d.title.toLowerCase().includes(query) || 
-        d.description.toLowerCase().includes(query) ||
-        (d.outcome && d.outcome.toLowerCase().includes(query))
+        d.why.toLowerCase().includes(query) ||
+        (d.expectedOutcome && d.expectedOutcome.toLowerCase().includes(query))
       );
     }
     
@@ -469,7 +469,7 @@ const DecisionList = ({
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Category" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper" className="bg-white shadow-lg" style={{zIndex: 1000}}>
             <SelectItem value="all">All Categories</SelectItem>
             {categories.map(category => (
               <SelectItem key={category} value={category}>
@@ -483,7 +483,7 @@ const DecisionList = ({
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Time Period" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper" className="bg-white shadow-lg" style={{zIndex: 1000}}>
             <SelectItem value="all">All Time</SelectItem>
             <SelectItem value="last30days">Last 30 Days</SelectItem>
             <SelectItem value="last3months">Last 3 Months</SelectItem>
@@ -495,7 +495,7 @@ const DecisionList = ({
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Sort Order" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper" className="bg-white shadow-lg" style={{zIndex: 1000}}>
             <SelectItem value="newest">Newest First</SelectItem>
             <SelectItem value="oldest">Oldest First</SelectItem>
           </SelectContent>
@@ -569,7 +569,7 @@ const DecisionList = ({
                       </span>
                     </div>
                     
-                    <p className="text-gray-600 line-clamp-2 mb-2">{decision.description}</p>
+                    <p className="text-gray-600 line-clamp-2 mb-2">{decision.why}</p>
                     
                     <div className="flex flex-wrap gap-2 text-xs text-gray-500">
                       <span className="flex items-center">
