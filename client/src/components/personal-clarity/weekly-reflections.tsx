@@ -33,6 +33,21 @@ const WeeklyReflections = () => {
 
     return monday;
   };
+  
+  // For testing purposes - get a different week date 
+  // This allows creating multiple weekly reflections
+  const getTestWeekDate = () => {
+    // Generate a random week in the past (up to 10 weeks ago)
+    const randomWeeksAgo = Math.floor(Math.random() * 10) + 1;
+    const date = new Date();
+    date.setDate(date.getDate() - (randomWeeksAgo * 7));
+    
+    const day = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    // Calculate the date of Monday of that week
+    date.setDate(date.getDate() - day + (day === 0 ? -6 : 1));
+    
+    return date;
+  };
 
   // Format the week date for display
   const formatWeekDate = (date: Date) => {
@@ -171,7 +186,9 @@ const WeeklyReflections = () => {
   }, [weeklyReflections]);
 
   const handleSave = (asDraft: boolean) => {
-    const weekDate = getCurrentWeekDate();
+    // If we're creating a new reflection, use a random past week date
+    // This ensures we can create multiple weekly reflections for testing
+    const weekDate = currentReflectionId === null ? getTestWeekDate() : getCurrentWeekDate();
     
     // Important: when creating a new reflection, make sure id is undefined, not null
     // This ensures the POST endpoint is called instead of the PUT endpoint
@@ -180,6 +197,7 @@ const WeeklyReflections = () => {
     console.log("About to save reflection:", {
       isNewReflection: currentReflectionId === null,
       idBeingSent: idParam,
+      weekDate: weekDate.toISOString(),
       endpoint: currentReflectionId === null ? "POST /api/weekly-reflections" : `PUT /api/weekly-reflections/${currentReflectionId}`
     });
     
