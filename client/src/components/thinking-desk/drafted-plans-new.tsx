@@ -161,7 +161,7 @@ export const DraftedPlans = memo(function DraftedPlans({
   const { data: plansData, isLoading, error } = useQuery({
     queryKey: ['/api/drafted-plans']
   });
-  
+
   // Safely cast the data as DraftedPlan[]
   const plans = Array.isArray(plansData) ? plansData as DraftedPlan[] : [];
 
@@ -174,12 +174,12 @@ export const DraftedPlans = memo(function DraftedPlans({
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || 'Failed to delete plan');
       }
-      
+
       return response;
     },
     onSuccess: () => {
@@ -222,7 +222,7 @@ export const DraftedPlans = memo(function DraftedPlans({
   // Sort plans based on selected field and direction
   const sortedPlans = useMemo(() => {
     if (!plans.length) return [];
-    
+
     return [...plans].sort((a, b) => {
       const aValue = a[sortField];
       const bValue = b[sortField];
@@ -256,12 +256,12 @@ export const DraftedPlans = memo(function DraftedPlans({
         },
         body: JSON.stringify(formattedData)
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || 'Failed to create plan');
       }
-      
+
       return response;
     },
     onSuccess: () => {
@@ -368,7 +368,7 @@ export const DraftedPlans = memo(function DraftedPlans({
             Sort by Date
           </Button>
         </div>
-        
+
         {sortedPlans.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-gray-500">No drafted plans found. Create your first one!</p>
@@ -449,10 +449,9 @@ export const DraftedPlans = memo(function DraftedPlans({
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="bg-white z-50">
                         <SelectItem value="Draft">Draft</SelectItem>
                         <SelectItem value="In Progress">In Progress</SelectItem>
-                        <SelectItem value="Ready">Ready</SelectItem>
                         <SelectItem value="Completed">Completed</SelectItem>
                       </SelectContent>
                     </Select>

@@ -71,7 +71,7 @@ const ClarityLabItem = memo(function ClarityLabItem({
               {lab.status}
             </span>
           </div>
-          
+
           <p className="text-sm text-gray-600 mt-2">{lab.description}</p>
 
           {lab.category.length > 0 && (
@@ -218,12 +218,12 @@ export const ClarityLabComponent = memo(function ClarityLabComponent({
       }
 
       const modifier = sortDirection === 'asc' ? 1 : -1;
-      
+
       // Handle null values
       if (aValue === null && bValue === null) return 0;
       if (aValue === null) return 1 * modifier;
       if (bValue === null) return -1 * modifier;
-      
+
       // Compare non-null values
       if (aValue < bValue) return -1 * modifier;
       if (aValue > bValue) return 1 * modifier;
@@ -280,4 +280,4 @@ export const ClarityLabComponent = memo(function ClarityLabComponent({
       </div>
     </div>
   );
-}); 
+});
