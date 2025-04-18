@@ -36,8 +36,11 @@ const OfferVault = () => {
   // Update offer notes
   const updateNotesMutation = useMutation({
     mutationFn: async () => {
-      if (!offerNotes) return null;
-      return apiRequest('PUT', `/api/offer-notes/${offerNotes.id}`, { content: noteContent });
+      if (!offerNotes || !Array.isArray(offerNotes) || offerNotes.length === 0) {
+        return apiRequest('POST', '/api/offer-notes', { userId: 1, content: noteContent });
+      }
+      const firstNote = Array.isArray(offerNotes) ? offerNotes[0] : offerNotes;
+      return apiRequest('PUT', `/api/offer-notes/${firstNote.id}`, { content: noteContent });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/offer-notes'] });
@@ -57,7 +60,12 @@ const OfferVault = () => {
   
   useEffect(() => {
     if (offerNotes) {
-      setNoteContent(offerNotes.content || "");
+      // Handle both array and single object response formats
+      if (Array.isArray(offerNotes) && offerNotes.length > 0) {
+        setNoteContent(offerNotes[0].content || "");
+      } else if (!Array.isArray(offerNotes)) {
+        setNoteContent(offerNotes.content || "");
+      }
     }
   }, [offerNotes]);
   
