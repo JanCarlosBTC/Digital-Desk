@@ -449,7 +449,7 @@ export const DraftedPlans = memo(function DraftedPlans({
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="bg-white z-[100] relative shadow-lg">
+                      <SelectContent position="popper" className="bg-white shadow-lg" style={{zIndex: 1000}}>
                         <SelectItem value="Draft">Draft</SelectItem>
                         <SelectItem value="In Progress">In Progress</SelectItem>
                         <SelectItem value="Completed">Completed</SelectItem>
