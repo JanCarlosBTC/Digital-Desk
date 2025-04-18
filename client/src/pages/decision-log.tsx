@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import DecisionList from "@/components/decision-log/decision-list";
-import DecisionForm from "@/components/decision-log/decision-form";
+import DirectDecisionForm from "@/components/decision-log/direct-decision-form";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, ClipboardListIcon, CheckSquare } from "lucide-react";
@@ -58,7 +58,7 @@ const DecisionLog = () => {
           // The form will handle its own submission through DecisionForm
         }}
       >
-        <DecisionForm 
+        <DirectDecisionForm 
           selectedDecision={selectedDecision} 
           onSuccess={() => setDialogOpen(false)}
           isDialog={true}
@@ -159,7 +159,7 @@ const DecisionLog = () => {
         {/* Decision Form - Only shown when a decision is selected */}
         {selectedDecision && (
           <div className="lg:col-span-4">
-            <DecisionForm 
+            <DirectDecisionForm 
               selectedDecision={selectedDecision} 
               onSuccess={() => setSelectedDecision(null)} 
               isDialog={false}
