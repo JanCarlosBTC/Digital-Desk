@@ -182,13 +182,36 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
       }
     },
     onError: (error: Error) => {
-      // Log error for debugging
+      // Enhanced logging for debugging
       console.error('Error saving decision:', error);
+      
+      // More detailed error inspection
+      if (error instanceof Error) {
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        
+        // Check for API-specific errors
+        if ('status' in error && 'data' in error) {
+          console.error('API error status:', (error as any).status);
+          console.error('API error data:', (error as any).data);
+        }
+        
+        // If error is a TypeError, it might be a network or parsing issue
+        if (error instanceof TypeError) {
+          console.error('Type error details:', error.message);
+        }
+      }
+      
+      // Check if validation error from Zod
+      const errorMessage = error.message?.includes('Validation error') 
+        ? "Form validation failed. Please check all required fields including category selection." 
+        : error.message || "Please try again.";
       
       // Extract and display a user-friendly error message
       toast({
         title: "Error saving decision",
-        description: error.message || "Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -258,6 +281,11 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
       return;
     }
     
+    // Debugging log for form data that's about to be sent
+    console.log("About to submit form data with category:", data.category);
+    console.log("All form data fields:", Object.keys(data));
+    console.log("Form values:", data);
+    
     // Now mutate with the data
     mutation.mutate(data);
   };
@@ -303,7 +331,13 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-medium">Category</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select 
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      console.log("Category selected:", value);
+                    }} 
+                    value={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger className="h-10 px-4 py-2 flex items-center bg-white">
                         <SelectValue placeholder="Select a category" />
@@ -318,6 +352,7 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
                       <SelectItem value="Financial">Financial</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FormMessage />
                 </FormItem>
               )}
             />
