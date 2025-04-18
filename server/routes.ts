@@ -367,15 +367,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post('/api/weekly-reflections', withAuthAndUser(async (req: Request, res: Response) => {
     try {
+      // Log incoming request for debugging
+      console.log('Creating weekly reflection - request body:', JSON.stringify(req.body));
+      
       const data = { 
         userId: req.userId as number, 
         ...req.body 
       };
-      const validatedData = insertWeeklyReflectionSchema.parse(data);
-      const weeklyReflection = await storage.createWeeklyReflection(validatedData);
-      return res.status(201).json(weeklyReflection);
+      
+      console.log('Creating weekly reflection - data with userId:', JSON.stringify(data));
+      
+      try {
+        const validatedData = insertWeeklyReflectionSchema.parse(data);
+        console.log('Creating weekly reflection - validated data:', JSON.stringify(validatedData));
+        
+        const weeklyReflection = await storage.createWeeklyReflection(validatedData);
+        console.log('Weekly reflection created successfully:', JSON.stringify(weeklyReflection));
+        
+        return res.status(201).json(weeklyReflection);
+      } catch (validationError) {
+        console.error('Validation error in weekly reflection creation:', validationError);
+        return handleZodError(validationError, res);
+      }
     } catch (error) {
-      return handleZodError(error, res);
+      console.error('Unexpected error in weekly reflection creation:', error);
+      return res.status(500).json({ 
+        message: "Error creating weekly reflection", 
+        error: (error as Error).message 
+      });
     }
   }));
   

@@ -472,17 +472,44 @@ export class MemStorage implements IStorage {
 
   async updateWeeklyReflection(id: number, data: Partial<InsertWeeklyReflection>): Promise<WeeklyReflection | undefined> {
     const existing = this.weeklyReflections.get(id);
-    if (!existing) return undefined;
+    if (!existing) {
+      console.error(`Weekly reflection with ID ${id} not found in updateWeeklyReflection`);
+      return undefined;
+    }
 
+    // Properly handle potential undefined or null values
     const updated: WeeklyReflection = { 
-      ...existing, 
-      ...data, 
-      wentWell: data.wentWell || existing.wentWell,
-      challenges: data.challenges || existing.challenges,
-      learnings: data.learnings || existing.learnings,
-      nextWeekFocus: data.nextWeekFocus || existing.nextWeekFocus,
+      ...existing,
+      // Only update fields that are explicitly provided in data
+      wentWell: data.wentWell !== undefined ? data.wentWell : existing.wentWell,
+      challenges: data.challenges !== undefined ? data.challenges : existing.challenges,
+      learnings: data.learnings !== undefined ? data.learnings : existing.learnings,
+      nextWeekFocus: data.nextWeekFocus !== undefined ? data.nextWeekFocus : existing.nextWeekFocus,
+      isDraft: data.isDraft !== undefined ? data.isDraft : existing.isDraft,
       updatedAt: new Date() 
     };
+    
+    // Keep the original weekDate if not provided
+    if (data.weekDate !== undefined) {
+      // Ensure weekDate is a Date object
+      updated.weekDate = typeof data.weekDate === 'string' 
+        ? new Date(data.weekDate) 
+        : data.weekDate;
+    }
+    
+    console.log(`Updating weekly reflection ${id}:`, {
+      before: {
+        id: existing.id,
+        weekDate: existing.weekDate,
+        isDraft: existing.isDraft
+      },
+      after: {
+        id: updated.id,
+        weekDate: updated.weekDate,
+        isDraft: updated.isDraft
+      }
+    });
+    
     this.weeklyReflections.set(id, updated);
 
     await this.logActivity({

@@ -137,9 +137,19 @@ const WeeklyReflections = () => {
   const handleSave = (asDraft: boolean) => {
     const weekDate = getCurrentWeekDate();
     
+    // Important: when creating a new reflection, make sure id is undefined, not null
+    // This ensures the POST endpoint is called instead of the PUT endpoint
+    const idParam = currentReflectionId === null ? undefined : currentReflectionId;
+    
+    console.log("About to save reflection:", {
+      isNewReflection: currentReflectionId === null,
+      idBeingSent: idParam,
+      endpoint: currentReflectionId === null ? "POST /api/weekly-reflections" : `PUT /api/weekly-reflections/${currentReflectionId}`
+    });
+    
     // Format weekDate as ISO string for proper serialization
     mutation.mutate({
-      id: currentReflectionId || undefined,
+      id: idParam,
       weekDate: weekDate.toISOString(),
       wentWell,
       challenges,
@@ -149,26 +159,18 @@ const WeeklyReflections = () => {
     });
 
     setIsDraft(asDraft);
-    
-    // Debug information
-    console.log("Submitting weekly reflection with data:", {
-      id: currentReflectionId || undefined,
-      weekDate: weekDate.toISOString(),
-      wentWell,
-      challenges,
-      learnings,
-      nextWeekFocus,
-      isDraft: asDraft
-    });
   };
 
   const handleNewReflection = () => {
+    // Clear form fields
     setWentWell("");
     setChallenges("");
     setLearnings("");
     setNextWeekFocus("");
     setIsDraft(true);
-    setCurrentReflectionId(null);
+    setCurrentReflectionId(null); // Important: Reset ID to create a new reflection
+    
+    console.log("Started new reflection - reset form and ID to null");
 
     toast({
       title: "New reflection started",
