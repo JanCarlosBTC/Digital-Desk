@@ -358,7 +358,7 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper" className="z-50">
               <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="Active">Active</SelectItem>
               <SelectItem value="Coming Soon">Coming Soon</SelectItem>
@@ -429,7 +429,7 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
                           <EditIcon className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" sideOffset={5} style={{zIndex: 1050}}>
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleManageOffer(offer)}>
