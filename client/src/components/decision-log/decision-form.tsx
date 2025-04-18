@@ -51,6 +51,10 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
   // Initialize form with default values
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: "onSubmit", // Validate on form submission
+    reValidateMode: "onChange", // Re-validate when fields change
+    shouldFocusError: true, // Focus the first field with an error
+    criteriaMode: "all", // Show all validation errors
     defaultValues: {
       title: "",
       category: "",
@@ -294,32 +298,64 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
   });
 
   const onSubmit = (data: FormValues) => {
-    console.log("Form submitted with data:", data);
+    console.log("Form submission function called with data:", data);
     
-    // Validate that all required fields are present
-    if (!data.title || !data.category || !data.decisionDate || !data.why) {
-      console.error("Missing required fields:", {
-        title: !data.title,
-        category: !data.category,
-        decisionDate: !data.decisionDate,
-        why: !data.why
-      });
+    // Log the form state to help debug validation issues
+    console.log("Form errors:", form.formState.errors);
+    console.log("Is form valid?", form.formState.isValid);
+    console.log("Is form submitting?", form.formState.isSubmitting);
+    console.log("Is form submitted?", form.formState.isSubmitted);
+    
+    // Enhanced validation with detailed user feedback
+    const missingFields = [];
+    
+    if (!data.title || data.title.trim() === '') {
+      missingFields.push('Title');
+    }
+    
+    if (!data.category || data.category.trim() === '') {
+      missingFields.push('Category');
+    }
+    
+    if (!data.decisionDate) {
+      missingFields.push('Decision Date');
+    }
+    
+    if (!data.why || data.why.trim() === '') {
+      missingFields.push('Reasoning (Why)');
+    }
+    
+    // If we have missing fields, show a detailed error message
+    if (missingFields.length > 0) {
+      console.error("Missing required fields:", missingFields);
       
       toast({
         title: "Missing required fields",
-        description: "Please fill in all required fields",
+        description: `Please fill in the following required fields: ${missingFields.join(', ')}`,
         variant: "destructive"
       });
       return;
     }
     
     // Debugging log for form data that's about to be sent
-    console.log("About to submit form data with category:", data.category);
+    console.log("Validation passed. About to submit with category:", data.category);
     console.log("All form data fields:", Object.keys(data));
     console.log("Form values:", data);
     
-    // Now mutate with the data
-    mutation.mutate(data);
+    try {
+      // Explicitly handle the mutation
+      console.log("Calling mutation.mutate with validated data");
+      mutation.mutate(data);
+    } catch (error) {
+      console.error("Error caught in onSubmit when calling mutation:", error);
+      
+      // Show error toast to user
+      toast({
+        title: "Error submitting form",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleCancel = () => {
@@ -595,6 +631,12 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
             type="submit"
             disabled={isSubmitting}
             className="h-10 px-4 py-2 flex items-center"
+            onClick={() => {
+              if (!form.formState.isSubmitting) {
+                console.log("Button clicked, manually triggering form submission");
+                form.handleSubmit(onSubmit)();
+              }
+            }}
           >
             {isSubmitting ? "Saving..." : "Save Decision"}
           </Button>
@@ -617,12 +659,14 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
       )}
 
       {isDialog ? (
-        // When used in dialog, don't wrap in a form element to avoid nesting
+        // When used in dialog, use the Form component directly with onSubmit handler
         <Form {...form}>
-          {formContent}
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            {formContent}
+          </form>
         </Form>
       ) : (
-        // When used standalone, wrap in a form element
+        // When used standalone, also use form with onSubmit
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             {formContent}
