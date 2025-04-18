@@ -384,6 +384,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const data = req.body;
 
+      console.log('Updating weekly reflection:', { id, data });
+
       const parsedId = parseAndValidateId(id, res);
       if (parsedId === undefined) return;
       
@@ -395,12 +397,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const updatedWeeklyReflection = await storage.updateWeeklyReflection(parsedId, data);
-      if (!updatedWeeklyReflection) {
-        return res.status(404).json({ message: "Weekly reflection not found" });
+      try {
+        const updatedWeeklyReflection = await storage.updateWeeklyReflection(parsedId, data);
+        if (!updatedWeeklyReflection) {
+          console.log('Weekly reflection not found:', parsedId);
+          return res.status(404).json({ message: "Weekly reflection not found" });
+        }
+        console.log('Weekly reflection updated successfully:', updatedWeeklyReflection);
+        return res.json(updatedWeeklyReflection);
+      } catch (storageError: any) {
+        console.error('Error in storage.updateWeeklyReflection:', storageError);
+        const errorMessage = storageError?.message || 'Unknown storage error';
+        return res.status(500).json({ message: `Error updating weekly reflection: ${errorMessage}` });
       }
-      return res.json(updatedWeeklyReflection);
     } catch (error) {
+      console.error('Error in weekly reflection update route:', error);
       return res.status(500).json({ message: "Error updating weekly reflection" });
     }
   }));

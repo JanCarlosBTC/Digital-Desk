@@ -374,14 +374,34 @@ export class PrismaStorage implements IStorage {
   }
 
   async updateWeeklyReflection(id: number, weeklyReflection: Partial<InsertWeeklyReflection>): Promise<WeeklyReflection | undefined> {
-    const updatedWeeklyReflection = await prisma.weeklyReflection.update({
-      where: { id },
-      data: { 
-        ...weeklyReflection,
-        updatedAt: new Date()
+    try {
+      console.log('In PrismaStorage.updateWeeklyReflection, updating with data:', { id, weeklyReflection });
+      
+      // Process date fields specifically
+      const dataToUpdate: any = { ...weeklyReflection };
+      
+      // Handle weekDate separately if present
+      if (dataToUpdate.weekDate) {
+        if (typeof dataToUpdate.weekDate === 'string') {
+          dataToUpdate.weekDate = new Date(dataToUpdate.weekDate);
+        }
       }
-    });
-    return updatedWeeklyReflection;
+      
+      // Always set updatedAt to the current time
+      dataToUpdate.updatedAt = new Date();
+      
+      console.log('Processed data for update:', dataToUpdate);
+      
+      const updatedWeeklyReflection = await prisma.weeklyReflection.update({
+        where: { id },
+        data: dataToUpdate
+      });
+      
+      return updatedWeeklyReflection;
+    } catch (error) {
+      console.error('Error in updateWeeklyReflection:', error);
+      throw error; // Re-throw to allow proper error handling upstream
+    }
   }
 
   async deleteWeeklyReflection(id: number): Promise<boolean> {
