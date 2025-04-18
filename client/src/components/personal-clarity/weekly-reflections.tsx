@@ -112,24 +112,60 @@ const WeeklyReflections = () => {
     }
   });
 
-  // Check if there's a draft for the current week
+  // Check if there's a reflection for the current week and load it
   useEffect(() => {
-    if (weeklyReflections && weeklyReflections.length > 0) {
-      const currentWeekDate = getCurrentWeekDate();
-      const currentWeekReflection = weeklyReflections.find(reflection => {
-        const reflectionDate = new Date(reflection.weekDate);
-        return reflectionDate.getFullYear() === currentWeekDate.getFullYear() 
-          && reflectionDate.getMonth() === currentWeekDate.getMonth() 
-          && reflectionDate.getDate() === currentWeekDate.getDate();
-      });
+    if (!weeklyReflections || weeklyReflections.length === 0) {
+      // If no reflections exist, just keep the form clear for a new entry
+      return;
+    }
 
-      if (currentWeekReflection) {
-        setWentWell(currentWeekReflection.wentWell || "");
-        setChallenges(currentWeekReflection.challenges || "");
-        setLearnings(currentWeekReflection.learnings || "");
-        setNextWeekFocus(currentWeekReflection.nextWeekFocus || "");
-        setIsDraft(currentWeekReflection.isDraft);
-        setCurrentReflectionId(currentWeekReflection.id);
+    // Only auto-load the reflection when the component first loads or when the data refreshes
+    // and no form edits have been made
+    const currentWeekDate = getCurrentWeekDate();
+    
+    console.log("Looking for current week reflection", {
+      currentWeekDate: currentWeekDate.toISOString(),
+      availableReflections: weeklyReflections.map(r => ({ 
+        id: r.id, 
+        date: new Date(r.weekDate).toISOString(), 
+        isDraft: r.isDraft 
+      }))
+    });
+
+    // Find reflection for current week, prioritizing draft over completed
+    const currentWeekReflections = weeklyReflections.filter(reflection => {
+      const reflectionDate = new Date(reflection.weekDate);
+      return reflectionDate.getFullYear() === currentWeekDate.getFullYear() 
+        && reflectionDate.getMonth() === currentWeekDate.getMonth() 
+        && reflectionDate.getDate() === currentWeekDate.getDate();
+    });
+
+    console.log(`Found ${currentWeekReflections.length} reflections for current week`);
+    
+    // If we found any reflections for the current week
+    if (currentWeekReflections.length > 0) {
+      // Prioritize drafts over completed reflections
+      const draftReflection = currentWeekReflections.find(r => r.isDraft);
+      // Use explicit non-null assertion as we've already checked that currentWeekReflections has items
+      const reflectionToShow: WeeklyReflection = draftReflection || currentWeekReflections[0];
+      
+      // Make sure reflectionToShow exists (TypeScript safety)
+      if (reflectionToShow) {
+        console.log("Loading reflection:", {
+          id: reflectionToShow.id,
+          isDraft: reflectionToShow.isDraft,
+          date: new Date(reflectionToShow.weekDate).toISOString()
+        });
+        
+        // Set the form data
+        setWentWell(reflectionToShow.wentWell || "");
+        setChallenges(reflectionToShow.challenges || "");
+        setLearnings(reflectionToShow.learnings || "");
+        setNextWeekFocus(reflectionToShow.nextWeekFocus || "");
+        setIsDraft(reflectionToShow.isDraft);
+        setCurrentReflectionId(reflectionToShow.id);
+      } else {
+        console.log("No reflection found to show despite having reflections for the current week");
       }
     }
   }, [weeklyReflections]);

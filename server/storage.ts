@@ -444,10 +444,21 @@ export class MemStorage implements IStorage {
   }
 
   async createWeeklyReflection(data: InsertWeeklyReflection): Promise<WeeklyReflection> {
+    // Ensure weekDate is a Date object
+    const weekDate = typeof data.weekDate === 'string' 
+      ? new Date(data.weekDate) 
+      : data.weekDate;
+    
+    console.log("Creating new weekly reflection with data:", {
+      userId: data.userId,
+      weekDate: weekDate instanceof Date ? weekDate.toISOString() : String(weekDate),
+      isDraft: data.isDraft
+    });
+    
     const reflection: WeeklyReflection = {
       id: this.nextId++,
       userId: data.userId,
-      weekDate: data.weekDate,
+      weekDate: weekDate,
       wentWell: data.wentWell ?? null,
       challenges: data.challenges ?? null,
       learnings: data.learnings ?? null,
@@ -456,7 +467,10 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+    
     this.weeklyReflections.set(reflection.id, reflection);
+    console.log(`Weekly reflection created with ID: ${reflection.id}`);
+    
     await this.logActivity({
       userId: data.userId,
       type: "create",
