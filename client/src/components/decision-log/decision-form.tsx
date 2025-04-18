@@ -626,20 +626,13 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
               Cancel
             </Button>
           )}
-          <Button
-            variant="default"
+          <button 
             type="submit"
             disabled={isSubmitting}
-            className="h-10 px-4 py-2 flex items-center"
-            onClick={() => {
-              if (!form.formState.isSubmitting) {
-                console.log("Button clicked, manually triggering form submission");
-                form.handleSubmit(onSubmit)();
-              }
-            }}
+            className="h-10 px-4 py-2 flex items-center bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
           >
             {isSubmitting ? "Saving..." : "Save Decision"}
-          </Button>
+          </button>
         </div>
       </div>
     </div>
@@ -658,21 +651,11 @@ const DecisionForm: React.FC<DecisionFormProps> = ({
         </>
       )}
 
-      {isDialog ? (
-        // When used in dialog, use the Form component directly with onSubmit handler
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            {formContent}
-          </form>
-        </Form>
-      ) : (
-        // When used standalone, also use form with onSubmit
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            {formContent}
-          </form>
-        </Form>
-      )}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {formContent}
+        </form>
+      </Form>
     </div>
   );
 };
