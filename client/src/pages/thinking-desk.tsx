@@ -116,12 +116,6 @@ const ThinkingDesk = () => {
           title="Thinking Desk"
           description="Organize your thinking and develop new ideas."
           icon={<LightbulbIcon className="h-8 w-8" />}
-          action={{
-            label: "New Item",
-            onClick: () => setActiveTab("Brain Dump"),
-            icon: <PlusIcon className="mr-2 h-4 w-4" />,
-            variant: "thinkingDesk"
-          }}
         />
 
         <TabNavigation 
