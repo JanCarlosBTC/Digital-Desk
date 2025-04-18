@@ -115,8 +115,20 @@ const BrainDump = () => {
     }
   };
   
-  const handleSave = () => {
-    if (!brainDump || content === brainDump.content) return;
+  const handleSave = async () => {
+    if (!brainDump) {
+      // Create new brain dump if none exists
+      const newBrainDump = await apiRequest('POST', '/api/brain-dump', { content });
+      queryClient.invalidateQueries({ queryKey: ['/api/brain-dump'] });
+      toast({
+        title: "Brain dump created",
+        description: "Your brain dump has been saved successfully.",
+      });
+      return;
+    }
+    
+    if (content === brainDump.content) return;
+    
     setIsSaving(true);
     mutation.mutate(content);
   };
