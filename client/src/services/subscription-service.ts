@@ -2,10 +2,11 @@ import { authService } from './auth-service';
 import { subscriptionApi } from './api-service';
 
 /**
- * Available subscription plans - now only a single plan is available
+ * Available subscription plans
  */
 export enum Plan {
-  FREE = 'Free'
+  FREE = 'Free',
+  PREMIUM = 'Premium'
 }
 
 /**
@@ -14,6 +15,17 @@ export enum Plan {
 export const PLAN_FEATURES = {
   [Plan.FREE]: {
     price: 0,
+    offerLimit: -1, // Unlimited
+    problemTreeLimit: -1, // Unlimited
+    draftedPlanLimit: -1, // Unlimited
+    includesExport: true,
+    includesTemplates: true,
+    includesCollaboration: true,
+    includesAPI: true,
+    storageLimit: 'Unlimited',
+  },
+  [Plan.PREMIUM]: {
+    price: 9.99,
     offerLimit: -1, // Unlimited
     problemTreeLimit: -1, // Unlimited
     draftedPlanLimit: -1, // Unlimited

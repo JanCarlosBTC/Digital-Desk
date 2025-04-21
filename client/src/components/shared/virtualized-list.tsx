@@ -118,7 +118,7 @@ export function VirtualizedList<T>({
         }}
       >
         {/* Individual virtualized items */}
-        {virtualItems.map((virtualItem) => {
+        {virtualItems.map((virtualItem: VirtualItem<unknown>) => {
           const item = items[virtualItem.index];
           
           // Skip rendering if item is undefined
