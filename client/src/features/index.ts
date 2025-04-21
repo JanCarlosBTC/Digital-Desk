@@ -8,3 +8,4 @@
 
 export * as ThinkingDesk from './thinking-desk/index.js';
 export * as OfferVault from './offer-vault/index.js';
+export * as DecisionLog from './decision-log/index.js';
