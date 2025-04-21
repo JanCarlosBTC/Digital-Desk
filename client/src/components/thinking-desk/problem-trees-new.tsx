@@ -326,7 +326,7 @@ export const ProblemTrees = memo(function ProblemTrees({
 
   // Show loading state while fetching data
   if (isLoading) {
-    return <LoadingState type="list" count={3} />;
+    return <LoadingState variant="skeleton" count={3} />;
   }
 
   // Show error state if there was an error fetching data
@@ -356,7 +356,7 @@ export const ProblemTrees = memo(function ProblemTrees({
             </div>
             <Button
               onClick={handleNewProblemTree}
-              variant="thinkingDesk"
+              variant="default"
               size="sm"
             >
               <PlusIcon className="mr-2 h-4 w-4" /> New Problem Tree

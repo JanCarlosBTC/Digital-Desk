@@ -145,7 +145,7 @@ const ProblemTreeList = memo(function ProblemTreeList({
   });
 
   if (isLoading) {
-    return <LoadingState type="list" count={3} />;
+    return <LoadingState variant="skeleton" count={3} />;
   }
 
   if (error) {

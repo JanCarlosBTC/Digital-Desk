@@ -314,7 +314,7 @@ export const DraftedPlans = memo(function DraftedPlans({
 
   // Show loading state while fetching data
   if (isLoading) {
-    return <LoadingState type="list" count={3} />;
+    return <LoadingState variant="skeleton" count={3} />;
   }
 
   // Show error state if there was an error fetching data
@@ -343,7 +343,7 @@ export const DraftedPlans = memo(function DraftedPlans({
           </div>
           <Button
             onClick={handleNewPlan}
-            variant="thinkingDesk"
+            variant="default"
             size="sm"
           >
             <PlusIcon className="mr-2 h-4 w-4" /> New Plan
