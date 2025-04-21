@@ -5,4 +5,5 @@
  * They include basic HTML elements like buttons, inputs, labels, etc.
  */
 
-// Will export atomic components as they're created
+export * from './button.js';
+export * from './input.js';

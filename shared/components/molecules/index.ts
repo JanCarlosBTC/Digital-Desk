@@ -6,4 +6,4 @@
  * (label + input), cards, and search forms.
  */
 
-// Will export molecular components as they're created
+export * from './card.js';
