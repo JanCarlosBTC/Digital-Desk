@@ -50,7 +50,13 @@ export function LoginForm({ onSuccess, redirectTo }: LoginFormProps) {
     setIsSubmitting(true);
     
     try {
-      await login(data.username, data.password);
+      // Call login with user data object
+      login({ 
+        name: data.username,
+        username: data.username,
+        initials: data.username.substring(0, 2).toUpperCase(),
+        plan: "Free"
+      });
       
       toast({
         title: 'Login successful',

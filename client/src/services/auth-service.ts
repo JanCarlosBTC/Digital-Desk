@@ -1,5 +1,4 @@
 import { User } from '@shared/schema';
-import { storageService } from './storage-service'; // Assuming the new service is in the same directory
 
 /**
  * Simplified storage service for user preferences
@@ -30,9 +29,6 @@ class StorageService {
   }
 }
 
-// Export singleton instance
-export const storageService = new StorageService();
-
 
 /**
  * Authentication service for user management
@@ -40,6 +36,7 @@ export const storageService = new StorageService();
  */
 class AuthService {
   private userKey = 'currentUser';
+  private tokenKey = 'authToken';
 
   /**
    * Get the stored user data
@@ -64,6 +61,27 @@ class AuthService {
   }
 
   /**
+   * Set authentication token
+   */
+  setToken(token: string): void {
+    localStorage.setItem(this.tokenKey, token);
+  }
+
+  /**
+   * Get authentication token
+   */
+  getToken(): string | null {
+    return localStorage.getItem(this.tokenKey);
+  }
+
+  /**
+   * Clear authentication token
+   */
+  clearToken(): void {
+    localStorage.removeItem(this.tokenKey);
+  }
+
+  /**
    * Check if user is logged in
    */
   isLoggedIn(): boolean {
@@ -82,6 +100,7 @@ class AuthService {
    */
   logout(): void {
     this.clearUser();
+    this.clearToken();
   }
 
   /**
@@ -89,6 +108,28 @@ class AuthService {
    */
   getCurrentUser(): User | null {
     return this.getUser();
+  }
+
+  /**
+   * Development login
+   */
+  async devLogin(username: string): Promise<{ token: string, user: User }> {
+    const response = await fetch('/api/auth/dev-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Dev login failed');
+    }
+    
+    const result = await response.json();
+    this.setToken(result.token);
+    this.saveUser(result.user);
+    
+    return result;
   }
 }
 
