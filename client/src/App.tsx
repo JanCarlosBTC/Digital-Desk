@@ -12,7 +12,7 @@ import DecisionLog from "@/pages/decision-log";
 import OfferVault from "@/pages/offer-vault";
 import SubscriptionPlans from "@/pages/subscription-plans";
 import SubscriptionSuccess from "@/pages/subscription-success";
-import Login from "@/pages/login";
+// Login page removed as authentication has been disabled
 import DemoPage from "@/pages/demo-page";
 import { PageTransition } from "@/components/transitions/simple-page-transition";
 import { UserProvider } from "@/context/user-context";
@@ -22,14 +22,7 @@ import { DemoStorageProvider } from "@/context/demo-storage-context";
 function Router() {
   const [location] = useLocation();
   
-  // Don't use AppLayout for authentication pages
-  if (location === "/login") {
-    return (
-      <Switch location={location}>
-        <Route path="/login" component={Login} />
-      </Switch>
-    );
-  }
+  // Authentication has been removed - all pages use AppLayout
   
   return (
     <AppLayout>

@@ -133,7 +133,7 @@ export class MemStorage implements IStorage {
 
     this.nextId = 1;
     
-    // Initialize session store
+    // Initialize simple memory session store (no authentication required)
     const MemoryStore = createMemoryStore(session);
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000, // Prune expired entries every 24h (in ms)

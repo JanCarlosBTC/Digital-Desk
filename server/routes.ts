@@ -11,11 +11,7 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
-// Import setupAuth function from our new auth module
-import { setupAuth } from "./auth.js";
-// Leave existing imports for backward compatibility during transition
-import { authenticate } from "./middleware/auth.js";
-import { login, getProfile } from "./controllers/auth.controller.js";
+// Authentication has been removed - using only API-compatible wrappers
 import { withAuth, withAuthAndUser, withDevAuth } from "./middleware/auth-wrapper.js";
 
 // The Request interface is now augmented via server/types/express.d.ts
@@ -38,8 +34,7 @@ function parseAndValidateId(id: string | undefined, res: Response): number | und
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Initialize the authentication system with Passport.js
-  setupAuth(app);
+  // Authentication has been removed - no setup needed
   
   const handleZodError = (error: unknown, res: Response): Response => {
     if (error instanceof ZodError) {
@@ -862,55 +857,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }));
 
-  // =========== Authentication Endpoints ===========
+  // =========== User Information API ===========
   
-  // Standard auth routes
-  app.post('/api/auth/login', login);
-  app.get('/api/auth/profile', authenticate, getProfile);
-  
-  // Development-only routes with proper security checks
-  app.post('/api/auth/dev-login', async (req, res) => {
-    // Import security logging for this sensitive endpoint
-    // Using require instead of dynamic import to avoid TypeScript issues
-    const { logSecurityEvent, logSuspiciousActivity } = require('./middleware/security-logger.js');
-    
-    // SECURITY CHECK: Only allow this endpoint in development
-    if (process.env.NODE_ENV === 'production') {
-      // Log critical security event - someone is trying to access dev features in prod
-      logSecurityEvent('Attempt to access dev-login in production environment!', 'critical', {
-        ip: req.ip,
-        method: req.method,
-        path: req.path,
-        userAgent: req.get('user-agent') || 'unknown'
-      });
-      
-      // Don't reveal that the endpoint exists at all in production
-      return res.status(404).json({ message: 'Endpoint not found' });
-    }
-    
-    // Log dev login attempt for security tracking (non-critical in dev environment)
-    logSecurityEvent(`Development login endpoint accessed`, 'warn', {
-      ip: req.ip,
-      method: req.method,
-      path: req.path,
-      userAgent: req.get('user-agent') || 'unknown',
-      username: req.body.username || 'unknown'
+  // Demo user information endpoint
+  app.get('/api/user', (req, res) => {
+    // Return a fixed demo user
+    return res.json({
+      id: 1,
+      name: "Demo User",
+      username: "demo",
+      initials: "DU",
+      plan: "Premium"
     });
-    
-    try {
-      // For simpler development and to avoid import issues
-      const { devLogin } = require('./controllers/dev-auth.controller.js');
-      
-      // Call the devLogin handler
-      return devLogin(req, res);
-    } catch (error) {
-      console.error('Failed to load dev auth controller:', error);
-      
-      // Log the failure for security monitoring
-      logSuspiciousActivity('Failed to load dev auth controller', req);
-      
-      return res.status(500).json({ message: 'Internal server error' });
-    }
   });
 
   const httpServer = createServer(app);

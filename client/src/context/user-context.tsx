@@ -22,44 +22,81 @@ const UserContext = createContext<UserContextType>({
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { toast } = useToast();
+  
+  // Create a fixed demo user - no login needed
   const [user, setUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem('user');
-    return stored ? JSON.parse(stored) : null;
+    const demoUser = {
+      id: 1,
+      name: "Demo User",
+      username: "demo",
+      initials: "DU",
+      plan: "Premium"
+    };
+    
+    // Store in localStorage to persist between refreshes
+    localStorage.setItem('user', JSON.stringify(demoUser));
+    return demoUser;
   });
+  
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
 
+  // Since authentication is removed, login always uses demo user
   const login = (userData: Partial<User>) => {
-    const newUser = {
-      id: Date.now(),
-      name: userData.name || 'Guest',
-      email: userData.email || 'guest@example.com',
-      ...userData
+    // Ignore credentials - always use demo user
+    const demoUser = {
+      id: 1,
+      name: "Demo User",
+      username: "demo",
+      initials: "DU",
+      plan: "Premium",
+      ...userData  // Allow overriding some values if needed
     };
 
-    localStorage.setItem('user', JSON.stringify(newUser));
-    setUser(newUser);
+    localStorage.setItem('user', JSON.stringify(demoUser));
+    setUser(demoUser);
 
     toast({
-      title: 'Logged in',
-      description: `Welcome, ${newUser.name}!`,
+      title: 'Demo mode activated',
+      description: `Using demo account`,
     });
   };
 
+  // Logout reinitializes the demo user
   const logout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
+    const demoUser = {
+      id: 1,
+      name: "Demo User",
+      username: "demo",
+      initials: "DU",
+      plan: "Premium"
+    };
+    
+    localStorage.setItem('user', JSON.stringify(demoUser));
+    setUser(demoUser);
 
     toast({
-      title: 'Logged out',
-      description: 'You have been logged out',
+      title: 'Demo reset',
+      description: 'Using fresh demo account',
     });
   };
 
+  // Refresh user retrieves from localStorage but ensures a demo user exists
   const refreshUser = () => {
     const stored = localStorage.getItem('user');
     if (stored) {
       setUser(JSON.parse(stored));
+    } else {
+      // If no user in storage, create a new demo user
+      const demoUser = {
+        id: 1,
+        name: "Demo User",
+        username: "demo",
+        initials: "DU",
+        plan: "Premium"
+      };
+      localStorage.setItem('user', JSON.stringify(demoUser));
+      setUser(demoUser);
     }
   };
 
