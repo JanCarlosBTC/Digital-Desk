@@ -98,7 +98,7 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
   });
 
   // Create offer with improved API utilities
-  const createMutation = useEnhancedApiMutation<any, FormValues>(
+  const createMutation = useEnhancedApiMutation<Offer, FormValues>(
     'POST',
     API_ENDPOINTS.OFFERS,
     {
@@ -116,9 +116,9 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
   );
 
   // Update offer with improved API utilities
-  const updateMutation = useEnhancedApiMutation<any, FormValues & { id: number }>(
+  const updateMutation = useEnhancedApiMutation<Offer, FormValues & { id: number }>(
     'PUT',
-    (variables) => API_ENDPOINTS.OFFER(variables.id),
+    (variables: FormValues & { id: number }) => `${API_ENDPOINTS.OFFERS}/${variables.id}`,
     {
       onSuccess: () => {
         toast({
@@ -134,9 +134,9 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
   );
   
   // Delete offer with improved API utilities
-  const deleteMutation = useEnhancedApiMutation<any, number>(
+  const deleteMutation = useEnhancedApiMutation<void, number>(
     'DELETE',
-    (id) => API_ENDPOINTS.OFFER(id),
+    (id: number) => `${API_ENDPOINTS.OFFERS}/${id}`,
     {
       onSuccess: () => {
         toast({

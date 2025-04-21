@@ -612,7 +612,7 @@ export function useSimplifiedApiMutation<TData, TVariables>(
  */
 export function useEnhancedApiMutation<TData = unknown, TVariables = unknown>(
   method: HttpMethod,
-  url: string,
+  url: string | ((variables: TVariables) => string),
   options?: {
     onSuccess?: (data: TData) => void;
     onError?: (error: Error) => void;
@@ -623,7 +623,8 @@ export function useEnhancedApiMutation<TData = unknown, TVariables = unknown>(
   
   return useMutation<TData, Error, TVariables>({
     mutationFn: async (variables: TVariables) => {
-      return await apiRequest<TData>(method, url, variables);
+      const resolvedUrl = typeof url === 'function' ? url(variables) : url;
+      return await apiRequest<TData>(method, resolvedUrl, variables);
     },
     onSuccess: (data) => {
       if (options?.onSuccess) {
