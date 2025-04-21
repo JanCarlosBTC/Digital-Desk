@@ -6,4 +6,4 @@
  * headers, footers, dashboards, and feature panels.
  */
 
-// Will export organism components as they're created
+export * from './dashboard-panel.js';

@@ -37,7 +37,21 @@
       "@utils/*": ["./client/src/lib/*"],
       "@components/*": ["./client/src/components/*"],
       "@services/*": ["./client/src/services/*"],
-      "@hooks/*": ["./client/src/hooks/*"]
+      "@hooks/*": ["./client/src/hooks/*"],
+      
+      /* Feature-based path aliases */
+      "@features/*": ["./client/src/features/*"],
+      "@features/thinking-desk/*": ["./client/src/features/thinking-desk/*"],
+      "@features/offer-vault/*": ["./client/src/features/offer-vault/*"],
+      "@features/decision-log/*": ["./client/src/features/decision-log/*"],
+      "@features/personal-clarity/*": ["./client/src/features/personal-clarity/*"],
+      
+      /* Shared components path aliases */
+      "@ui/*": ["./shared/components/*"],
+      "@ui/atoms/*": ["./shared/components/atoms/*"],
+      "@ui/molecules/*": ["./shared/components/molecules/*"],
+      "@ui/organisms/*": ["./shared/components/organisms/*"],
+      "@ui/lib/*": ["./shared/lib/*"]
     },
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
