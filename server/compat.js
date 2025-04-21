@@ -53,7 +53,7 @@ globalThis.__dirname = __dirname;
 
 // Patch global variables for libraries that expect CommonJS environment
 if (typeof module === 'undefined') {
-  // @ts-ignore
+  // @ts-expect-error - creating module for CommonJS compatibility
   globalThis.module = { exports: {} };
 }
 

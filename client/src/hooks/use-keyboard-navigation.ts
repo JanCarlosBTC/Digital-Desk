@@ -36,7 +36,7 @@ export const useKeyboardNavigation = ({
 
       switch (event.key) {
         case 'ArrowDown':
-        case 'ArrowRight':
+        case 'ArrowRight': {
           event.preventDefault();
           const nextIndex = (currentIndex + 1) % focusableElementsRef.current.length;
           const nextElement = focusableElementsRef.current[nextIndex];
@@ -46,9 +46,10 @@ export const useKeyboardNavigation = ({
           }
           onNavigate?.('next');
           break;
+        }
 
         case 'ArrowUp':
-        case 'ArrowLeft':
+        case 'ArrowLeft': {
           event.preventDefault();
           const prevIndex =
             currentIndex === -1
@@ -62,6 +63,7 @@ export const useKeyboardNavigation = ({
           }
           onNavigate?.('prev');
           break;
+        }
 
         case 'Enter':
         case ' ':

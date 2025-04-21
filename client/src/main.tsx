@@ -43,6 +43,6 @@ export const navItems = [
 const rootElement = document.getElementById("root");
 
 // Making sure we only create a root once
-// @ts-ignore - using window for development only
+// @ts-expect-error - using window for development only
 const root = window.__ROOT__ || (window.__ROOT__ = createRoot(rootElement!));
 root.render(<App />);
