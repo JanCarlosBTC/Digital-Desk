@@ -41,6 +41,16 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
+// Define an interface for user data with required fields
+interface RegisterUserData {
+  username: string;
+  email: string;
+  name: string;
+  password: string;
+  initials?: string;
+  plan?: string;
+}
+
 interface RegisterFormProps {
   onSuccess?: () => void;
   redirectTo?: string;
@@ -48,6 +58,7 @@ interface RegisterFormProps {
 
 export function RegisterForm({ onSuccess, redirectTo }: RegisterFormProps) {
   const { login } = useUser();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize form with validation
@@ -68,20 +79,20 @@ export function RegisterForm({ onSuccess, redirectTo }: RegisterFormProps) {
     
     try {
       // Extract confirmPassword as it's not needed in the API
-      const { confirmPassword, ...userData } = data;
+      const { confirmPassword, ...baseUserData } = data;
       
-      // Calculate initials from name if not provided
-      if (!userData.initials && userData.name) {
-        const nameParts = userData.name.split(' ');
-        userData.initials = nameParts.length > 1
-          ? (nameParts[0][0] + nameParts[1][0]).toUpperCase()
-          : userData.name.substring(0, 2).toUpperCase();
-      }
-      
-      // Set default plan if not provided
-      if (!userData.plan) {
-        userData.plan = 'Free';
-      }
+      // Build the complete user data with required fields
+      const userDataToSend: RegisterUserData = {
+        ...baseUserData,
+        // Calculate initials from name
+        initials: baseUserData.name ? (
+          baseUserData.name.includes(' ') 
+            ? `${baseUserData.name.split(' ')[0]?.charAt(0) || ''}${baseUserData.name.split(' ')[1]?.charAt(0) || ''}`
+            : baseUserData.name.substring(0, 2)
+        ).toUpperCase() : baseUserData.username.substring(0, 2).toUpperCase(),
+        // Set default plan
+        plan: 'Free'
+      };
       
       // Register with the API
       const response = await fetch('/api/register', {
@@ -89,7 +100,7 @@ export function RegisterForm({ onSuccess, redirectTo }: RegisterFormProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(userData),
+        body: JSON.stringify(userDataToSend),
         credentials: 'include' // Important for session cookies
       });
       

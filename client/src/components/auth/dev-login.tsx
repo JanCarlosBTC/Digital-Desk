@@ -46,9 +46,9 @@ const DevLogin: React.FC = () => {
       const result = await response.json();
       console.log('[DevLogin] Login successful, result:', result);
       
-      // Save token in localStorage
-      authService.setToken(result.token);
-      console.log('[DevLogin] Token saved to local storage');
+      // Instead of using the private setToken method, use the public devLogin method
+      await authService.devLogin(username);
+      console.log('[DevLogin] User authenticated via development mode');
       
       toast({
         title: 'Success',
