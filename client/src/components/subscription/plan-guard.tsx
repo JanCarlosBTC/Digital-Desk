@@ -32,7 +32,7 @@ export function PlanGuard({
   children,
   upgradeMessage,
   fallback,
-  requiredPlan = Plan.PREMIUM
+  requiredPlan = Plan.FREE
 }: PlanGuardProps) {
   const { user } = useUser();
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);

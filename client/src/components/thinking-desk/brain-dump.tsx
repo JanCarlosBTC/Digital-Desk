@@ -365,7 +365,7 @@ const BrainDump = () => {
             <span className="text-sm text-gray-700 font-medium">Your brain dump is private by default</span>
           </div>
           <div className="flex space-x-2">
-            <Button variant="thinkingDeskOutline" size="sm" className="text-gray-600">
+            <Button variant="outline" size="sm" className="text-gray-600">
               <ShareIcon className="mr-1 h-4 w-4" /> Share
             </Button>
           </div>

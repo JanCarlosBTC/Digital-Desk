@@ -6,7 +6,7 @@
  */
 
 import React, { useRef, useCallback, ReactNode, CSSProperties } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer, VirtualItem } from '@tanstack/react-virtual';
 
 // Types
 export interface VirtualizedListProps<T> {
