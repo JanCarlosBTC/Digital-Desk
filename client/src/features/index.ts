@@ -10,3 +10,4 @@ export * as ThinkingDesk from './thinking-desk/index.js';
 export * as OfferVault from './offer-vault/index.js';
 export * as DecisionLog from './decision-log/index.js';
 export * as PersonalClarity from './personal-clarity/index.js';
+export * as Examples from './examples/index.js';

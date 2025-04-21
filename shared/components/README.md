@@ -1,89 +1,86 @@
-# Digital Desk Shared Component Library
+# Digital Desk Component Library
 
-This directory contains the shared component library for Digital Desk, organized according to atomic design principles.
+This document outlines the component architecture and design patterns used in the Digital Desk application.
 
-## Architecture
+## Architecture Overview
 
-The component library follows atomic design methodology, which organizes components into three main categories:
+The Digital Desk codebase follows a modern, maintainable architecture with:
 
-1. **Atoms**: Basic, indivisible UI elements
-2. **Molecules**: Groups of atoms functioning together as a unit
-3. **Organisms**: Complex UI components composed of molecules and atoms
+1. **Atomic Design Structure**: Components are organized into atoms, molecules, and organisms
+2. **Feature-Based Organization**: Business logic is grouped by domain
+3. **Domain-Specific Styling**: Each feature domain has consistent visual identity
+4. **Clean Import Patterns**: Barrel files for simplified imports
 
-## Directory Structure
+## Component Structure
 
-```
-shared/components/
-├── atoms/           # Basic building blocks (Button, Input, etc.)
-├── molecules/       # Combinations of atoms (Card, FormField, etc.)
-├── organisms/       # Complex components (DashboardPanel, etc.)
-└── index.ts         # Main barrel file exporting all components
-```
+### Shared Components
+
+The shared component library follows atomic design principles:
+
+- **Atoms**: Basic building blocks (Button, Input)
+- **Molecules**: Combinations of atoms (Card, FormField)
+- **Organisms**: Complex UI structures (DashboardPanel)
+
+### Feature Components
+
+Feature-specific components are organized by domain:
+
+- **Thinking Desk**: Brain dump, problem trees, drafted plans
+- **Offer Vault**: Offer tracking, comparison tools
+- **Decision Log**: Decision tracking, confidence measurement
+- **Personal Clarity**: Reflections, check-ins, goal tracking
 
 ## Design System
 
-The component library is built on top of a comprehensive design system implemented as CSS variables in `client/src/index.css` and referenced in `tailwind.config.ts`. Key aspects include:
+### Domain-Specific Theming
 
-- **Typography**: Font sizes, weights, and line heights
-- **Spacing**: Consistent spacing scale
-- **Colors**: Domain-specific color palettes for different application areas
-- **Shadows**: Elevation system
-- **Border Radius**: Consistent rounding
-- **Transitions**: Animation timing and easing
+Each feature domain has its own color palette:
 
-## Key Design Tokens
+- **Thinking Desk**: Creative exploration and thought organization
+- **Offer Vault**: Data comparison and analysis
+- **Decision Log**: Structure and reasoning tracking
+- **Personal Clarity**: Reflection and personal growth
 
-Domain-specific colors are defined for each feature area:
+### Component Variants
 
-- **Thinking Desk**: Blue-based palette (`--thinking-desk-primary`, etc.)
-- **Offer Vault**: Green-based palette (`--offer-vault-primary`, etc.)
-- **Decision Log**: Amber/yellow-based palette (`--decision-log-primary`, etc.)
-- **Personal Clarity**: Purple-based palette (`--personal-clarity-primary`, etc.)
+Components support different variants:
+
+1. **Variant**: Visual style (default, outline, ghost)
+2. **Size**: Component sizing (sm, default, lg)
+3. **Domain**: Feature-specific styling
 
 ## Usage Guidelines
 
-### Importing Components
-
-Import components directly from their respective categories:
+### Component Import Pattern
 
 ```tsx
-// Using relative imports
-import { Button } from '../../../shared/components/atoms/button.js';
-import { Card } from '../../../shared/components/molecules/card.js';
-import { DashboardPanel } from '../../../shared/components/organisms/dashboard-panel.js';
+// Import from shared component library
+import { Button } from '../../../shared/components/atoms/button';
+import { Card } from '../../../shared/components/molecules/card';
+import { DashboardPanel } from '../../../shared/components/organisms/dashboard-panel';
+
+// OR use barrel files
+import { Button } from '../../../shared/components/atoms';
+import { Card } from '../../../shared/components/molecules';
+import { DashboardPanel } from '../../../shared/components/organisms';
 ```
 
-### Component Customization
-
-Most components accept a `domain` prop that applies domain-specific styling:
+### Feature-Specific Components
 
 ```tsx
-// Example: Button with domain-specific styling
-<Button variant="thinking-desk">Save</Button>
+// Import feature components
+import { DecisionCard } from '../../features/decision-log/components/decision-card';
+import { MonthlyCheckInCard } from '../../features/personal-clarity/components/monthly-check-in-card';
 
-// Example: Card with domain-specific styling
-<Card domain="offer-vault">Content here</Card>
-
-// Example: Dashboard panel with domain-specific styling
-<DashboardPanel 
-  title="Brain Dump" 
-  domain="thinking-desk"
-  icon={<BrainIcon />}
->
-  Content here
-</DashboardPanel>
+// OR use barrel files
+import { DecisionLog } from '../../features';
+const { DecisionCard } = DecisionLog;
 ```
 
-## Feature-Based Organization
+## Key Design Decisions
 
-The application is organized into feature-based modules:
-
-```
-client/src/features/
-├── thinking-desk/      # Brain dump, problem trees, etc.
-├── offer-vault/        # Job offers, compensation tracking
-├── decision-log/       # Decision tracking and analysis
-└── personal-clarity/   # Reflections, check-ins, etc.
-```
-
-Each feature module maintains its own domain-specific components that build upon the shared component library.
+1. **Domain Prop**: All shared components accept a `domain` prop that applies feature-specific styling
+2. **Composition Pattern**: Complex UIs are built through component composition
+3. **Icon Support**: Components like Button support `leadingIcon` and `trailingIcon` props
+4. **Error States**: Form components have built-in error display capabilities
+5. **Responsive Design**: All components are designed to work on mobile, tablet, and desktop
