@@ -15,6 +15,7 @@ import SubscriptionSuccess from "@/pages/subscription-success";
 import Login from "@/pages/login";
 import { PageTransition } from "@/components/transitions/simple-page-transition";
 import { UserProvider } from "@/context/user-context";
+import { DemoStorageProvider } from "@/context/demo-storage-context";
 
 // Enhanced router with page transitions
 function Router() {
@@ -51,8 +52,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <UserProvider>
-        <Router />
-        <Toaster />
+        <DemoStorageProvider>
+          <Router />
+          <Toaster />
+        </DemoStorageProvider>
       </UserProvider>
     </QueryClientProvider>
   );
