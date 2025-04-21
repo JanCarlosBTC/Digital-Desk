@@ -16,8 +16,8 @@ const OfferMetrics = () => {
       activeOffersPct: 0,
       avgRevenue: 0,
       avgRevenuePct: 0,
-      conversionRate: 32, // Hardcoded for demo
-      conversionRatePct: 64 // Hardcoded for demo
+      conversionRate: 25, // Fixed value for demo
+      conversionRatePct: 50 // This is 50% of target (50%)
     };
 
     // Active offers count
@@ -43,8 +43,8 @@ const OfferMetrics = () => {
       activeOffersPct,
       avgRevenue,
       avgRevenuePct,
-      conversionRate: 32, // Hardcoded for demo
-      conversionRatePct: 64 // Hardcoded for demo
+      conversionRate: 25, // Fixed value for demo
+      conversionRatePct: 50 // This is 50% of target (50%)
     };
   };
 
@@ -101,7 +101,7 @@ const OfferMetrics = () => {
                 style={{ width: `${metrics.conversionRatePct}%` }}
               ></div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">{metrics.conversionRatePct}% of 50% target</p>
+            <p className="text-xs text-gray-500 mt-1">Current: {metrics.conversionRate}% (Target: 50%)</p>
           </div>
         </div>
       )}
