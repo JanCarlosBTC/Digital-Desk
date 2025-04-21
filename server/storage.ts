@@ -11,8 +11,13 @@ import {
   Offer, InsertOffer,
   OfferNote, InsertOfferNote
 } from "../shared/schema.js";
+import session from "express-session";
+import createMemoryStore from "memorystore";
 
 export interface IStorage {
+  // Session store for authentication
+  sessionStore: session.Store;
+  
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -98,6 +103,8 @@ export class MemStorage implements IStorage {
   private offerNotes: Map<number, OfferNote>;
 
   private nextId: number;
+  
+  sessionStore: session.Store;
 
   // No-op implementation of logActivity (deprecated method)
   private async logActivity(params: { 
