@@ -1,2 +1,0 @@
-  development[m 48428f9 Optimize components with React.memo and useCallback for performance improvements
-* [32mmain       [m c1b7385 Remove Drizzle dependencies to fix esbuild security vulnerability
