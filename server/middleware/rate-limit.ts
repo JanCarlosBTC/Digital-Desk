@@ -39,7 +39,8 @@ export const createRateLimiter = (
     
     // Skip rate limiting in development mode
     skip: (req: Request) => {
-      return process.env.NODE_ENV === 'development';
+      // Force skip rate limiting in development and for Replit environments
+      return process.env.NODE_ENV === 'development' || req.hostname.includes('replit.dev');
     },
     
     // Use IP address as the key by default

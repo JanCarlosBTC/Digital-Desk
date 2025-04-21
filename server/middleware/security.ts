@@ -77,8 +77,8 @@ export function sanitizeInput(req: Request, _res: Response, next: NextFunction) 
  */
 export function bruteForceProtection(
   windowMs = 15 * 60 * 1000, // 15 minutes
-  maxFailures = process.env.NODE_ENV === 'development' ? 15 : 5,
-  blockDuration = process.env.NODE_ENV === 'development' ? 5 * 60 * 1000 : 30 * 60 * 1000 // 5 minutes in dev, 30 in prod
+  maxFailures = process.env.NODE_ENV === 'development' ? 50 : 5, // Increase limit for development/demo
+  blockDuration = process.env.NODE_ENV === 'development' ? 1 * 60 * 1000 : 30 * 60 * 1000 // 1 minute in dev, 30 in prod
 ) {
   // In-memory storage of failed attempts (should use Redis in production)
   const failedAttempts: Record<string, { count: number, blockedUntil?: number }> = {};
@@ -94,6 +94,11 @@ export function bruteForceProtection(
   }, 60 * 1000); // Clean up every minute
   
   return (req: Request, res: Response, next: NextFunction) => {
+    // Skip for Replit environments
+    if (req.hostname.includes('replit.dev')) {
+      return next();
+    }
+    
     const ip = req.ip || 'unknown';
     const now = Date.now();
     
