@@ -1,12 +1,7 @@
-import { Express } from 'express';
-
-declare global {
-  namespace Express {
-    interface Request {
-      userId?: number;
-    }
+declare namespace Express {
+  interface Request {
+    userId?: number;
   }
 }
 
-// This export is needed to make this file a module
-export {};
+// No export needed as this is a pure declaration file

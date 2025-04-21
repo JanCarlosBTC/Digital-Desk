@@ -1,4 +1,5 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import type { Express, Response, NextFunction } from "express";
+import type { Request } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage.js";
@@ -14,15 +15,7 @@ import { authenticate } from "./middleware/auth.js";
 import { login, getProfile } from "./controllers/auth.controller.js";
 import { withAuth, withAuthAndUser, withDevAuth } from "./middleware/auth-wrapper.js";
 
-// Extend the Express Request type to include userId property
-// Using module augmentation instead of namespace
-import { Request as ExpressRequest } from 'express';
-
-declare global {
-  interface Request extends ExpressRequest {
-    userId?: number;
-  }
-}
+// The Request interface is now augmented via server/types/express.d.ts
 
 /**
  * Helper function to safely parse an ID from request parameters

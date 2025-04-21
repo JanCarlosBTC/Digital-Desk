@@ -8,6 +8,7 @@
     "sourceMap": true,
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "typeRoots": ["./node_modules/@types", "./server/types"],
     "paths": {
       "@shared/*": ["./shared/*"]
     }
