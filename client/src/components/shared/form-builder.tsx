@@ -8,7 +8,7 @@
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Path, FieldValues } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -38,7 +38,7 @@ type FieldType = 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select
 
 // Base field props
 interface BaseFieldProps {
-  name: string;
+  name: string; // This will be cast to the appropriate field path at runtime
   label: string;
   description?: string;
   placeholder?: string;
@@ -130,8 +130,8 @@ export function FormBuilder<T extends z.ZodType<any, any>>({
     defaultValues: defaultValues as any,
   });
   
-  // Helper function to cast field name to Path<z.infer<T>>
-  const castFieldName = (name: string) => name as Path<z.infer<T>>;
+  // Helper function to safely cast field name to the appropriate type for react-hook-form
+  const castFieldName = (name: string): any => name as any;
 
   // Handle form submission
   const handleSubmit = async (values: z.infer<T>) => {
@@ -322,7 +322,7 @@ export function FormBuilder<T extends z.ZodType<any, any>>({
           <FormField
             key={name}
             control={form.control}
-            name={name}
+            name={castFieldName(name)}
             render={(props) => (
               <FormItem className={field.className}>
                 <FormLabel>
