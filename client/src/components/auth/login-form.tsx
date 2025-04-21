@@ -50,17 +50,30 @@ export function LoginForm({ onSuccess, redirectTo }: LoginFormProps) {
     setIsSubmitting(true);
     
     try {
-      // Call login with user data object
-      login({ 
-        name: data.username,
-        username: data.username,
-        initials: data.username.substring(0, 2).toUpperCase(),
-        plan: "Free"
+      // Use authService for server authentication
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+        credentials: 'include' // Important for session cookies
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Login failed');
+      }
+      
+      // Get the user data from response
+      const userData = await response.json();
+      
+      // Update our local user context
+      login(userData);
       
       toast({
         title: 'Login successful',
-        description: 'Welcome back!',
+        description: `Welcome back, ${userData.name || userData.username}!`,
       });
       
       if (onSuccess) {

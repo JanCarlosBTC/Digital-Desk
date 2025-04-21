@@ -70,18 +70,61 @@ export function RegisterForm({ onSuccess, redirectTo }: RegisterFormProps) {
       // Extract confirmPassword as it's not needed in the API
       const { confirmPassword, ...userData } = data;
       
-      login(userData);
-      const success = true;
-      
-      if (success) {
-        if (onSuccess) {
-          onSuccess();
-        }
-        
-        if (redirectTo) {
-          window.location.href = redirectTo;
-        }
+      // Calculate initials from name if not provided
+      if (!userData.initials && userData.name) {
+        const nameParts = userData.name.split(' ');
+        userData.initials = nameParts.length > 1
+          ? (nameParts[0][0] + nameParts[1][0]).toUpperCase()
+          : userData.name.substring(0, 2).toUpperCase();
       }
+      
+      // Set default plan if not provided
+      if (!userData.plan) {
+        userData.plan = 'Free';
+      }
+      
+      // Register with the API
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+        credentials: 'include' // Important for session cookies
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Registration failed');
+      }
+      
+      // Get the user data from response
+      const createdUser = await response.json();
+      
+      // Update the user context
+      login(createdUser);
+      
+      // Show success message
+      toast({
+        title: 'Account created',
+        description: `Welcome to Digital Desk, ${createdUser.name}!`,
+      });
+      
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      if (redirectTo) {
+        window.location.href = redirectTo;
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      
+      toast({
+        title: 'Registration failed',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        variant: 'destructive',
+      });
     } finally {
       setIsSubmitting(false);
     }
