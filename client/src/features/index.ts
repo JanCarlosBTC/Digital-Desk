@@ -7,3 +7,4 @@
  */
 
 export * as ThinkingDesk from './thinking-desk/index.js';
+export * as OfferVault from './offer-vault/index.js';
