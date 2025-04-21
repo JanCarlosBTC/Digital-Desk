@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@ui/molecules/card.js';
-import { Button } from '@ui/atoms/button.js';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../../shared/components/molecules/card.js';
+import { Button } from '../../../../shared/components/atoms/button.js';
 import { ArchiveIcon, EditIcon, TrashIcon } from 'lucide-react';
 
 interface OfferDetails {
