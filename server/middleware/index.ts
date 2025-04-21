@@ -2,7 +2,7 @@ import { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import express from 'express';
 import session from 'express-session';
-import { loggerMiddleware } from './logger.js';
+import { requestLogger } from './logger.js';
 import { errorHandlerMiddleware } from './errorHandler.js';
 import { hostBypassMiddleware } from './host-bypass.js';
 import { standardApiLimiter } from './rate-limit.js';
@@ -52,7 +52,7 @@ export function setupMiddleware(app: Express): void {
   
   // Custom middleware components
   app.use(hostBypassMiddleware);
-  app.use(loggerMiddleware);
+  app.use(requestLogger);
   
   // Session configuration - must be before CSRF
   setupSession(app);
