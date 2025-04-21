@@ -150,9 +150,17 @@ const WeeklyReflections = () => {
     // Find reflection for current week, prioritizing draft over completed
     const currentWeekReflections = weeklyReflections.filter(reflection => {
       const reflectionDate = new Date(reflection.weekDate);
-      return reflectionDate.getFullYear() === currentWeekDate.getFullYear() 
-        && reflectionDate.getMonth() === currentWeekDate.getMonth() 
-        && reflectionDate.getDate() === currentWeekDate.getDate();
+      
+      // Instead of checking exact date match, check for the same week
+      // Get Monday of reflection week
+      const reflectionMonday = new Date(reflectionDate);
+      const reflectionDay = reflectionDate.getDay();
+      reflectionMonday.setDate(reflectionDate.getDate() - reflectionDay + (reflectionDay === 0 ? -6 : 1));
+      
+      // Compare Monday dates for week equality
+      return reflectionMonday.getFullYear() === currentWeekDate.getFullYear() 
+        && reflectionMonday.getMonth() === currentWeekDate.getMonth() 
+        && reflectionMonday.getDate() === currentWeekDate.getDate();
     });
 
     console.log(`Found ${currentWeekReflections.length} reflections for current week`);
@@ -161,8 +169,7 @@ const WeeklyReflections = () => {
     if (currentWeekReflections.length > 0) {
       // Prioritize drafts over completed reflections
       const draftReflection = currentWeekReflections.find(r => r.isDraft);
-      // Use explicit non-null assertion as we've already checked that currentWeekReflections has items
-      const reflectionToShow: WeeklyReflection = draftReflection || currentWeekReflections[0];
+      const reflectionToShow = draftReflection || currentWeekReflections[0];
       
       // Make sure reflectionToShow exists (TypeScript safety)
       if (reflectionToShow) {
@@ -238,7 +245,7 @@ const WeeklyReflections = () => {
         <h2 className="text-xl font-semibold text-gray-800">Weekly Reflections</h2>
         <Button 
           onClick={handleNewReflection}
-          variant="personalClarity"
+          variant="default"
         >
           <PlusIcon className="mr-2 h-4 w-4" /> New Reflection
         </Button>
@@ -302,7 +309,7 @@ const WeeklyReflections = () => {
 
             <div className="flex justify-end">
               <Button 
-                variant="personalClarityOutline" 
+                variant="outline" 
                 className="mr-2"
                 onClick={() => handleSave(true)}
                 disabled={mutation.isPending || isSubmitting}
@@ -310,7 +317,7 @@ const WeeklyReflections = () => {
                 Save Draft
               </Button>
               <Button 
-                variant="personalClarity"
+                variant="default"
                 onClick={() => handleSave(false)}
                 disabled={mutation.isPending || isSubmitting}
               >

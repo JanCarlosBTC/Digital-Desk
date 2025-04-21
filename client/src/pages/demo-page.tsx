@@ -26,60 +26,7 @@ const DemoPage: React.FC = () => {
   const [insightDescription, setInsightDescription] = React.useState('');
   const [insightImpact, setInsightImpact] = React.useState<'High' | 'Medium' | 'Low'>('Medium');
 
-  // Setup sample data on first load
-  React.useEffect(() => {
-    if (demoMode && offers.length === 0) {
-      // Add some sample offers if none exist
-      addOffer({
-        title: "Business Strategy Coaching",
-        description: "6-month program to develop and implement a comprehensive business strategy",
-        price: "$5,000",
-        category: "Coaching",
-        status: "Active",
-        format: "1:1 Sessions",
-        duration: "6 months",
-        clientCount: 3,
-        archivedAt: null
-      });
-      
-      addOffer({
-        title: "Website Audit & Optimization",
-        description: "Comprehensive review of your website with actionable recommendations",
-        price: "$1,200",
-        category: "Digital",
-        status: "Active",
-        format: "Report + Call",
-        duration: "2 weeks",
-        clientCount: 12,
-        archivedAt: null
-      });
-      
-      addOffer({
-        title: "Marketing Strategy Workshop",
-        description: "Full-day workshop to develop your marketing strategy and content plan",
-        price: "$2,500",
-        category: "Workshop",
-        status: "Active",
-        format: "In-person",
-        duration: "1 day",
-        clientCount: 8,
-        archivedAt: null
-      });
-    }
-    
-    if (demoMode && insights.length === 0) {
-      // Add some sample insights
-      addInsight({
-        title: "Client onboarding needs improvement",
-        description: "Based on recent client feedback, our onboarding process could be more streamlined",
-        impact: "High",
-        source: "Client Feedback",
-        tags: ["onboarding", "client experience"],
-        status: "New",
-        appliedOn: null
-      });
-    }
-  }, [demoMode, offers.length, insights.length, addOffer, addInsight]);
+  // No auto-populated sample data
 
   const handleAddOffer = () => {
     if (!offerTitle || !offerDescription || !offerPrice) return;

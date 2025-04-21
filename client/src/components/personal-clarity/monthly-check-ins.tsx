@@ -122,7 +122,7 @@ const MonthlyCheckIns = () => {
         <h2 className="text-xl font-semibold text-gray-800">Monthly Check-ins</h2>
         <Button 
           onClick={handleNewCheckIn}
-          variant="personalClarity"
+          variant="default"
         >
           <CalendarIcon className="mr-2 h-4 w-4" /> {getMonthName(currentMonth)} Check-in
         </Button>
@@ -207,10 +207,10 @@ const MonthlyCheckIns = () => {
                         </span>
                         <div className="flex items-center space-x-3">
                           <span className="text-xs text-gray-500">
-                            Completed on {formatCompletedOn(checkIn.completedOn)}
+                            Completed on {formatCompletedOn(new Date(checkIn.completedOn || new Date()))}
                           </span>
                           <Button
-                            variant="personalClarityOutline"
+                            variant="outline"
                             size="sm"
                             onClick={() => setSelectedCheckIn(checkIn)}
                             className="h-8 px-2"
