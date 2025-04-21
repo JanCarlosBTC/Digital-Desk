@@ -146,6 +146,12 @@ export class MemStorage implements IStorage {
       name: "John Doe",
       plan: "Premium",
       initials: "JD"
+    }).then(user => {
+      // Add a default brain dump for the demo user
+      this.createBrainDump({
+        userId: user.id,
+        content: "Welcome to your Brain Dump! This is a space for capturing your thoughts and ideas."
+      });
     });
   }
 
@@ -961,6 +967,7 @@ export class MemStorage implements IStorage {
   }
 }
 
+// Use MemStorage for now until Prisma dependencies are properly installed
 let storageImpl: IStorage = new MemStorage();
 
 export const storage: IStorage = storageImpl;
