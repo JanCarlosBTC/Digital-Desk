@@ -5,6 +5,12 @@ export default {
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
+      /* THEME CONFIGURATION */
+      // From theme.json (now consolidated)
+      themePrimaryColor: "hsl(213 94% 60%)", // Primary color from theme.json
+      themeVariant: "professional", // Variant from theme.json
+      themeAppearance: "light", // Appearance from theme.json
+      themeRadius: 0.5, // Radius from theme.json
       /* TYPOGRAPHY SCALE */
       fontSize: {
         xs: "var(--font-size-xs)",
