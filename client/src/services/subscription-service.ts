@@ -123,17 +123,20 @@ class SubscriptionService {
     const plan = await this.getCurrentPlan();
     
     switch (resourceType) {
-      case 'offers':
+      case 'offers': {
         const offerLimit = PLAN_FEATURES[plan].offerLimit as number;
         return offerLimit === -1 || usage.offerCount < offerLimit;
+      }
       
-      case 'problemTrees':
+      case 'problemTrees': {
         const problemTreeLimit = PLAN_FEATURES[plan].problemTreeLimit as number;
         return problemTreeLimit === -1 || usage.problemTreeCount < problemTreeLimit;
+      }
       
-      case 'draftedPlans':
+      case 'draftedPlans': {
         const draftedPlanLimit = PLAN_FEATURES[plan].draftedPlanLimit as number;
         return draftedPlanLimit === -1 || usage.draftedPlanCount < draftedPlanLimit;
+      }
       
       default:
         return false;

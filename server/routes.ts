@@ -15,11 +15,12 @@ import { login, getProfile } from "./controllers/auth.controller.js";
 import { withAuth, withAuthAndUser, withDevAuth } from "./middleware/auth-wrapper.js";
 
 // Extend the Express Request type to include userId property
+// Using module augmentation instead of namespace
+import { Request as ExpressRequest } from 'express';
+
 declare global {
-  namespace Express {
-    interface Request {
-      userId?: number;
-    }
+  interface Request extends ExpressRequest {
+    userId?: number;
   }
 }
 
