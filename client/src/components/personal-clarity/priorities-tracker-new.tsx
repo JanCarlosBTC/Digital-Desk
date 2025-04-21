@@ -190,7 +190,7 @@ const PrioritiesTracker = () => {
         <h2 className="text-xl font-semibold text-gray-800">What Matters Most</h2>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button 
-            variant="personalClarityOutline"
+            variant="outline"
             onClick={() => setIsOpen(true)}
             className="flex items-center"
           >
@@ -276,7 +276,7 @@ const PrioritiesTracker = () => {
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button 
               className="rounded-r-lg"
-              variant="personalClarity"
+              variant="default"
               onClick={handleAddPriority}
               disabled={isSubmitting || !newPriority.trim()} 
             >

@@ -171,7 +171,7 @@ const PrioritiesTracker = () => {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-800">What Matters Most</h2>
           <Button 
-            variant="personalClarityOutline"
+            variant="outline"
             onClick={() => setIsOpen(true)}
             className="flex items-center"
           >
@@ -233,7 +233,7 @@ const PrioritiesTracker = () => {
           />
           <Button 
             className="rounded-r-lg"
-            variant="personalClarity"
+            variant="default"
             onClick={handleAddPriority}
             disabled={isSubmitting || !newPriority.trim()} 
           >
