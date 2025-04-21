@@ -50,27 +50,19 @@ export function LoginForm({ onSuccess, redirectTo }: LoginFormProps) {
     setIsSubmitting(true);
     
     try {
-      const success = await login(data.username, data.password);
+      await login(data.username, data.password);
       
-      if (success) {
-        toast({
-          title: 'Login successful',
-          description: 'Welcome back!',
-        });
-        
-        if (onSuccess) {
-          onSuccess();
-        }
-        
-        if (redirectTo) {
-          window.location.href = redirectTo;
-        }
-      } else {
-        toast({
-          title: 'Login failed',
-          description: 'Invalid username or password',
-          variant: 'destructive',
-        });
+      toast({
+        title: 'Login successful',
+        description: 'Welcome back!',
+      });
+      
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      if (redirectTo) {
+        window.location.href = redirectTo;
       }
     } catch (error) {
       toast({

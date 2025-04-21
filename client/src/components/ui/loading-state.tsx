@@ -89,6 +89,13 @@ export function LoadingState({
 }
 
 /**
+ * LoadingSpinner component - simple spinner for use in buttons and inline elements
+ */
+export function LoadingSpinner({ className }: { className?: string }) {
+  return <Loader2 className={cn("h-4 w-4 animate-spin", className)} />;
+}
+
+/**
  * Card-specific loading state for consistent loading UIs in card components
  */
 export function CardLoadingState({

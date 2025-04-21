@@ -338,7 +338,7 @@ const OfferForm: React.FC<OfferFormProps> = ({
               </Button>
               <Button 
                 type="submit" 
-                variant="offerVault" 
+                variant="default" 
                 disabled={mutation.isPending}
               >
                 {mutation.isPending && <LoadingSpinner />}
