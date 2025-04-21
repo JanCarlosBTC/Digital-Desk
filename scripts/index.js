@@ -38,7 +38,8 @@ const scripts = {
   'init-mem-storage': './init-mem-storage.js',
   'init-prisma-db': './init-prisma-db.ts',
   'migrate-to-prisma': './migrate-to-prisma.ts',
-  'update-schema-imports': './update-schema-imports.ts'
+  'update-schema-imports': './update-schema-imports.ts',
+  'db': './db-fix.js'
 };
 
 if (!scriptName) {

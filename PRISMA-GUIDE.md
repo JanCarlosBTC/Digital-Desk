@@ -36,9 +36,29 @@ const newPriority = await prismaStorage.createPriority({
 To modify the database schema:
 
 1. Edit `prisma/schema.prisma`
-2. Run the command: `npx prisma db push`
+2. Run the command: `./scripts/run.sh db push` or `npx prisma db push`
 
 **Never** use manual SQL migrations or Drizzle migration methods.
+
+### Database Helper Script
+
+Digital Desk provides a dedicated database helper script for common operations:
+
+```bash
+# View available commands
+./scripts/run.sh db help
+
+# Push schema changes
+./scripts/run.sh db push
+
+# Reset database (caution: destroys all data)
+./scripts/run.sh db reset
+
+# Run diagnostics
+./scripts/run.sh db diagnose
+```
+
+This script simplifies common database tasks and provides helpful diagnostics for troubleshooting.
 
 ### Common Issues
 

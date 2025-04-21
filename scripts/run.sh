@@ -16,6 +16,7 @@
 #   - init-prisma-db       : Initialize Prisma database
 #   - migrate-to-prisma    : Migrate data from Drizzle to Prisma
 #   - update-schema-imports: Update schema imports
+#   - db                   : Database helper (run db help for more info)
 
 set -e
 
@@ -48,6 +49,9 @@ case "$SCRIPT_NAME" in
   "update-schema-imports")
     npx ts-node "$SCRIPT_DIR/update-schema-imports.ts" "$@"
     ;;
+  "db")
+    node "$SCRIPT_DIR/db-fix.js" "$@"
+    ;;
   "")
     echo "Available scripts:"
     echo "  - cleanup-logs"
@@ -58,6 +62,7 @@ case "$SCRIPT_NAME" in
     echo "  - init-prisma-db"
     echo "  - migrate-to-prisma"
     echo "  - update-schema-imports"
+    echo "  - db                : Database helper (run db help for more info)"
     exit 0
     ;;
   *)
@@ -70,6 +75,7 @@ case "$SCRIPT_NAME" in
     echo "  - init-prisma-db"
     echo "  - migrate-to-prisma"
     echo "  - update-schema-imports"
+    echo "  - db                : Database helper (run db help for more info)"
     exit 1
     ;;
 esac
