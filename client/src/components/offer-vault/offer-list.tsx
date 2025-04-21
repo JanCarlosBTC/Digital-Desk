@@ -317,11 +317,12 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
   };
 
   // Format date helper
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "N/A";
+  const formatDate = (date: string | Date | null) => {
+    if (!date) return "N/A";
     
     // Format to month and year only
-    return new Date(dateString).toLocaleDateString(undefined, { 
+    const dateObj = date instanceof Date ? date : new Date(date);
+    return dateObj.toLocaleDateString(undefined, { 
       month: 'short', 
       year: 'numeric' 
     });
@@ -480,7 +481,7 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
                       </div>
                     )}
                     
-                    {offer.clientCount > 0 && (
+                    {offer.clientCount && offer.clientCount > 0 && (
                       <div className="flex items-center text-sm">
                         <UsersIcon className="mr-2 h-4 w-4 text-gray-500" />
                         <span>{offer.clientCount} client{offer.clientCount !== 1 ? 's' : ''}</span>
@@ -507,7 +508,7 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
         onOpenChange={handleDialogClose}
         size="lg"
         submitLabel="Save Offer"
-        submitting={createMutation.isPending}
+        isSubmitting={createMutation.isPending}
         onSubmit={(e) => {
           e.preventDefault();
           form.handleSubmit(onSubmit)(e);
@@ -656,7 +657,7 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
         onOpenChange={handleEditDialogClose}
         size="lg"
         submitLabel="Save Changes"
-        submitting={updateMutation.isPending}
+        isSubmitting={updateMutation.isPending}
         onSubmit={(e) => {
           e.preventDefault();
           form.handleSubmit(onSubmit)(e);

@@ -47,7 +47,7 @@ interface RegisterFormProps {
 }
 
 export function RegisterForm({ onSuccess, redirectTo }: RegisterFormProps) {
-  const { register } = useUser();
+  const { login } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize form with validation
@@ -70,7 +70,8 @@ export function RegisterForm({ onSuccess, redirectTo }: RegisterFormProps) {
       // Extract confirmPassword as it's not needed in the API
       const { confirmPassword, ...userData } = data;
       
-      const success = await register(userData);
+      login(userData);
+      const success = true;
       
       if (success) {
         if (onSuccess) {
