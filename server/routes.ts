@@ -11,6 +11,9 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
+// Import setupAuth function from our new auth module
+import { setupAuth } from "./auth.js";
+// Leave existing imports for backward compatibility during transition
 import { authenticate } from "./middleware/auth.js";
 import { login, getProfile } from "./controllers/auth.controller.js";
 import { withAuth, withAuthAndUser, withDevAuth } from "./middleware/auth-wrapper.js";
@@ -35,6 +38,9 @@ function parseAndValidateId(id: string | undefined, res: Response): number | und
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize the authentication system with Passport.js
+  setupAuth(app);
+  
   const handleZodError = (error: unknown, res: Response): Response => {
     if (error instanceof ZodError) {
       const validationError = fromZodError(error);

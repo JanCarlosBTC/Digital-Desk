@@ -104,7 +104,7 @@ export class MemStorage implements IStorage {
 
   private nextId: number;
   
-  sessionStore: session.Store;
+  sessionStore: session.Store = null!; // Will be initialized in constructor
 
   // No-op implementation of logActivity (deprecated method)
   private async logActivity(params: { 
@@ -132,6 +132,12 @@ export class MemStorage implements IStorage {
     this.offerNotes = new Map();
 
     this.nextId = 1;
+    
+    // Initialize session store
+    const MemoryStore = createMemoryStore(session);
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000, // Prune expired entries every 24h (in ms)
+    });
 
     // Add a demo user
     this.createUser({
