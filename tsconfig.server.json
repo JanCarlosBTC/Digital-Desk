@@ -11,8 +11,9 @@
     "typeRoots": ["./node_modules/@types", "./server/types"],
     "paths": {
       "@shared/*": ["./shared/*"]
-    }
+    },
+    "types": ["node"]
   },
   "include": ["server/**/*", "shared/**/*"],
-  "exclude": ["node_modules", "client"]
+  "exclude": ["node_modules", "client", "**/*.spec.ts", "server/vite.ts"]
 }

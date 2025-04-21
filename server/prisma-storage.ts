@@ -10,6 +10,9 @@
 
 import { IStorage } from './storage.js';
 import prisma from './prisma.js';
+import session from 'express-session';
+import connectPg from 'connect-pg-simple';
+import { pool } from './db.js';
 import {
   User, InsertUser,
   BrainDump, InsertBrainDump,
@@ -24,7 +27,19 @@ import {
   OfferNote, InsertOfferNote
 } from "../shared/schema.js";
 
+const PostgresSessionStore = connectPg(session);
+
 export class PrismaStorage implements IStorage {
+  // Session store for auth persistence
+  sessionStore: session.Store;
+  
+  constructor() {
+    // Initialize PostgreSQL session store
+    this.sessionStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true
+    });
+  }
   // User methods
   async getUser(id: number): Promise<User | undefined> {
     const user = await prisma.user.findUnique({

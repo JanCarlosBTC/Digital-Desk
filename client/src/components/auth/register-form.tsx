@@ -81,16 +81,25 @@ export function RegisterForm({ onSuccess, redirectTo }: RegisterFormProps) {
       // Extract confirmPassword as it's not needed in the API
       const { confirmPassword, ...baseUserData } = data;
       
+      // Calculate initials from name
+      let initials = '';
+      if (baseUserData.name) {
+        if (baseUserData.name.includes(' ')) {
+          const nameParts = baseUserData.name.split(' ');
+          const firstInitial = nameParts[0] && nameParts[0].charAt(0) || '';
+          const secondInitial = nameParts[1] && nameParts[1].charAt(0) || '';
+          initials = (firstInitial + secondInitial).toUpperCase();
+        } else {
+          initials = baseUserData.name.substring(0, 2).toUpperCase();
+        }
+      } else {
+        initials = baseUserData.username.substring(0, 2).toUpperCase();
+      }
+      
       // Build the complete user data with required fields
       const userDataToSend: RegisterUserData = {
         ...baseUserData,
-        // Calculate initials from name
-        initials: baseUserData.name ? (
-          baseUserData.name.includes(' ') 
-            ? `${baseUserData.name.split(' ')[0]?.charAt(0) || ''}${baseUserData.name.split(' ')[1]?.charAt(0) || ''}`
-            : baseUserData.name.substring(0, 2)
-        ).toUpperCase() : baseUserData.username.substring(0, 2).toUpperCase(),
-        // Set default plan
+        initials,
         plan: 'Free'
       };
       
