@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { User } from '@shared/schema';
+import { DemoUser } from '@shared/schema';
 
 interface UserContextType {
-  user: User | null;
+  user: DemoUser | null;
   isLoading: boolean;
   isError: boolean;
-  login: (userData: Partial<User>) => void;
+  login: (userData: Partial<DemoUser>) => void;
   logout: () => void;
   refreshUser: () => void;
 }
@@ -24,8 +24,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
   
   // Create a fixed demo user - no login needed
-  const [user, setUser] = useState<User | null>(() => {
-    const demoUser = {
+  const [user, setUser] = useState<DemoUser | null>(() => {
+    const demoUser: DemoUser = {
       id: 1,
       name: "Demo User",
       username: "demo",
@@ -42,9 +42,9 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isError, setIsError] = useState(false);
 
   // Since authentication is removed, login always uses demo user
-  const login = (userData: Partial<User>) => {
+  const login = (userData: Partial<DemoUser>) => {
     // Ignore credentials - always use demo user
-    const demoUser = {
+    const demoUser: DemoUser = {
       id: 1,
       name: "Demo User",
       username: "demo",
@@ -64,7 +64,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Logout reinitializes the demo user
   const logout = () => {
-    const demoUser = {
+    const demoUser: DemoUser = {
       id: 1,
       name: "Demo User",
       username: "demo",
@@ -85,10 +85,10 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshUser = () => {
     const stored = localStorage.getItem('user');
     if (stored) {
-      setUser(JSON.parse(stored));
+      setUser(JSON.parse(stored) as DemoUser);
     } else {
       // If no user in storage, create a new demo user
-      const demoUser = {
+      const demoUser: DemoUser = {
         id: 1,
         name: "Demo User",
         username: "demo",

@@ -10,6 +10,15 @@ export const insertUserSchema = z.object({
   initials: z.string().min(1, "Initials are required"),
 });
 
+// Demo User schema (without password requirement)
+export const demoUserSchema = z.object({
+  id: z.number().int().positive(),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  name: z.string().min(1, "Name is required"),
+  plan: z.string().nullable(),
+  initials: z.string().min(1, "Initials are required"),
+});
+
 // Brain Dump schema
 export const insertBrainDumpSchema = z.object({
   userId: z.number().int().positive(),
@@ -152,6 +161,7 @@ export type { User, BrainDump, ProblemTree, DraftedPlan, ClarityLab, WeeklyRefle
 
 // Export insert types
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type DemoUser = z.infer<typeof demoUserSchema>;
 export type InsertBrainDump = z.infer<typeof insertBrainDumpSchema>;
 export type InsertProblemTree = z.infer<typeof insertProblemTreeSchema>;
 export type InsertDraftedPlan = z.infer<typeof insertDraftedPlanSchema>;
