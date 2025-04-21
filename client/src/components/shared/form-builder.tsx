@@ -8,7 +8,7 @@
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, Path, FieldValues } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -129,6 +129,9 @@ export function FormBuilder<T extends z.ZodType<any, any>>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues as any,
   });
+  
+  // Helper function to cast field name to Path<z.infer<T>>
+  const castFieldName = (name: string) => name as Path<z.infer<T>>;
 
   // Handle form submission
   const handleSubmit = async (values: z.infer<T>) => {
@@ -157,7 +160,7 @@ export function FormBuilder<T extends z.ZodType<any, any>>({
           <FormField
             key={name}
             control={form.control}
-            name={name}
+            name={castFieldName(name)}
             render={({ field: formField }) => (
               <FormItem className={field.className}>
                 <FormLabel>
@@ -184,7 +187,7 @@ export function FormBuilder<T extends z.ZodType<any, any>>({
           <FormField
             key={name}
             control={form.control}
-            name={name}
+            name={castFieldName(name)}
             render={({ field: formField }) => (
               <FormItem className={field.className}>
                 <FormLabel>
@@ -212,7 +215,7 @@ export function FormBuilder<T extends z.ZodType<any, any>>({
           <FormField
             key={name}
             control={form.control}
-            name={name}
+            name={castFieldName(name)}
             render={({ field: formField }) => (
               <FormItem className={field.className}>
                 <FormLabel>
@@ -251,7 +254,7 @@ export function FormBuilder<T extends z.ZodType<any, any>>({
           <FormField
             key={name}
             control={form.control}
-            name={name}
+            name={castFieldName(name)}
             render={({ field: formField }) => (
               <FormItem className={cn('flex flex-row items-start space-x-3 space-y-0', field.className)}>
                 <FormControl>
@@ -281,7 +284,7 @@ export function FormBuilder<T extends z.ZodType<any, any>>({
           <FormField
             key={name}
             control={form.control}
-            name={name}
+            name={castFieldName(name)}
             render={({ field: formField }) => (
               <FormItem className={field.className}>
                 <FormLabel>
