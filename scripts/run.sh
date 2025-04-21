@@ -1,81 +1,70 @@
 #!/bin/bash
-# Script Runner for Digital Desk
-# 
-# This script provides a CLI interface to run various utility scripts
-# for the Digital Desk application.
-# 
-# Usage:
-#   ./scripts/run.sh <script-name> [args...]
-# 
-# Available Scripts:
-#   - cleanup-logs         : Clean up old log activity
-#   - copy-controllers     : Copy controller files
-#   - update-packages      : Update package dependencies
-#   - init-db              : Initialize the database with sample data
-#   - init-mem-storage     : Initialize memory storage
-#   - init-prisma-db       : Initialize Prisma database
-#   - migrate-to-prisma    : Migrate data from Drizzle to Prisma
-#   - update-schema-imports: Update schema imports
-#   - db                   : Database helper (run db help for more info)
 
-set -e
+# Digital Desk Script Runner
+# This script provides a unified interface to run utility scripts
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPT_NAME="$1"
-shift 1
+# Change to project root directory
+cd "$(dirname "$0")/.." || exit 1
 
+# Set environment variables from .env file if it exists
+if [ -f .env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env
+  set +a
+fi
+
+# Display help message if no arguments are provided
+if [ $# -eq 0 ]; then
+  echo "Digital Desk Script Runner"
+  echo ""
+  echo "Usage: ./scripts/run.sh <script-name> [args...]"
+  echo ""
+  echo "Available scripts:"
+  echo "  db <command>              - Database management commands (reset, push, migrate, seed, validate, diagnose)"
+  echo "  init-db                   - Initialize the database with sample data"
+  echo "  init-mem-storage          - Initialize in-memory storage"
+  echo "  init-prisma-db            - Initialize Prisma database"
+  echo "  migrate-to-prisma         - Migrate data from Drizzle to Prisma"
+  echo "  cleanup-logs              - Clean up old log activity"
+  echo "  update-packages           - Update package dependencies"
+  echo "  update-schema-imports     - Update schema imports"
+  echo ""
+  echo "For more information, see SCRIPTS.md"
+  exit 0
+fi
+
+SCRIPT_NAME=$1
+shift
+
+# Execute script based on name
 case "$SCRIPT_NAME" in
-  "cleanup-logs")
-    node "$SCRIPT_DIR/cleanup_logactivity.js" "$@"
+  db)
+    node scripts/db-fix.js "$@"
     ;;
-  "copy-controllers")
-    node "$SCRIPT_DIR/copy-controllers.js" "$@"
+  init-db)
+    node scripts/init-db.js "$@"
     ;;
-  "update-packages")
-    node "$SCRIPT_DIR/update-packages.js" "$@"
+  init-mem-storage)
+    node scripts/init-mem-storage.js "$@"
     ;;
-  "init-db")
-    node "$SCRIPT_DIR/init-db.js" "$@"
+  init-prisma-db)
+    npx ts-node scripts/init-prisma-db.ts "$@"
     ;;
-  "init-mem-storage")
-    node "$SCRIPT_DIR/init-mem-storage.js" "$@"
+  migrate-to-prisma)
+    npx ts-node scripts/migrate-to-prisma.ts "$@"
     ;;
-  "init-prisma-db")
-    npx ts-node "$SCRIPT_DIR/init-prisma-db.ts" "$@"
+  cleanup-logs)
+    node scripts/cleanup_logactivity.js "$@"
     ;;
-  "migrate-to-prisma")
-    npx ts-node "$SCRIPT_DIR/migrate-to-prisma.ts" "$@"
+  update-packages)
+    node scripts/update-packages.js "$@"
     ;;
-  "update-schema-imports")
-    npx ts-node "$SCRIPT_DIR/update-schema-imports.ts" "$@"
-    ;;
-  "db")
-    node "$SCRIPT_DIR/db-fix.js" "$@"
-    ;;
-  "")
-    echo "Available scripts:"
-    echo "  - cleanup-logs"
-    echo "  - copy-controllers"
-    echo "  - update-packages"
-    echo "  - init-db"
-    echo "  - init-mem-storage"
-    echo "  - init-prisma-db"
-    echo "  - migrate-to-prisma"
-    echo "  - update-schema-imports"
-    echo "  - db                : Database helper (run db help for more info)"
-    exit 0
+  update-schema-imports)
+    npx ts-node scripts/update-schema-imports.ts "$@"
     ;;
   *)
-    echo "Script \"$SCRIPT_NAME\" not found. Available scripts:"
-    echo "  - cleanup-logs"
-    echo "  - copy-controllers"
-    echo "  - update-packages"
-    echo "  - init-db"
-    echo "  - init-mem-storage"
-    echo "  - init-prisma-db"
-    echo "  - migrate-to-prisma"
-    echo "  - update-schema-imports"
-    echo "  - db                : Database helper (run db help for more info)"
-    exit 1
+    # Try to run a script directly via the index.js entry point
+    node scripts/index.js "$SCRIPT_NAME" "$@"
     ;;
 esac

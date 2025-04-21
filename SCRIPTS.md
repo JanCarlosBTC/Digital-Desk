@@ -1,97 +1,115 @@
-# Digital Desk Scripts
+# Digital Desk Scripts Guide
 
-This document provides information about utility scripts available in the Digital Desk application.
+This document provides comprehensive information about the utility scripts available in Digital Desk.
 
-## Running Scripts
+## Script Runner
 
-There are two ways to run utility scripts:
+Digital Desk uses a centralized script runner to execute utility scripts from a unified interface.
 
-### Using the Node.js script runner
+### Usage
 
-```
-node scripts/index.js <script-name> [args...]
-```
-
-### Using the Bash script runner
-
-```
+```bash
 ./scripts/run.sh <script-name> [args...]
+```
+
+Example:
+
+```bash
+./scripts/run.sh db reset
 ```
 
 ## Available Scripts
 
-| Script Name | Description | Usage |
-|-------------|-------------|-------|
-| `cleanup-logs` | Cleans up old log activity | `./scripts/run.sh cleanup-logs` |
-| `copy-controllers` | Copies controller files | `./scripts/run.sh copy-controllers` |
-| `update-packages` | Updates package dependencies | `./scripts/run.sh update-packages` |
-| `init-db` | Initializes database with sample data | `./scripts/run.sh init-db` |
-| `init-mem-storage` | Initializes memory storage | `./scripts/run.sh init-mem-storage` |
-| `init-prisma-db` | Initializes Prisma database | `./scripts/run.sh init-prisma-db` |
-| `migrate-to-prisma` | Migrates data from Drizzle to Prisma | `./scripts/run.sh migrate-to-prisma` |
-| `update-schema-imports` | Updates schema imports | `./scripts/run.sh update-schema-imports` |
+### Database Management
 
-## Database Helper Script
+| Script | Description | Example |
+|--------|-------------|---------|
+| `db reset` | Reset the database (all data will be lost) | `./scripts/run.sh db reset` |
+| `db push` | Push schema changes to the database | `./scripts/run.sh db push` |
+| `db migrate` | Run a migration to apply schema changes | `./scripts/run.sh db migrate` |
+| `db seed` | Seed the database with demo data | `./scripts/run.sh db seed` |
+| `db validate` | Validate the database schema | `./scripts/run.sh db validate` |
+| `db diagnose` | Run diagnostics on the database connection | `./scripts/run.sh db diagnose` |
 
-A dedicated script for managing database operations is available:
+### Initialization Scripts
 
+| Script | Description | Example |
+|--------|-------------|---------|
+| `init-db` | Initialize the database with sample data | `./scripts/run.sh init-db` |
+| `init-mem-storage` | Initialize in-memory storage | `./scripts/run.sh init-mem-storage` |
+| `init-prisma-db` | Initialize Prisma database | `./scripts/run.sh init-prisma-db` |
+
+### Data Migration
+
+| Script | Description | Example |
+|--------|-------------|---------|
+| `migrate-to-prisma` | Migrate data from Drizzle to Prisma | `./scripts/run.sh migrate-to-prisma` |
+
+### Maintenance Scripts
+
+| Script | Description | Example |
+|--------|-------------|---------|
+| `cleanup-logs` | Clean up old log activity | `./scripts/run.sh cleanup-logs` |
+| `update-packages` | Update package dependencies | `./scripts/run.sh update-packages` |
+| `update-schema-imports` | Update schema imports | `./scripts/run.sh update-schema-imports` |
+
+## Database Helper Script (db-fix.js)
+
+The database helper script provides utilities for common Prisma database operations and fixing common issues.
+
+### Usage
+
+```bash
+./scripts/run.sh db <command>
 ```
-node scripts/db-fix.js <command>
+
+Commands:
+
+- `reset` - Reset the database (all data will be lost)
+- `push` - Push schema changes to the database
+- `migrate` - Run a migration to apply schema changes
+- `seed` - Seed the database with demo data
+- `validate` - Validate the database schema
+- `diagnose` - Run diagnostics on the database connection
+
+Example:
+
+```bash
+# Diagnose database connection issues
+./scripts/run.sh db diagnose
+
+# Reset the database (WARNING: All data will be lost)
+./scripts/run.sh db reset
 ```
 
-### Commands:
+## Custom Script Development
 
-| Command | Description |
-|---------|-------------|
-| `reset` | Reset the database (all data will be lost) |
-| `push` | Push schema changes to the database |
-| `migrate` | Run a migration to apply schema changes |
-| `seed` | Seed the database with demo data |
-| `validate` | Validate the database schema |
-| `diagnose` | Run diagnostics on the database connection |
-| `help` | Show the help message |
+When developing new utility scripts, follow these guidelines:
 
-## Script Details
+1. Place the script in the `/scripts` directory
+2. Make the script executable (`chmod +x <script-name>`)
+3. Add documentation for the script in this guide
+4. Register the script in `scripts/index.js` if it should be accessible via the script runner
 
-### cleanup-logs
+### Script Template
 
-Cleans up old log activity files to prevent the logs directory from growing too large.
+```javascript
+/**
+ * Script Name
+ * 
+ * Description of what this script does.
+ * 
+ * Usage:
+ *   node scripts/script-name.js [args...]
+ */
 
-### copy-controllers
+async function main() {
+  // Script implementation
+  console.log('Script executed successfully');
+}
 
-Copies controller files from source to destination, typically used during build or deployment processes.
-
-### update-packages
-
-Updates package.json dependencies to their latest versions. Use with caution as it may break compatibility.
-
-### init-db
-
-Initializes the database with sample data. This is useful for development and testing purposes.
-
-### init-mem-storage
-
-Initializes in-memory storage with demo data. Useful for running the application without a database.
-
-### init-prisma-db
-
-Initializes the Prisma database with basic data structure and sample data.
-
-### migrate-to-prisma
-
-Migrates data from the Drizzle ORM schema to Prisma. This is a one-time operation when transitioning from Drizzle to Prisma.
-
-### update-schema-imports
-
-Updates import statements in files that reference the schema to ensure proper paths and exports are used.
-
-### db-fix.js
-
-The database helper script provides a convenient way to manage common database operations:
-
-- **reset**: Completely resets the database, dropping all tables and recreating them (all data will be lost)
-- **push**: Pushes schema changes to the database without creating migrations
-- **migrate**: Creates and applies a new migration to track schema changes
-- **seed**: Seeds the database with demo data using the init-prisma-db.ts script
-- **validate**: Validates that the database schema matches the Prisma schema
-- **diagnose**: Runs diagnostics on the database connection and configuration
+main().catch(error => {
+  console.error('Script execution failed:', error);
+  process.exit(1);
+});
+```

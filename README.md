@@ -23,20 +23,29 @@ Digital Desk's documentation has been organized into several focused guides:
 
 We've recently made several optimizations to improve performance and user experience:
 
-1. **Responsive UI Improvements**:
+1. **Codebase Refactoring & Architecture Improvements**:
+   - Standardized on Prisma ORM, removing deprecated Drizzle code
+   - Added Pino logger for structured logging and request tracking
+   - Centralized utility scripts in `/scripts` directory
+   - Created comprehensive error handling documentation
+   - Added Jest testing infrastructure and GitHub Actions workflow
+
+2. **Responsive UI Improvements**:
    - Enhanced responsive design across components including the Offer Vault, mobile navigation, and card layouts
 
-2. **Performance Optimizations**:
+3. **Performance Optimizations**:
    - Implemented memoization strategies in app layout and key components with React.memo
    - Used LazyMotion for framer-motion to load animations on demand
    - Added debounced window resize handlers in responsive hooks
+   - Added Lighthouse CI configuration for performance monitoring
 
-3. **User Experience Enhancements**:
+4. **User Experience Enhancements**:
    - Better loading indicators and empty states with helpful messages
    - Implemented consistent status badges and icons
    - Improved form validation with helpful descriptions
+   - Enhanced logging and error handling for better debugging
 
-4. **Accessibility Improvements**:
+5. **Accessibility Improvements**:
    - Added proper aria attributes to navigation components
    - Better keyboard navigation support
    - Improved color contrast for text elements
@@ -127,14 +136,22 @@ We've recently made several optimizations to improve performance and user experi
 1. **Application Logs:**
    - Check the Replit workflow logs for backend errors
    - Use the browser console for frontend errors
+   - Review structured logs in Pino format with proper context
 
 2. **API Testing:**
    - Test API endpoints using the browser's network tab
    - Use properly structured API requests with error handling
+   - Check request and response logs with status codes
 
 3. **Database Issues:**
+   - Use the database helper script for diagnostics: `./scripts/run.sh db diagnose`
+   - Reset database when needed: `./scripts/run.sh db reset`
    - Use the provided SQL execution tool for database inspection
    - Check Prisma Client errors for detailed database error information
+   
+4. **Utility Scripts:**
+   - See [SCRIPTS.md](./SCRIPTS.md) for all available utility scripts
+   - Use centralized script runner: `./scripts/run.sh <script-name>`
 
 ### Subscription Testing
 
