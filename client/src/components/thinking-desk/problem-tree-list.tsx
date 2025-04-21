@@ -169,7 +169,7 @@ const ProblemTreeList = memo(function ProblemTreeList({
           </div>
           <Button
             onClick={handleNewProblemTree}
-            variant="thinkingDesk"
+            variant="default"
             className="h-10"
           >
             <PlusIcon className="mr-2 h-4 w-4" /> New Problem Tree
@@ -227,7 +227,7 @@ const ProblemTreeList = memo(function ProblemTreeList({
             <p className="text-gray-500 mb-4">Start breaking down complex problems into manageable parts.</p>
             <Button
               onClick={handleNewProblemTree}
-              variant="thinkingDesk"
+              variant="default"
             >
               <PlusIcon className="mr-2 h-4 w-4" /> Create Your First Problem Tree
             </Button>
@@ -249,12 +249,12 @@ const ProblemTreeList = memo(function ProblemTreeList({
                   {
                     label: "View Details",
                     onClick: () => onViewDetailsClick ? onViewDetailsClick(tree) : null,
-                    variant: "thinkingDeskOutline"
+                    variant: "outline"
                   },
                   {
                     label: "Edit",
                     onClick: () => handleSelectProblemTree(tree),
-                    variant: "thinkingDeskOutline"
+                    variant: "outline"
                   },
                   {
                     label: "Delete",

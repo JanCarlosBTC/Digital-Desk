@@ -421,7 +421,7 @@ export function FixedProblemTrees({ showNewProblemTree = false, onDialogClose }:
         
         {/* Main content */}
         {isLoading ? (
-          <LoadingState type="list" count={3} />
+          <LoadingState variant="skeleton" count={3} />
         ) : fetchError ? (
           <div className="bg-red-50 p-4 rounded-md text-red-700">
             <h3 className="font-medium">Error loading problem trees</h3>

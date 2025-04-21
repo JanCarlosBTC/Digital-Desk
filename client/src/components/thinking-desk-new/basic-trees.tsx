@@ -409,7 +409,7 @@ export function BasicTrees({ showNewProblemTree = false, onDialogClose }: BasicT
         </div>
         
         {isLoading ? (
-          <LoadingState type="list" count={3} />
+          <LoadingState variant="skeleton" count={3} />
         ) : (
           renderProblemTrees()
         )}
