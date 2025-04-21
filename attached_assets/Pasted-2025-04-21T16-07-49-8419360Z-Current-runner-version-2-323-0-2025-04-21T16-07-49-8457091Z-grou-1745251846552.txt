@@ -1,0 +1,751 @@
+2025-04-21T16:07:49.8419360Z Current runner version: '2.323.0'
+2025-04-21T16:07:49.8457091Z ##[group]Operating System
+2025-04-21T16:07:49.8458447Z Ubuntu
+2025-04-21T16:07:49.8459293Z 24.04.2
+2025-04-21T16:07:49.8460011Z LTS
+2025-04-21T16:07:49.8460918Z ##[endgroup]
+2025-04-21T16:07:49.8461688Z ##[group]Runner Image
+2025-04-21T16:07:49.8462611Z Image: ubuntu-24.04
+2025-04-21T16:07:49.8463541Z Version: 20250413.1.0
+2025-04-21T16:07:49.8465399Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250413.1/images/ubuntu/Ubuntu2404-Readme.md
+2025-04-21T16:07:49.8468163Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250413.1
+2025-04-21T16:07:49.8469982Z ##[endgroup]
+2025-04-21T16:07:49.8470898Z ##[group]Runner Image Provisioner
+2025-04-21T16:07:49.8472238Z 2.0.422.1
+2025-04-21T16:07:49.8473237Z ##[endgroup]
+2025-04-21T16:07:49.8475110Z ##[group]GITHUB_TOKEN Permissions
+2025-04-21T16:07:49.8477789Z Contents: read
+2025-04-21T16:07:49.8478868Z Metadata: read
+2025-04-21T16:07:49.8479972Z Packages: read
+2025-04-21T16:07:49.8481104Z ##[endgroup]
+2025-04-21T16:07:49.8483930Z Secret source: Actions
+2025-04-21T16:07:49.8485418Z Prepare workflow directory
+2025-04-21T16:07:49.9104347Z Prepare all required actions
+2025-04-21T16:07:49.9161649Z Getting action download info
+2025-04-21T16:07:50.1459439Z ##[group]Download immutable action package 'actions/checkout@v3'
+2025-04-21T16:07:50.1460421Z Version: 3.6.0
+2025-04-21T16:07:50.1461429Z Digest: sha256:942562b9c7d4b1f2557f1da21f4d3eb4eb4fd01f2ad78b2a6e187d1b193e0a0f
+2025-04-21T16:07:50.1462573Z Source commit SHA: f43a0e5ff2bd294095638e18286ca9a3d1956744
+2025-04-21T16:07:50.1463262Z ##[endgroup]
+2025-04-21T16:07:50.2335373Z ##[group]Download immutable action package 'actions/setup-node@v3'
+2025-04-21T16:07:50.2336096Z Version: 3.9.1
+2025-04-21T16:07:50.2337118Z Digest: sha256:d8c8dbd6e63927801f9de42620f961a361b03be6034dcc11e83ca01f50cb9f40
+2025-04-21T16:07:50.2338075Z Source commit SHA: 3235b876344d2a9aa001b8d1453c930bba69e610
+2025-04-21T16:07:50.2338781Z ##[endgroup]
+2025-04-21T16:07:50.5801167Z Complete job name: build
+2025-04-21T16:07:50.6354234Z ##[group]Checking docker version
+2025-04-21T16:07:50.6367586Z ##[command]/usr/bin/docker version --format '{{.Server.APIVersion}}'
+2025-04-21T16:07:50.6858991Z '1.45'
+2025-04-21T16:07:50.6871202Z Docker daemon API version: '1.45'
+2025-04-21T16:07:50.6871907Z ##[command]/usr/bin/docker version --format '{{.Client.APIVersion}}'
+2025-04-21T16:07:50.7025204Z '1.45'
+2025-04-21T16:07:50.7037842Z Docker client API version: '1.45'
+2025-04-21T16:07:50.7042790Z ##[endgroup]
+2025-04-21T16:07:50.7046176Z ##[group]Clean up resources from previous jobs
+2025-04-21T16:07:50.7051863Z ##[command]/usr/bin/docker ps --all --quiet --no-trunc --filter "label=46548f"
+2025-04-21T16:07:50.7179209Z ##[command]/usr/bin/docker network prune --force --filter "label=46548f"
+2025-04-21T16:07:50.7295233Z ##[endgroup]
+2025-04-21T16:07:50.7295678Z ##[group]Create local container network
+2025-04-21T16:07:50.7305715Z ##[command]/usr/bin/docker network create --label 46548f github_network_5cc8c981bcab4bedbbab41ec40784022
+2025-04-21T16:07:50.8038907Z f0722a0b2345b4a3fb0f64e36b654a85a6ef9f42e5bb5866b3d46b74e6476dec
+2025-04-21T16:07:50.8056955Z ##[endgroup]
+2025-04-21T16:07:50.8080091Z ##[group]Starting postgres service container
+2025-04-21T16:07:50.8099614Z ##[command]/usr/bin/docker pull postgres:15
+2025-04-21T16:07:51.2364492Z 15: Pulling from library/postgres
+2025-04-21T16:07:51.3473497Z 8a628cdd7ccc: Pulling fs layer
+2025-04-21T16:07:51.3475211Z 7f231089d790: Pulling fs layer
+2025-04-21T16:07:51.3476600Z e315323dafc9: Pulling fs layer
+2025-04-21T16:07:51.3477398Z eac1e56d4ee8: Pulling fs layer
+2025-04-21T16:07:51.3478075Z 90463926d2a7: Pulling fs layer
+2025-04-21T16:07:51.3478758Z b1654e8e1b7f: Pulling fs layer
+2025-04-21T16:07:51.3479436Z 8a0c5f7da6d6: Pulling fs layer
+2025-04-21T16:07:51.3480125Z 88de5978531b: Pulling fs layer
+2025-04-21T16:07:51.3480779Z f9509fe905c8: Pulling fs layer
+2025-04-21T16:07:51.3481453Z 27e79f9556ed: Pulling fs layer
+2025-04-21T16:07:51.3482445Z 3a416bb02678: Pulling fs layer
+2025-04-21T16:07:51.3483144Z c33dbe9c2f08: Pulling fs layer
+2025-04-21T16:07:51.3483927Z 75dd0845c5ca: Pulling fs layer
+2025-04-21T16:07:51.3484597Z ea429041403b: Pulling fs layer
+2025-04-21T16:07:51.3485329Z 88de5978531b: Waiting
+2025-04-21T16:07:51.3485968Z f9509fe905c8: Waiting
+2025-04-21T16:07:51.3486858Z 27e79f9556ed: Waiting
+2025-04-21T16:07:51.3487477Z 3a416bb02678: Waiting
+2025-04-21T16:07:51.3488105Z c33dbe9c2f08: Waiting
+2025-04-21T16:07:51.3488717Z 75dd0845c5ca: Waiting
+2025-04-21T16:07:51.3489339Z ea429041403b: Waiting
+2025-04-21T16:07:51.3489947Z 90463926d2a7: Waiting
+2025-04-21T16:07:51.3490577Z eac1e56d4ee8: Waiting
+2025-04-21T16:07:51.3491202Z b1654e8e1b7f: Waiting
+2025-04-21T16:07:51.3491853Z 8a0c5f7da6d6: Waiting
+2025-04-21T16:07:51.4688244Z 7f231089d790: Download complete
+2025-04-21T16:07:51.5069037Z e315323dafc9: Verifying Checksum
+2025-04-21T16:07:51.5070588Z e315323dafc9: Download complete
+2025-04-21T16:07:51.5872281Z eac1e56d4ee8: Verifying Checksum
+2025-04-21T16:07:51.5874563Z eac1e56d4ee8: Download complete
+2025-04-21T16:07:51.6392895Z 8a628cdd7ccc: Verifying Checksum
+2025-04-21T16:07:51.6394515Z 8a628cdd7ccc: Download complete
+2025-04-21T16:07:51.7405435Z b1654e8e1b7f: Verifying Checksum
+2025-04-21T16:07:51.7406914Z b1654e8e1b7f: Download complete
+2025-04-21T16:07:51.7624528Z 8a0c5f7da6d6: Verifying Checksum
+2025-04-21T16:07:51.7625147Z 8a0c5f7da6d6: Download complete
+2025-04-21T16:07:51.8188686Z 90463926d2a7: Verifying Checksum
+2025-04-21T16:07:51.8189700Z 90463926d2a7: Download complete
+2025-04-21T16:07:51.8487145Z 88de5978531b: Verifying Checksum
+2025-04-21T16:07:51.8490480Z 88de5978531b: Download complete
+2025-04-21T16:07:51.9603108Z 3a416bb02678: Verifying Checksum
+2025-04-21T16:07:51.9604298Z 3a416bb02678: Download complete
+2025-04-21T16:07:51.9771166Z 27e79f9556ed: Verifying Checksum
+2025-04-21T16:07:51.9771673Z 27e79f9556ed: Download complete
+2025-04-21T16:07:52.0692156Z c33dbe9c2f08: Verifying Checksum
+2025-04-21T16:07:52.0693529Z c33dbe9c2f08: Download complete
+2025-04-21T16:07:52.0865718Z 75dd0845c5ca: Verifying Checksum
+2025-04-21T16:07:52.0866718Z 75dd0845c5ca: Download complete
+2025-04-21T16:07:52.1848297Z ea429041403b: Download complete
+2025-04-21T16:07:52.7916444Z 8a628cdd7ccc: Pull complete
+2025-04-21T16:07:52.9091599Z f9509fe905c8: Verifying Checksum
+2025-04-21T16:07:52.9092095Z f9509fe905c8: Download complete
+2025-04-21T16:07:53.0873904Z 7f231089d790: Pull complete
+2025-04-21T16:07:53.2283964Z e315323dafc9: Pull complete
+2025-04-21T16:07:53.2714461Z eac1e56d4ee8: Pull complete
+2025-04-21T16:07:53.5791485Z 90463926d2a7: Pull complete
+2025-04-21T16:07:53.6433310Z b1654e8e1b7f: Pull complete
+2025-04-21T16:07:53.6520649Z 8a0c5f7da6d6: Pull complete
+2025-04-21T16:07:53.6609948Z 88de5978531b: Pull complete
+2025-04-21T16:07:56.4686802Z f9509fe905c8: Pull complete
+2025-04-21T16:07:56.4811033Z 27e79f9556ed: Pull complete
+2025-04-21T16:07:56.4915952Z 3a416bb02678: Pull complete
+2025-04-21T16:07:56.5076103Z c33dbe9c2f08: Pull complete
+2025-04-21T16:07:56.5185608Z 75dd0845c5ca: Pull complete
+2025-04-21T16:07:56.5278179Z ea429041403b: Pull complete
+2025-04-21T16:07:56.5315264Z Digest: sha256:fe45ed1a824b81c0c9c605890963b67501758ca8c946db89089c85ce0f88e974
+2025-04-21T16:07:56.5326545Z Status: Downloaded newer image for postgres:15
+2025-04-21T16:07:56.5337128Z docker.io/library/postgres:15
+2025-04-21T16:07:56.5396587Z ##[command]/usr/bin/docker create --name b0c800a327e74b8fadd6abace32753b2_postgres15_5ff6b7 --label 46548f --network github_network_5cc8c981bcab4bedbbab41ec40784022 --network-alias postgres -p 5432:5432 --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5 -e "POSTGRES_USER=postgres" -e "POSTGRES_PASSWORD=postgres" -e "POSTGRES_DB=testdb" -e GITHUB_ACTIONS=true -e CI=true postgres:15
+2025-04-21T16:07:56.5675392Z 7c671209bb20880581c762ec9e6b163c4d7171d7952123a8062354887179f218
+2025-04-21T16:07:56.5698095Z ##[command]/usr/bin/docker start 7c671209bb20880581c762ec9e6b163c4d7171d7952123a8062354887179f218
+2025-04-21T16:07:56.8077985Z 7c671209bb20880581c762ec9e6b163c4d7171d7952123a8062354887179f218
+2025-04-21T16:07:56.8100714Z ##[command]/usr/bin/docker ps --all --filter id=7c671209bb20880581c762ec9e6b163c4d7171d7952123a8062354887179f218 --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+2025-04-21T16:07:56.8232031Z 7c671209bb20880581c762ec9e6b163c4d7171d7952123a8062354887179f218 Up Less than a second (health: starting)
+2025-04-21T16:07:56.8250102Z ##[command]/usr/bin/docker port 7c671209bb20880581c762ec9e6b163c4d7171d7952123a8062354887179f218
+2025-04-21T16:07:56.8366144Z 5432/tcp -> 0.0.0.0:5432
+2025-04-21T16:07:56.8366978Z 5432/tcp -> [::]:5432
+2025-04-21T16:07:56.8411835Z ##[endgroup]
+2025-04-21T16:07:56.8420715Z ##[group]Waiting for all services to be ready
+2025-04-21T16:07:56.8433149Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 7c671209bb20880581c762ec9e6b163c4d7171d7952123a8062354887179f218
+2025-04-21T16:07:56.8551042Z starting
+2025-04-21T16:07:56.8572894Z postgres service is starting, waiting 2 seconds before checking again.
+2025-04-21T16:07:58.8572712Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 7c671209bb20880581c762ec9e6b163c4d7171d7952123a8062354887179f218
+2025-04-21T16:07:58.8686957Z starting
+2025-04-21T16:07:58.8699760Z postgres service is starting, waiting 4 seconds before checking again.
+2025-04-21T16:08:02.9358236Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 7c671209bb20880581c762ec9e6b163c4d7171d7952123a8062354887179f218
+2025-04-21T16:08:02.9480178Z starting
+2025-04-21T16:08:02.9496667Z postgres service is starting, waiting 9 seconds before checking again.
+2025-04-21T16:08:12.1349211Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 7c671209bb20880581c762ec9e6b163c4d7171d7952123a8062354887179f218
+2025-04-21T16:08:12.1472345Z healthy
+2025-04-21T16:08:12.1488874Z postgres service is healthy.
+2025-04-21T16:08:12.1489544Z ##[endgroup]
+2025-04-21T16:08:12.1716059Z ##[group]Run actions/checkout@v3
+2025-04-21T16:08:12.1716769Z with:
+2025-04-21T16:08:12.1716971Z   repository: JanCarlosBTC/Digital-Desk
+2025-04-21T16:08:12.1717348Z   token: ***
+2025-04-21T16:08:12.1717521Z   ssh-strict: true
+2025-04-21T16:08:12.1717708Z   persist-credentials: true
+2025-04-21T16:08:12.1717914Z   clean: true
+2025-04-21T16:08:12.1718098Z   sparse-checkout-cone-mode: true
+2025-04-21T16:08:12.1718312Z   fetch-depth: 1
+2025-04-21T16:08:12.1718484Z   fetch-tags: false
+2025-04-21T16:08:12.1718644Z   lfs: false
+2025-04-21T16:08:12.1718813Z   submodules: false
+2025-04-21T16:08:12.1718998Z   set-safe-directory: true
+2025-04-21T16:08:12.1719382Z ##[endgroup]
+2025-04-21T16:08:12.3184509Z Syncing repository: JanCarlosBTC/Digital-Desk
+2025-04-21T16:08:12.3185737Z ##[group]Getting Git version info
+2025-04-21T16:08:12.3186212Z Working directory is '/home/runner/work/Digital-Desk/Digital-Desk'
+2025-04-21T16:08:12.3187123Z [command]/usr/bin/git version
+2025-04-21T16:08:12.3225940Z git version 2.49.0
+2025-04-21T16:08:12.3253192Z ##[endgroup]
+2025-04-21T16:08:12.3268201Z Temporarily overriding HOME='/home/runner/work/_temp/fb81a8da-6fbe-41e5-9670-763e224b4d50' before making global git config changes
+2025-04-21T16:08:12.3269116Z Adding repository directory to the temporary git global config as a safe directory
+2025-04-21T16:08:12.3271871Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Digital-Desk/Digital-Desk
+2025-04-21T16:08:12.3303134Z Deleting the contents of '/home/runner/work/Digital-Desk/Digital-Desk'
+2025-04-21T16:08:12.3306776Z ##[group]Initializing the repository
+2025-04-21T16:08:12.3309850Z [command]/usr/bin/git init /home/runner/work/Digital-Desk/Digital-Desk
+2025-04-21T16:08:12.3366179Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-04-21T16:08:12.3367106Z hint: is subject to change. To configure the initial branch name to use in all
+2025-04-21T16:08:12.3368134Z hint: of your new repositories, which will suppress this warning, call:
+2025-04-21T16:08:12.3368465Z hint:
+2025-04-21T16:08:12.3368788Z hint: 	git config --global init.defaultBranch <name>
+2025-04-21T16:08:12.3369309Z hint:
+2025-04-21T16:08:12.3369781Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-04-21T16:08:12.3370544Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-04-21T16:08:12.3371127Z hint:
+2025-04-21T16:08:12.3371420Z hint: 	git branch -m <name>
+2025-04-21T16:08:12.3372225Z Initialized empty Git repository in /home/runner/work/Digital-Desk/Digital-Desk/.git/
+2025-04-21T16:08:12.3381678Z [command]/usr/bin/git remote add origin https://github.com/JanCarlosBTC/Digital-Desk
+2025-04-21T16:08:12.3412913Z ##[endgroup]
+2025-04-21T16:08:12.3413332Z ##[group]Disabling automatic garbage collection
+2025-04-21T16:08:12.3415797Z [command]/usr/bin/git config --local gc.auto 0
+2025-04-21T16:08:12.3441814Z ##[endgroup]
+2025-04-21T16:08:12.3442224Z ##[group]Setting up auth
+2025-04-21T16:08:12.3447216Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-04-21T16:08:12.3473574Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-04-21T16:08:12.3773281Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-04-21T16:08:12.3799983Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-04-21T16:08:12.4025193Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-04-21T16:08:12.4058549Z ##[endgroup]
+2025-04-21T16:08:12.4059058Z ##[group]Fetching the repository
+2025-04-21T16:08:12.4067501Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --progress --no-recurse-submodules --depth=1 origin +aac863c528622458a26316e5b7b59fa37fa43b40:refs/remotes/origin/main
+2025-04-21T16:08:12.7033484Z remote: Enumerating objects: 390, done.        
+2025-04-21T16:08:12.7034293Z remote: Counting objects:   0% (1/390)        
+2025-04-21T16:08:12.7035456Z remote: Counting objects:   1% (4/390)        
+2025-04-21T16:08:12.7035999Z remote: Counting objects:   2% (8/390)        
+2025-04-21T16:08:12.7036683Z remote: Counting objects:   3% (12/390)        
+2025-04-21T16:08:12.7037171Z remote: Counting objects:   4% (16/390)        
+2025-04-21T16:08:12.7037635Z remote: Counting objects:   5% (20/390)        
+2025-04-21T16:08:12.7038138Z remote: Counting objects:   6% (24/390)        
+2025-04-21T16:08:12.7038581Z remote: Counting objects:   7% (28/390)        
+2025-04-21T16:08:12.7039013Z remote: Counting objects:   8% (32/390)        
+2025-04-21T16:08:12.7039362Z remote: Counting objects:   9% (36/390)        
+2025-04-21T16:08:12.7039642Z remote: Counting objects:  10% (39/390)        
+2025-04-21T16:08:12.7039912Z remote: Counting objects:  11% (43/390)        
+2025-04-21T16:08:12.7040165Z remote: Counting objects:  12% (47/390)        
+2025-04-21T16:08:12.7040439Z remote: Counting objects:  13% (51/390)        
+2025-04-21T16:08:12.7040710Z remote: Counting objects:  14% (55/390)        
+2025-04-21T16:08:12.7040961Z remote: Counting objects:  15% (59/390)        
+2025-04-21T16:08:12.7041211Z remote: Counting objects:  16% (63/390)        
+2025-04-21T16:08:12.7041456Z remote: Counting objects:  17% (67/390)        
+2025-04-21T16:08:12.7041705Z remote: Counting objects:  18% (71/390)        
+2025-04-21T16:08:12.7041966Z remote: Counting objects:  19% (75/390)        
+2025-04-21T16:08:12.7042222Z remote: Counting objects:  20% (78/390)        
+2025-04-21T16:08:12.7042480Z remote: Counting objects:  21% (82/390)        
+2025-04-21T16:08:12.7042731Z remote: Counting objects:  22% (86/390)        
+2025-04-21T16:08:12.7043215Z remote: Counting objects:  23% (90/390)        
+2025-04-21T16:08:12.7043468Z remote: Counting objects:  24% (94/390)        
+2025-04-21T16:08:12.7043723Z remote: Counting objects:  25% (98/390)        
+2025-04-21T16:08:12.7043977Z remote: Counting objects:  26% (102/390)        
+2025-04-21T16:08:12.7044241Z remote: Counting objects:  27% (106/390)        
+2025-04-21T16:08:12.7044515Z remote: Counting objects:  28% (110/390)        
+2025-04-21T16:08:12.7044780Z remote: Counting objects:  29% (114/390)        
+2025-04-21T16:08:12.7045040Z remote: Counting objects:  30% (117/390)        
+2025-04-21T16:08:12.7045292Z remote: Counting objects:  31% (121/390)        
+2025-04-21T16:08:12.7045550Z remote: Counting objects:  32% (125/390)        
+2025-04-21T16:08:12.7045804Z remote: Counting objects:  33% (129/390)        
+2025-04-21T16:08:12.7046061Z remote: Counting objects:  34% (133/390)        
+2025-04-21T16:08:12.7046570Z remote: Counting objects:  35% (137/390)        
+2025-04-21T16:08:12.7046846Z remote: Counting objects:  36% (141/390)        
+2025-04-21T16:08:12.7047106Z remote: Counting objects:  37% (145/390)        
+2025-04-21T16:08:12.7047355Z remote: Counting objects:  38% (149/390)        
+2025-04-21T16:08:12.7047612Z remote: Counting objects:  39% (153/390)        
+2025-04-21T16:08:12.7047863Z remote: Counting objects:  40% (156/390)        
+2025-04-21T16:08:12.7048119Z remote: Counting objects:  41% (160/390)        
+2025-04-21T16:08:12.7048369Z remote: Counting objects:  42% (164/390)        
+2025-04-21T16:08:12.7048628Z remote: Counting objects:  43% (168/390)        
+2025-04-21T16:08:12.7048875Z remote: Counting objects:  44% (172/390)        
+2025-04-21T16:08:12.7049131Z remote: Counting objects:  45% (176/390)        
+2025-04-21T16:08:12.7049386Z remote: Counting objects:  46% (180/390)        
+2025-04-21T16:08:12.7049634Z remote: Counting objects:  47% (184/390)        
+2025-04-21T16:08:12.7049892Z remote: Counting objects:  48% (188/390)        
+2025-04-21T16:08:12.7050143Z remote: Counting objects:  49% (192/390)        
+2025-04-21T16:08:12.7050564Z remote: Counting objects:  50% (195/390)        
+2025-04-21T16:08:12.7050822Z remote: Counting objects:  51% (199/390)        
+2025-04-21T16:08:12.7051077Z remote: Counting objects:  52% (203/390)        
+2025-04-21T16:08:12.7051335Z remote: Counting objects:  53% (207/390)        
+2025-04-21T16:08:12.7051583Z remote: Counting objects:  54% (211/390)        
+2025-04-21T16:08:12.7051842Z remote: Counting objects:  55% (215/390)        
+2025-04-21T16:08:12.7052092Z remote: Counting objects:  56% (219/390)        
+2025-04-21T16:08:12.7052349Z remote: Counting objects:  57% (223/390)        
+2025-04-21T16:08:12.7052598Z remote: Counting objects:  58% (227/390)        
+2025-04-21T16:08:12.7052853Z remote: Counting objects:  59% (231/390)        
+2025-04-21T16:08:12.7053098Z remote: Counting objects:  60% (234/390)        
+2025-04-21T16:08:12.7053353Z remote: Counting objects:  61% (238/390)        
+2025-04-21T16:08:12.7053615Z remote: Counting objects:  62% (242/390)        
+2025-04-21T16:08:12.7053883Z remote: Counting objects:  63% (246/390)        
+2025-04-21T16:08:12.7054391Z remote: Counting objects:  64% (250/390)        
+2025-04-21T16:08:12.7054825Z remote: Counting objects:  65% (254/390)        
+2025-04-21T16:08:12.7055077Z remote: Counting objects:  66% (258/390)        
+2025-04-21T16:08:12.7055528Z remote: Counting objects:  67% (262/390)        
+2025-04-21T16:08:12.7055818Z remote: Counting objects:  68% (266/390)        
+2025-04-21T16:08:12.7056082Z remote: Counting objects:  69% (270/390)        
+2025-04-21T16:08:12.7056622Z remote: Counting objects:  70% (273/390)        
+2025-04-21T16:08:12.7057102Z remote: Counting objects:  71% (277/390)        
+2025-04-21T16:08:12.7057363Z remote: Counting objects:  72% (281/390)        
+2025-04-21T16:08:12.7057751Z remote: Counting objects:  73% (285/390)        
+2025-04-21T16:08:12.7058014Z remote: Counting objects:  74% (289/390)        
+2025-04-21T16:08:12.7058439Z remote: Counting objects:  75% (293/390)        
+2025-04-21T16:08:12.7058704Z remote: Counting objects:  76% (297/390)        
+2025-04-21T16:08:12.7058955Z remote: Counting objects:  77% (301/390)        
+2025-04-21T16:08:12.7059212Z remote: Counting objects:  78% (305/390)        
+2025-04-21T16:08:12.7059472Z remote: Counting objects:  79% (309/390)        
+2025-04-21T16:08:12.7059726Z remote: Counting objects:  80% (312/390)        
+2025-04-21T16:08:12.7059981Z remote: Counting objects:  81% (316/390)        
+2025-04-21T16:08:12.7060246Z remote: Counting objects:  82% (320/390)        
+2025-04-21T16:08:12.7060516Z remote: Counting objects:  83% (324/390)        
+2025-04-21T16:08:12.7123516Z remote: Counting objects:  84% (328/390)        
+2025-04-21T16:08:12.7123859Z remote: Counting objects:  85% (332/390)        
+2025-04-21T16:08:12.7124138Z remote: Counting objects:  86% (336/390)        
+2025-04-21T16:08:12.7124401Z remote: Counting objects:  87% (340/390)        
+2025-04-21T16:08:12.7124665Z remote: Counting objects:  88% (344/390)        
+2025-04-21T16:08:12.7124943Z remote: Counting objects:  89% (348/390)        
+2025-04-21T16:08:12.7125206Z remote: Counting objects:  90% (351/390)        
+2025-04-21T16:08:12.7125463Z remote: Counting objects:  91% (355/390)        
+2025-04-21T16:08:12.7125718Z remote: Counting objects:  92% (359/390)        
+2025-04-21T16:08:12.7125968Z remote: Counting objects:  93% (363/390)        
+2025-04-21T16:08:12.7126439Z remote: Counting objects:  94% (367/390)        
+2025-04-21T16:08:12.7126780Z remote: Counting objects:  95% (371/390)        
+2025-04-21T16:08:12.7127093Z remote: Counting objects:  96% (375/390)        
+2025-04-21T16:08:12.7127402Z remote: Counting objects:  97% (379/390)        
+2025-04-21T16:08:12.7127688Z remote: Counting objects:  98% (383/390)        
+2025-04-21T16:08:12.7127941Z remote: Counting objects:  99% (387/390)        
+2025-04-21T16:08:12.7128194Z remote: Counting objects: 100% (390/390)        
+2025-04-21T16:08:12.7128481Z remote: Counting objects: 100% (390/390), done.        
+2025-04-21T16:08:12.7128971Z remote: Compressing objects:   0% (1/367)        
+2025-04-21T16:08:12.7129301Z remote: Compressing objects:   1% (4/367)        
+2025-04-21T16:08:12.7129579Z remote: Compressing objects:   2% (8/367)        
+2025-04-21T16:08:12.7129842Z remote: Compressing objects:   3% (12/367)        
+2025-04-21T16:08:12.7130120Z remote: Compressing objects:   4% (15/367)        
+2025-04-21T16:08:12.7130387Z remote: Compressing objects:   5% (19/367)        
+2025-04-21T16:08:12.7130662Z remote: Compressing objects:   6% (23/367)        
+2025-04-21T16:08:12.7192145Z remote: Compressing objects:   7% (26/367)        
+2025-04-21T16:08:12.7192472Z remote: Compressing objects:   8% (30/367)        
+2025-04-21T16:08:12.7192766Z remote: Compressing objects:   9% (34/367)        
+2025-04-21T16:08:12.7193047Z remote: Compressing objects:  10% (37/367)        
+2025-04-21T16:08:12.7193311Z remote: Compressing objects:  11% (41/367)        
+2025-04-21T16:08:12.7193587Z remote: Compressing objects:  12% (45/367)        
+2025-04-21T16:08:12.7193858Z remote: Compressing objects:  13% (48/367)        
+2025-04-21T16:08:12.7197180Z remote: Compressing objects:  14% (52/367)        
+2025-04-21T16:08:12.7200774Z remote: Compressing objects:  15% (56/367)        
+2025-04-21T16:08:12.7221552Z remote: Compressing objects:  16% (59/367)        
+2025-04-21T16:08:12.7228485Z remote: Compressing objects:  17% (63/367)        
+2025-04-21T16:08:12.7231993Z remote: Compressing objects:  18% (67/367)        
+2025-04-21T16:08:12.7236711Z remote: Compressing objects:  19% (70/367)        
+2025-04-21T16:08:12.7241142Z remote: Compressing objects:  20% (74/367)        
+2025-04-21T16:08:12.7245700Z remote: Compressing objects:  21% (78/367)        
+2025-04-21T16:08:12.7250067Z remote: Compressing objects:  22% (81/367)        
+2025-04-21T16:08:12.7260631Z remote: Compressing objects:  23% (85/367)        
+2025-04-21T16:08:12.7273891Z remote: Compressing objects:  24% (89/367)        
+2025-04-21T16:08:12.7282920Z remote: Compressing objects:  25% (92/367)        
+2025-04-21T16:08:12.7293790Z remote: Compressing objects:  26% (96/367)        
+2025-04-21T16:08:12.7296627Z remote: Compressing objects:  27% (100/367)        
+2025-04-21T16:08:12.7307782Z remote: Compressing objects:  28% (103/367)        
+2025-04-21T16:08:12.7315712Z remote: Compressing objects:  29% (107/367)        
+2025-04-21T16:08:12.7318212Z remote: Compressing objects:  30% (111/367)        
+2025-04-21T16:08:12.7323027Z remote: Compressing objects:  31% (114/367)        
+2025-04-21T16:08:12.7327433Z remote: Compressing objects:  32% (118/367)        
+2025-04-21T16:08:12.7331893Z remote: Compressing objects:  33% (122/367)        
+2025-04-21T16:08:12.7335775Z remote: Compressing objects:  34% (125/367)        
+2025-04-21T16:08:12.7340337Z remote: Compressing objects:  35% (129/367)        
+2025-04-21T16:08:12.7343782Z remote: Compressing objects:  36% (133/367)        
+2025-04-21T16:08:12.7347688Z remote: Compressing objects:  37% (136/367)        
+2025-04-21T16:08:12.7351346Z remote: Compressing objects:  38% (140/367)        
+2025-04-21T16:08:12.7354668Z remote: Compressing objects:  39% (144/367)        
+2025-04-21T16:08:12.7358812Z remote: Compressing objects:  40% (147/367)        
+2025-04-21T16:08:12.7363786Z remote: Compressing objects:  41% (151/367)        
+2025-04-21T16:08:12.7366866Z remote: Compressing objects:  42% (155/367)        
+2025-04-21T16:08:12.7367768Z remote: Compressing objects:  43% (158/367)        
+2025-04-21T16:08:12.7368474Z remote: Compressing objects:  44% (162/367)        
+2025-04-21T16:08:12.7368992Z remote: Compressing objects:  45% (166/367)        
+2025-04-21T16:08:12.7369573Z remote: Compressing objects:  46% (169/367)        
+2025-04-21T16:08:12.7371271Z remote: Compressing objects:  47% (173/367)        
+2025-04-21T16:08:12.7378996Z remote: Compressing objects:  48% (177/367)        
+2025-04-21T16:08:12.7379355Z remote: Compressing objects:  49% (180/367)        
+2025-04-21T16:08:12.7380860Z remote: Compressing objects:  50% (184/367)        
+2025-04-21T16:08:12.7392152Z remote: Compressing objects:  51% (188/367)        
+2025-04-21T16:08:12.7395912Z remote: Compressing objects:  52% (191/367)        
+2025-04-21T16:08:12.7399998Z remote: Compressing objects:  53% (195/367)        
+2025-04-21T16:08:12.7404119Z remote: Compressing objects:  54% (199/367)        
+2025-04-21T16:08:12.7411293Z remote: Compressing objects:  55% (202/367)        
+2025-04-21T16:08:12.7415697Z remote: Compressing objects:  56% (206/367)        
+2025-04-21T16:08:12.7418902Z remote: Compressing objects:  57% (210/367)        
+2025-04-21T16:08:12.7424671Z remote: Compressing objects:  58% (213/367)        
+2025-04-21T16:08:12.7436397Z remote: Compressing objects:  59% (217/367)        
+2025-04-21T16:08:12.7442303Z remote: Compressing objects:  60% (221/367)        
+2025-04-21T16:08:12.7451214Z remote: Compressing objects:  61% (224/367)        
+2025-04-21T16:08:12.7453377Z remote: Compressing objects:  62% (228/367)        
+2025-04-21T16:08:12.7454173Z remote: Compressing objects:  63% (232/367)        
+2025-04-21T16:08:12.7454707Z remote: Compressing objects:  64% (235/367)        
+2025-04-21T16:08:12.7455527Z remote: Compressing objects:  65% (239/367)        
+2025-04-21T16:08:12.7455948Z remote: Compressing objects:  66% (243/367)        
+2025-04-21T16:08:12.7459373Z remote: Compressing objects:  67% (246/367)        
+2025-04-21T16:08:12.7460121Z remote: Compressing objects:  68% (250/367)        
+2025-04-21T16:08:12.7461042Z remote: Compressing objects:  69% (254/367)        
+2025-04-21T16:08:12.7463422Z remote: Compressing objects:  70% (257/367)        
+2025-04-21T16:08:12.7466418Z remote: Compressing objects:  71% (261/367)        
+2025-04-21T16:08:12.7471902Z remote: Compressing objects:  72% (265/367)        
+2025-04-21T16:08:12.7474039Z remote: Compressing objects:  73% (268/367)        
+2025-04-21T16:08:12.7476605Z remote: Compressing objects:  74% (272/367)        
+2025-04-21T16:08:12.7477100Z remote: Compressing objects:  75% (276/367)        
+2025-04-21T16:08:12.7479092Z remote: Compressing objects:  76% (279/367)        
+2025-04-21T16:08:12.7479868Z remote: Compressing objects:  77% (283/367)        
+2025-04-21T16:08:12.7480329Z remote: Compressing objects:  78% (287/367)        
+2025-04-21T16:08:12.7757563Z remote: Compressing objects:  79% (290/367)        
+2025-04-21T16:08:12.7895034Z remote: Compressing objects:  80% (294/367)        
+2025-04-21T16:08:12.8228388Z remote: Compressing objects:  81% (298/367)        
+2025-04-21T16:08:12.8398880Z remote: Compressing objects:  82% (301/367)        
+2025-04-21T16:08:12.8541077Z remote: Compressing objects:  83% (305/367)        
+2025-04-21T16:08:12.8543509Z remote: Compressing objects:  84% (309/367)        
+2025-04-21T16:08:12.8548638Z remote: Compressing objects:  85% (312/367)        
+2025-04-21T16:08:12.8564630Z remote: Compressing objects:  86% (316/367)        
+2025-04-21T16:08:12.8568854Z remote: Compressing objects:  87% (320/367)        
+2025-04-21T16:08:12.8569567Z remote: Compressing objects:  88% (323/367)        
+2025-04-21T16:08:12.8570392Z remote: Compressing objects:  89% (327/367)        
+2025-04-21T16:08:12.8570816Z remote: Compressing objects:  90% (331/367)        
+2025-04-21T16:08:12.8571168Z remote: Compressing objects:  91% (334/367)        
+2025-04-21T16:08:12.8571641Z remote: Compressing objects:  92% (338/367)        
+2025-04-21T16:08:12.8572244Z remote: Compressing objects:  93% (342/367)        
+2025-04-21T16:08:12.8572726Z remote: Compressing objects:  94% (345/367)        
+2025-04-21T16:08:12.8573056Z remote: Compressing objects:  95% (349/367)        
+2025-04-21T16:08:12.8573380Z remote: Compressing objects:  96% (353/367)        
+2025-04-21T16:08:12.8573700Z remote: Compressing objects:  97% (356/367)        
+2025-04-21T16:08:12.8574034Z remote: Compressing objects:  98% (360/367)        
+2025-04-21T16:08:12.8574352Z remote: Compressing objects:  99% (364/367)        
+2025-04-21T16:08:12.8574680Z remote: Compressing objects: 100% (367/367)        
+2025-04-21T16:08:12.8575045Z remote: Compressing objects: 100% (367/367), done.        
+2025-04-21T16:08:12.8605386Z Receiving objects:   0% (1/390)
+2025-04-21T16:08:12.8606093Z Receiving objects:   1% (4/390)
+2025-04-21T16:08:12.8606856Z Receiving objects:   2% (8/390)
+2025-04-21T16:08:12.8609861Z Receiving objects:   3% (12/390)
+2025-04-21T16:08:12.8612591Z Receiving objects:   4% (16/390)
+2025-04-21T16:08:12.8612968Z Receiving objects:   5% (20/390)
+2025-04-21T16:08:12.9377079Z Receiving objects:   6% (24/390)
+2025-04-21T16:08:13.0318179Z Receiving objects:   7% (28/390)
+2025-04-21T16:08:13.0805836Z Receiving objects:   8% (32/390)
+2025-04-21T16:08:13.0810820Z Receiving objects:   9% (36/390)
+2025-04-21T16:08:13.0811734Z Receiving objects:  10% (39/390)
+2025-04-21T16:08:13.0813714Z Receiving objects:  11% (43/390)
+2025-04-21T16:08:13.1283150Z Receiving objects:  12% (47/390)
+2025-04-21T16:08:13.1769519Z Receiving objects:  13% (51/390)
+2025-04-21T16:08:13.2092090Z Receiving objects:  14% (55/390)
+2025-04-21T16:08:13.2092547Z Receiving objects:  15% (59/390)
+2025-04-21T16:08:13.2093591Z Receiving objects:  16% (63/390)
+2025-04-21T16:08:13.2097317Z Receiving objects:  17% (67/390)
+2025-04-21T16:08:13.2100510Z Receiving objects:  18% (71/390)
+2025-04-21T16:08:13.2101569Z Receiving objects:  19% (75/390)
+2025-04-21T16:08:13.2104371Z Receiving objects:  20% (78/390)
+2025-04-21T16:08:13.2106539Z Receiving objects:  21% (82/390)
+2025-04-21T16:08:13.2109917Z Receiving objects:  22% (86/390)
+2025-04-21T16:08:13.2110304Z Receiving objects:  23% (90/390)
+2025-04-21T16:08:13.2114502Z Receiving objects:  24% (94/390)
+2025-04-21T16:08:13.2118137Z Receiving objects:  25% (98/390)
+2025-04-21T16:08:13.2118827Z Receiving objects:  26% (102/390)
+2025-04-21T16:08:13.2204498Z Receiving objects:  27% (106/390)
+2025-04-21T16:08:13.2216680Z Receiving objects:  28% (110/390)
+2025-04-21T16:08:13.2221896Z Receiving objects:  29% (114/390)
+2025-04-21T16:08:13.2226038Z Receiving objects:  30% (117/390)
+2025-04-21T16:08:13.2230323Z Receiving objects:  31% (121/390)
+2025-04-21T16:08:13.2232966Z Receiving objects:  32% (125/390)
+2025-04-21T16:08:13.2236011Z Receiving objects:  33% (129/390)
+2025-04-21T16:08:13.2238818Z Receiving objects:  34% (133/390)
+2025-04-21T16:08:13.2240656Z Receiving objects:  35% (137/390)
+2025-04-21T16:08:13.2242155Z Receiving objects:  36% (141/390)
+2025-04-21T16:08:13.2243770Z Receiving objects:  37% (145/390)
+2025-04-21T16:08:13.2246511Z Receiving objects:  38% (149/390)
+2025-04-21T16:08:13.2246929Z Receiving objects:  39% (153/390)
+2025-04-21T16:08:13.2249157Z Receiving objects:  40% (156/390)
+2025-04-21T16:08:13.2250142Z Receiving objects:  41% (160/390)
+2025-04-21T16:08:13.2252484Z Receiving objects:  42% (164/390)
+2025-04-21T16:08:13.2253510Z Receiving objects:  43% (168/390)
+2025-04-21T16:08:13.2256051Z Receiving objects:  44% (172/390)
+2025-04-21T16:08:13.2257232Z Receiving objects:  45% (176/390)
+2025-04-21T16:08:13.2259093Z Receiving objects:  46% (180/390)
+2025-04-21T16:08:13.2261025Z Receiving objects:  47% (184/390)
+2025-04-21T16:08:13.2262983Z Receiving objects:  48% (188/390)
+2025-04-21T16:08:13.2264506Z Receiving objects:  49% (192/390)
+2025-04-21T16:08:13.2265599Z Receiving objects:  50% (195/390)
+2025-04-21T16:08:13.2268083Z Receiving objects:  51% (199/390)
+2025-04-21T16:08:13.2269204Z Receiving objects:  52% (203/390)
+2025-04-21T16:08:13.2269934Z Receiving objects:  53% (207/390)
+2025-04-21T16:08:13.2271498Z Receiving objects:  54% (211/390)
+2025-04-21T16:08:13.2272510Z Receiving objects:  55% (215/390)
+2025-04-21T16:08:13.2272899Z Receiving objects:  56% (219/390)
+2025-04-21T16:08:13.2273270Z Receiving objects:  57% (223/390)
+2025-04-21T16:08:13.2273919Z Receiving objects:  58% (227/390)
+2025-04-21T16:08:13.2275442Z Receiving objects:  59% (231/390)
+2025-04-21T16:08:13.2277239Z Receiving objects:  60% (234/390)
+2025-04-21T16:08:13.2280205Z Receiving objects:  61% (238/390)
+2025-04-21T16:08:13.2283286Z Receiving objects:  62% (242/390)
+2025-04-21T16:08:13.2284472Z Receiving objects:  63% (246/390)
+2025-04-21T16:08:13.2286020Z Receiving objects:  64% (250/390)
+2025-04-21T16:08:13.2288941Z Receiving objects:  65% (254/390)
+2025-04-21T16:08:13.2290566Z Receiving objects:  66% (258/390)
+2025-04-21T16:08:13.2292216Z Receiving objects:  67% (262/390)
+2025-04-21T16:08:13.2293714Z Receiving objects:  68% (266/390)
+2025-04-21T16:08:13.2295263Z Receiving objects:  69% (270/390)
+2025-04-21T16:08:13.2295644Z Receiving objects:  70% (273/390)
+2025-04-21T16:08:13.2547652Z Receiving objects:  71% (277/390)
+2025-04-21T16:08:13.2549297Z Receiving objects:  72% (281/390)
+2025-04-21T16:08:13.2588364Z Receiving objects:  73% (285/390)
+2025-04-21T16:08:13.2590569Z Receiving objects:  74% (289/390)
+2025-04-21T16:08:13.2591234Z Receiving objects:  75% (293/390)
+2025-04-21T16:08:13.2592539Z Receiving objects:  76% (297/390)
+2025-04-21T16:08:13.2593562Z Receiving objects:  77% (301/390)
+2025-04-21T16:08:13.2596128Z Receiving objects:  78% (305/390)
+2025-04-21T16:08:13.2597641Z Receiving objects:  79% (309/390)
+2025-04-21T16:08:13.2598263Z remote: Total 390 (delta 31), reused 255 (delta 13), pack-reused 0 (from 0)        
+2025-04-21T16:08:13.2598868Z Receiving objects:  80% (312/390)
+2025-04-21T16:08:13.2600014Z Receiving objects:  81% (316/390)
+2025-04-21T16:08:13.2600434Z Receiving objects:  82% (320/390)
+2025-04-21T16:08:13.2600841Z Receiving objects:  83% (324/390)
+2025-04-21T16:08:13.2603184Z Receiving objects:  84% (328/390)
+2025-04-21T16:08:13.2604947Z Receiving objects:  85% (332/390)
+2025-04-21T16:08:13.2608490Z Receiving objects:  86% (336/390)
+2025-04-21T16:08:13.2612531Z Receiving objects:  87% (340/390)
+2025-04-21T16:08:13.2613552Z Receiving objects:  88% (344/390)
+2025-04-21T16:08:13.2614076Z Receiving objects:  89% (348/390)
+2025-04-21T16:08:13.2615580Z Receiving objects:  90% (351/390)
+2025-04-21T16:08:13.2616798Z Receiving objects:  91% (355/390)
+2025-04-21T16:08:13.2617843Z Receiving objects:  92% (359/390)
+2025-04-21T16:08:13.2618541Z Receiving objects:  93% (363/390)
+2025-04-21T16:08:13.2620436Z Receiving objects:  94% (367/390)
+2025-04-21T16:08:13.2621560Z Receiving objects:  95% (371/390)
+2025-04-21T16:08:13.2621990Z Receiving objects:  96% (375/390)
+2025-04-21T16:08:13.2623577Z Receiving objects:  97% (379/390)
+2025-04-21T16:08:13.2625064Z Receiving objects:  98% (383/390)
+2025-04-21T16:08:13.2625806Z Receiving objects:  99% (387/390)
+2025-04-21T16:08:13.2626171Z Receiving objects: 100% (390/390)
+2025-04-21T16:08:13.2626880Z Receiving objects: 100% (390/390), 4.82 MiB | 11.97 MiB/s, done.
+2025-04-21T16:08:13.2630467Z Resolving deltas:   0% (0/31)
+2025-04-21T16:08:13.2631133Z Resolving deltas:   3% (1/31)
+2025-04-21T16:08:13.2632142Z Resolving deltas:   6% (2/31)
+2025-04-21T16:08:13.2633003Z Resolving deltas:   9% (3/31)
+2025-04-21T16:08:13.2634111Z Resolving deltas:  12% (4/31)
+2025-04-21T16:08:13.2635220Z Resolving deltas:  16% (5/31)
+2025-04-21T16:08:13.2635803Z Resolving deltas:  19% (6/31)
+2025-04-21T16:08:13.2637730Z Resolving deltas:  22% (7/31)
+2025-04-21T16:08:13.2639925Z Resolving deltas:  25% (8/31)
+2025-04-21T16:08:13.2640410Z Resolving deltas:  29% (9/31)
+2025-04-21T16:08:13.2640796Z Resolving deltas:  32% (10/31)
+2025-04-21T16:08:13.2641370Z Resolving deltas:  35% (11/31)
+2025-04-21T16:08:13.2641810Z Resolving deltas:  38% (12/31)
+2025-04-21T16:08:13.2642489Z Resolving deltas:  41% (13/31)
+2025-04-21T16:08:13.2642871Z Resolving deltas:  45% (14/31)
+2025-04-21T16:08:13.2643458Z Resolving deltas:  48% (15/31)
+2025-04-21T16:08:13.2643966Z Resolving deltas:  51% (16/31)
+2025-04-21T16:08:13.2644392Z Resolving deltas:  54% (17/31)
+2025-04-21T16:08:13.2644807Z Resolving deltas:  58% (18/31)
+2025-04-21T16:08:13.2645165Z Resolving deltas:  61% (19/31)
+2025-04-21T16:08:13.2645553Z Resolving deltas:  67% (21/31)
+2025-04-21T16:08:13.2645947Z Resolving deltas:  70% (22/31)
+2025-04-21T16:08:13.2646657Z Resolving deltas:  77% (24/31)
+2025-04-21T16:08:13.2647055Z Resolving deltas:  80% (25/31)
+2025-04-21T16:08:13.2647473Z Resolving deltas:  83% (26/31)
+2025-04-21T16:08:13.2647870Z Resolving deltas:  90% (28/31)
+2025-04-21T16:08:13.2648261Z Resolving deltas:  93% (29/31)
+2025-04-21T16:08:13.2648626Z Resolving deltas:  96% (30/31)
+2025-04-21T16:08:13.2651252Z Resolving deltas: 100% (31/31)
+2025-04-21T16:08:13.2651860Z Resolving deltas: 100% (31/31), done.
+2025-04-21T16:08:13.2782562Z From https://github.com/JanCarlosBTC/Digital-Desk
+2025-04-21T16:08:13.2783781Z  * [new ref]         aac863c528622458a26316e5b7b59fa37fa43b40 -> origin/main
+2025-04-21T16:08:13.2813588Z ##[endgroup]
+2025-04-21T16:08:13.2815564Z ##[group]Determining the checkout info
+2025-04-21T16:08:13.2816586Z ##[endgroup]
+2025-04-21T16:08:13.2817313Z ##[group]Checking out the ref
+2025-04-21T16:08:13.2822446Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-04-21T16:08:13.3276650Z Switched to a new branch 'main'
+2025-04-21T16:08:13.3279618Z branch 'main' set up to track 'origin/main'.
+2025-04-21T16:08:13.3288772Z ##[endgroup]
+2025-04-21T16:08:13.3329645Z [command]/usr/bin/git log -1 --format='%H'
+2025-04-21T16:08:13.3353018Z 'aac863c528622458a26316e5b7b59fa37fa43b40'
+2025-04-21T16:08:13.3557260Z ##[group]Run actions/setup-node@v3
+2025-04-21T16:08:13.3557524Z with:
+2025-04-21T16:08:13.3557693Z   node-version: 20.x
+2025-04-21T16:08:13.3557889Z   cache: npm
+2025-04-21T16:08:13.3558054Z   always-auth: false
+2025-04-21T16:08:13.3558244Z   check-latest: false
+2025-04-21T16:08:13.3558557Z   token: ***
+2025-04-21T16:08:13.3558727Z ##[endgroup]
+2025-04-21T16:08:13.5400906Z Found in cache @ /opt/hostedtoolcache/node/20.19.0/x64
+2025-04-21T16:08:13.5405017Z ##[group]Environment details
+2025-04-21T16:08:13.8561944Z node: v20.19.0
+2025-04-21T16:08:13.8562321Z npm: 10.8.2
+2025-04-21T16:08:13.8562589Z yarn: 1.22.22
+2025-04-21T16:08:13.8564154Z ##[endgroup]
+2025-04-21T16:08:13.8575487Z [command]/opt/hostedtoolcache/node/20.19.0/x64/bin/npm config get cache
+2025-04-21T16:08:13.9651259Z /home/runner/.npm
+2025-04-21T16:08:14.1128147Z npm cache is not found
+2025-04-21T16:08:14.1243299Z ##[group]Run npm ci
+2025-04-21T16:08:14.1243554Z [36;1mnpm ci[0m
+2025-04-21T16:08:14.1297750Z shell: /usr/bin/bash -e {0}
+2025-04-21T16:08:14.1298004Z ##[endgroup]
+2025-04-21T16:08:17.3654303Z npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+2025-04-21T16:08:17.9212537Z npm warn deprecated npmlog@5.0.1: This package is no longer supported.
+2025-04-21T16:08:18.4082413Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2025-04-21T16:08:18.8324035Z npm warn deprecated gauge@3.0.2: This package is no longer supported.
+2025-04-21T16:08:18.9443554Z npm warn deprecated domexception@4.0.0: Use your platform's native DOMException instead
+2025-04-21T16:08:19.2951331Z npm warn deprecated are-we-there-yet@2.0.0: This package is no longer supported.
+2025-04-21T16:08:19.3432214Z npm warn deprecated abab@2.0.6: Use your platform's native atob() and btoa() methods instead
+2025-04-21T16:08:20.4233581Z npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+2025-04-21T16:08:20.4542585Z npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+2025-04-21T16:08:20.7668402Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-04-21T16:08:20.8311757Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-04-21T16:08:20.9769787Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-04-21T16:08:21.1167374Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-04-21T16:08:21.5051901Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2025-04-21T16:08:32.4846515Z 
+2025-04-21T16:08:32.4848943Z added 1065 packages, and audited 1066 packages in 18s
+2025-04-21T16:08:32.4849368Z 
+2025-04-21T16:08:32.4849589Z 125 packages are looking for funding
+2025-04-21T16:08:32.4850001Z   run `npm fund` for details
+2025-04-21T16:08:32.5131479Z 
+2025-04-21T16:08:32.5131993Z 5 moderate severity vulnerabilities
+2025-04-21T16:08:32.5132313Z 
+2025-04-21T16:08:32.5132651Z To address issues that do not require attention, run:
+2025-04-21T16:08:32.5133115Z   npm audit fix
+2025-04-21T16:08:32.5133294Z 
+2025-04-21T16:08:32.5133645Z To address all issues (including breaking changes), run:
+2025-04-21T16:08:32.5134117Z   npm audit fix --force
+2025-04-21T16:08:32.5134333Z 
+2025-04-21T16:08:32.5134530Z Run `npm audit` for details.
+2025-04-21T16:08:32.5530040Z ##[group]Run npm run check
+2025-04-21T16:08:32.5530312Z [36;1mnpm run check[0m
+2025-04-21T16:08:32.5580611Z shell: /usr/bin/bash -e {0}
+2025-04-21T16:08:32.5580825Z ##[endgroup]
+2025-04-21T16:08:32.6761901Z 
+2025-04-21T16:08:32.6762303Z > rest-express@1.0.0 check
+2025-04-21T16:08:32.6762700Z > tsc
+2025-04-21T16:08:32.6762882Z 
+2025-04-21T16:08:43.0209742Z ##[error]client/src/components/thinking-desk/drafted-plans.tsx(163,13): error TS2322: Type '"thinkingDesk"' is not assignable to type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+2025-04-21T16:08:43.0221780Z ##[error]client/src/components/thinking-desk/drafted-plans.tsx(258,27): error TS2322: Type '"thinkingDeskOutline"' is not assignable to type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+2025-04-21T16:08:43.0225696Z ##[error]client/src/components/thinking-desk/drafted-plans.tsx(264,33): error TS2322: Type '"thinkingDesk"' is not assignable to type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+2025-04-21T16:08:43.0229700Z ##[error]client/src/components/thinking-desk/drafted-plans.tsx(429,21): error TS2322: Type '"thinkingDesk"' is not assignable to type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+2025-04-21T16:08:43.0233531Z ##[error]client/src/components/thinking-desk/problem-tree-details.tsx(71,21): error TS2322: Type '"thinkingDesk"' is not assignable to type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+2025-04-21T16:08:43.0237934Z ##[error]client/src/components/thinking-desk/problem-tree-simple.tsx(387,13): error TS2322: Type '"thinkingDesk"' is not assignable to type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+2025-04-21T16:08:43.0244747Z ##[error]client/src/components/ui/animated-button.tsx(254,9): error TS2322: Type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | "thinkingDesk" | "thinkingDeskOutline" | "personalClarity" | "personalClarityOutline" | "decisionLog" | "decisionLogOutline" | "offerVault" | "offerVaultOutline"' is not assignable to type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+2025-04-21T16:08:43.0248665Z   Type '"thinkingDesk"' is not assignable to type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+2025-04-21T16:08:43.0254169Z ##[error]client/src/components/ui/animated-button.tsx(284,11): error TS2322: Type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | "thinkingDesk" | "thinkingDeskOutline" | "personalClarity" | "personalClarityOutline" | "decisionLog" | "decisionLogOutline" | "offerVault" | "offerVaultOutline"' is not assignable to type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+2025-04-21T16:08:43.0257931Z   Type '"thinkingDesk"' is not assignable to type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+2025-04-21T16:08:43.0263131Z ##[error]client/src/components/ui/animated-button.tsx(303,7): error TS2322: Type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | "thinkingDesk" | "thinkingDeskOutline" | "personalClarity" | "personalClarityOutline" | "decisionLog" | "decisionLogOutline" | "offerVault" | "offerVaultOutline"' is not assignable to type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+2025-04-21T16:08:43.0266792Z   Type '"thinkingDesk"' is not assignable to type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+2025-04-21T16:08:43.0268331Z ##[error]client/src/components/ui/chart.tsx(140,34): error TS18048: 'item' is possibly 'undefined'.
+2025-04-21T16:08:43.0270348Z ##[error]client/src/components/ui/chart.tsx(140,50): error TS18048: 'item' is possibly 'undefined'.
+2025-04-21T16:08:43.0276609Z ##[error]client/src/components/ui/feature-card.tsx(147,13): error TS2322: Type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | "thinkingDesk" | "thinkingDeskOutline" | "personalClarity" | "personalClarityOutline" | "decisionLog" | "decisionLogOutline" | "offerVault" | "offerVaultOutline"' is not assignable to type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+2025-04-21T16:08:43.0280245Z   Type '"thinkingDesk"' is not assignable to type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+2025-04-21T16:08:43.0282206Z ##[error]client/src/components/ui/input-otp.tsx(36,11): error TS2339: Property 'char' does not exist on type 'SlotProps | undefined'.
+2025-04-21T16:08:43.0284875Z ##[error]client/src/components/ui/input-otp.tsx(36,17): error TS2339: Property 'hasFakeCaret' does not exist on type 'SlotProps | undefined'.
+2025-04-21T16:08:43.0287780Z ##[error]client/src/components/ui/input-otp.tsx(36,31): error TS2339: Property 'isActive' does not exist on type 'SlotProps | undefined'.
+2025-04-21T16:08:43.0293991Z ##[error]client/src/components/ui/page-header.tsx(56,44): error TS2322: Type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | "thinkingDesk" | "thinkingDeskOutline" | "personalClarity" | "personalClarityOutline" | "decisionLog" | "decisionLogOutline" | "offerVault" | "offerVaultOutline" | undefined' is not assignable to type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+2025-04-21T16:08:43.0297887Z   Type '"thinkingDesk"' is not assignable to type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+2025-04-21T16:08:43.0300683Z ##[error]client/src/features/decision-log/components/decision-card.tsx(2,75): error TS2307: Cannot find module '../../../../shared/components/molecules/card.js' or its corresponding type declarations.
+2025-04-21T16:08:43.0304232Z ##[error]client/src/features/decision-log/components/decision-card.tsx(3,24): error TS2307: Cannot find module '../../../../shared/components/atoms/button.js' or its corresponding type declarations.
+2025-04-21T16:08:43.0308469Z ##[error]client/src/features/examples/components/dashboard-integration.tsx(4,8): error TS2307: Cannot find module '../../../../shared/components/organisms/dashboard-panel.js' or its corresponding type declarations.
+2025-04-21T16:08:43.0312327Z ##[error]client/src/features/examples/components/dashboard-integration.tsx(5,24): error TS2307: Cannot find module '../../../../shared/components/atoms/button.js' or its corresponding type declarations.
+2025-04-21T16:08:43.0316422Z ##[error]client/src/features/offer-vault/components/offer-card.tsx(2,75): error TS2307: Cannot find module '../../../../shared/components/molecules/card.js' or its corresponding type declarations.
+2025-04-21T16:08:43.0320052Z ##[error]client/src/features/offer-vault/components/offer-card.tsx(3,24): error TS2307: Cannot find module '../../../../shared/components/atoms/button.js' or its corresponding type declarations.
+2025-04-21T16:08:43.0323946Z ##[error]client/src/features/personal-clarity/components/monthly-check-in-card.tsx(2,75): error TS2307: Cannot find module '../../../../shared/components/molecules/card.js' or its corresponding type declarations.
+2025-04-21T16:08:43.0327928Z ##[error]client/src/features/personal-clarity/components/monthly-check-in-card.tsx(3,24): error TS2307: Cannot find module '../../../../shared/components/atoms/button.js' or its corresponding type declarations.
+2025-04-21T16:08:43.0332024Z ##[error]client/src/features/thinking-desk/components/brain-dump-card.tsx(2,32): error TS2307: Cannot find module '../../../../shared/components/organisms/dashboard-panel.js' or its corresponding type declarations.
+2025-04-21T16:08:43.0335961Z ##[error]client/src/features/thinking-desk/components/brain-dump-card.tsx(3,24): error TS2307: Cannot find module '../../../../shared/components/atoms/button.js' or its corresponding type declarations.
+2025-04-21T16:08:43.0338915Z ##[error]client/src/hooks/use-api-resource.ts(192,15): error TS7030: Not all code paths return a value.
+2025-04-21T16:08:43.0341380Z ##[error]client/src/hooks/use-api-resource.ts(210,7): error TS2322: Type 'ApiError | null' is not assignable to type 'ApiError | undefined'.
+2025-04-21T16:08:43.0343096Z   Type 'null' is not assignable to type 'ApiError | undefined'.
+2025-04-21T16:08:43.0344688Z ##[error]client/src/hooks/use-api-resource.ts(219,7): error TS2322: Type 'ApiError | null' is not assignable to type 'ApiError | undefined'.
+2025-04-21T16:08:43.0346504Z   Type 'null' is not assignable to type 'ApiError | undefined'.
+2025-04-21T16:08:43.0347833Z ##[error]client/src/hooks/use-keyboard-navigation.ts(43,11): error TS18048: 'nextElement' is possibly 'undefined'.
+2025-04-21T16:08:43.0350063Z ##[error]client/src/hooks/use-keyboard-navigation.ts(45,13): error TS18048: 'nextElement' is possibly 'undefined'.
+2025-04-21T16:08:43.0352351Z ##[error]client/src/hooks/use-keyboard-navigation.ts(60,11): error TS18048: 'prevElement' is possibly 'undefined'.
+2025-04-21T16:08:43.0354610Z ##[error]client/src/hooks/use-keyboard-navigation.ts(62,13): error TS18048: 'prevElement' is possibly 'undefined'.
+2025-04-21T16:08:43.0356984Z ##[error]client/src/hooks/use-keyboard-navigation.ts(109,7): error TS2532: Object is possibly 'undefined'.
+2025-04-21T16:08:43.0359156Z ##[error]client/src/hooks/use-keyboard-navigation.ts(111,9): error TS2532: Object is possibly 'undefined'.
+2025-04-21T16:08:43.0361574Z ##[error]client/src/hooks/use-keyboard-navigation.ts(119,7): error TS18048: 'lastElement' is possibly 'undefined'.
+2025-04-21T16:08:43.0363840Z ##[error]client/src/hooks/use-keyboard-navigation.ts(121,9): error TS18048: 'lastElement' is possibly 'undefined'.
+2025-04-21T16:08:43.0366045Z ##[error]client/src/lib/api-utils.ts(356,9): error TS18048: 'apiError.data' is possibly 'undefined'.
+2025-04-21T16:08:43.0368316Z ##[error]client/src/lib/api-utils.ts(356,40): error TS18048: 'apiError.data' is possibly 'undefined'.
+2025-04-21T16:08:43.0370330Z ##[error]client/src/lib/api-utils.ts(357,44): error TS18048: 'apiError.data' is possibly 'undefined'.
+2025-04-21T16:08:43.0372361Z ##[error]client/src/lib/api-utils.ts(373,9): error TS18048: 'apiError.data' is possibly 'undefined'.
+2025-04-21T16:08:43.0374370Z ##[error]client/src/lib/api-utils.ts(374,14): error TS18048: 'apiError.data' is possibly 'undefined'.
+2025-04-21T16:08:43.0376389Z ##[error]client/src/lib/api-utils.ts(424,5): error TS2769: No overload matches this call.
+2025-04-21T16:08:43.0378572Z   Overload 1 of 3, '(options: DefinedInitialDataOptions<T, Error, T, QueryKey>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>', gave the following error.
+2025-04-21T16:08:43.0380324Z     Object literal may only specify known properties, and 'onError' does not exist in type 'DefinedInitialDataOptions<T, Error, T, QueryKey>'.
+2025-04-21T16:08:43.0382070Z   Overload 2 of 3, '(options: UndefinedInitialDataOptions<T, Error, T, QueryKey>, queryClient?: QueryClient | undefined): UseQueryResult<...>', gave the following error.
+2025-04-21T16:08:43.0383823Z     Object literal may only specify known properties, and 'onError' does not exist in type 'UndefinedInitialDataOptions<T, Error, T, QueryKey>'.
+2025-04-21T16:08:43.0385545Z   Overload 3 of 3, '(options: UseQueryOptions<T, Error, T, QueryKey>, queryClient?: QueryClient | undefined): UseQueryResult<T, Error>', gave the following error.
+2025-04-21T16:08:43.0387299Z     Object literal may only specify known properties, and 'onError' does not exist in type 'UseQueryOptions<T, Error, T, QueryKey>'.
+2025-04-21T16:08:43.0389590Z ##[error]client/src/lib/api-utils.ts(433,20): error TS2339: Property 'onError' does not exist on type 'Omit<UseQueryOptions<T, Error, T, QueryKey>, "queryKey">'.
+2025-04-21T16:08:43.0392680Z ##[error]client/src/lib/api-utils.ts(434,17): error TS2339: Property 'onError' does not exist on type 'Omit<UseQueryOptions<T, Error, T, QueryKey>, "queryKey">'.
+2025-04-21T16:08:43.0395210Z ##[error]client/src/lib/api-utils.ts(440,13): error TS7030: Not all code paths return a value.
+2025-04-21T16:08:43.0398331Z ##[error]client/src/lib/api-utils.ts(542,57): error TS2339: Property 'queryKey' does not exist on type 'QueryKey | { queryKey: string | QueryKey; exact?: boolean | undefined; }'.
+2025-04-21T16:08:43.0400232Z   Property 'queryKey' does not exist on type 'QueryKey'.
+2025-04-21T16:08:43.0402308Z ##[error]client/src/lib/api-utils.ts(543,21): error TS2339: Property 'queryKey' does not exist on type 'QueryKey | { queryKey: string | QueryKey; exact?: boolean | undefined; }'.
+2025-04-21T16:08:43.0405575Z ##[error]client/src/lib/api-utils.ts(543,31): error TS2339: Property 'exact' does not exist on type 'QueryKey | { queryKey: string | QueryKey; exact?: boolean | undefined; }'.
+2025-04-21T16:08:43.0437201Z ##[error]client/src/pages/offer-vault.tsx(121,19): error TS2322: Type '"offerVault"' is not assignable to type '"link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+2025-04-21T16:08:43.0853392Z ##[error]Process completed with exit code 2.
+2025-04-21T16:08:43.0926599Z Post job cleanup.
+2025-04-21T16:08:43.1644496Z [command]/usr/bin/git version
+2025-04-21T16:08:43.1679034Z git version 2.49.0
+2025-04-21T16:08:43.1719777Z Temporarily overriding HOME='/home/runner/work/_temp/abc05f62-5977-476b-9075-8c2a55e4c5e1' before making global git config changes
+2025-04-21T16:08:43.1721156Z Adding repository directory to the temporary git global config as a safe directory
+2025-04-21T16:08:43.1723747Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Digital-Desk/Digital-Desk
+2025-04-21T16:08:43.1754104Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-04-21T16:08:43.1782831Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-04-21T16:08:43.2011338Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-04-21T16:08:43.2030332Z http.https://github.com/.extraheader
+2025-04-21T16:08:43.2041216Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-04-21T16:08:43.2068882Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-04-21T16:08:43.2397748Z Print service container logs: b0c800a327e74b8fadd6abace32753b2_postgres15_5ff6b7
+2025-04-21T16:08:43.2402432Z ##[command]/usr/bin/docker logs --details 7c671209bb20880581c762ec9e6b163c4d7171d7952123a8062354887179f218
+2025-04-21T16:08:43.2530351Z  initdb: warning: enabling "trust" authentication for local connections
+2025-04-21T16:08:43.2531414Z  initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+2025-04-21T16:08:43.2532478Z  The files belonging to this database system will be owned by user "postgres".
+2025-04-21T16:08:43.2533629Z  2025-04-21 16:07:57.788 UTC [1] LOG:  starting PostgreSQL 15.12 (Debian 15.12-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-04-21T16:08:43.2534446Z  2025-04-21 16:07:57.788 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-04-21T16:08:43.2535158Z  2025-04-21 16:07:57.788 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-04-21T16:08:43.2535728Z  2025-04-21 16:07:57.789 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-04-21T16:08:43.2536209Z  2025-04-21 16:07:57.792 UTC [64] LOG:  database system was shut down at 2025-04-21 16:07:57 UTC
+2025-04-21T16:08:43.2536849Z  2025-04-21 16:07:57.796 UTC [1] LOG:  database system is ready to accept connections
+2025-04-21T16:08:43.2537216Z  2025-04-21 16:08:06.873 UTC [75] FATAL:  role "root" does not exist
+2025-04-21T16:08:43.2537548Z  2025-04-21 16:08:16.963 UTC [83] FATAL:  role "root" does not exist
+2025-04-21T16:08:43.2537863Z  2025-04-21 16:08:27.052 UTC [91] FATAL:  role "root" does not exist
+2025-04-21T16:08:43.2538193Z  2025-04-21 16:08:37.143 UTC [100] FATAL:  role "root" does not exist
+2025-04-21T16:08:43.2538501Z  This user must also own the server process.
+2025-04-21T16:08:43.2538726Z  
+2025-04-21T16:08:43.2538965Z  The database cluster will be initialized with locale "en_US.utf8".
+2025-04-21T16:08:43.2539369Z  The default database encoding has accordingly been set to "UTF8".
+2025-04-21T16:08:43.2539738Z  The default text search configuration will be set to "english".
+2025-04-21T16:08:43.2540021Z  
+2025-04-21T16:08:43.2540180Z  Data page checksums are disabled.
+2025-04-21T16:08:43.2540391Z  
+2025-04-21T16:08:43.2540655Z  fixing permissions on existing directory /var/lib/postgresql/data ... ok
+2025-04-21T16:08:43.2541435Z  creating subdirectories ... ok
+2025-04-21T16:08:43.2542082Z  selecting dynamic shared memory implementation ... posix
+2025-04-21T16:08:43.2542590Z  selecting default max_connections ... 100
+2025-04-21T16:08:43.2542860Z  selecting default shared_buffers ... 128MB
+2025-04-21T16:08:43.2543111Z  selecting default time zone ... Etc/UTC
+2025-04-21T16:08:43.2543351Z  creating configuration files ... ok
+2025-04-21T16:08:43.2543591Z  running bootstrap script ... ok
+2025-04-21T16:08:43.2543886Z  performing post-bootstrap initialization ... ok
+2025-04-21T16:08:43.2544160Z  syncing data to disk ... ok
+2025-04-21T16:08:43.2544561Z  
+2025-04-21T16:08:43.2544696Z  
+2025-04-21T16:08:43.2544893Z  Success. You can now start the database server using:
+2025-04-21T16:08:43.2545152Z  
+2025-04-21T16:08:43.2545343Z      pg_ctl -D /var/lib/postgresql/data -l logfile start
+2025-04-21T16:08:43.2545597Z  
+2025-04-21T16:08:43.2546131Z  waiting for server to start....2025-04-21 16:07:57.478 UTC [48] LOG:  starting PostgreSQL 15.12 (Debian 15.12-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-04-21T16:08:43.2547057Z  2025-04-21 16:07:57.479 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-04-21T16:08:43.2547536Z  2025-04-21 16:07:57.482 UTC [51] LOG:  database system was shut down at 2025-04-21 16:07:57 UTC
+2025-04-21T16:08:43.2547959Z  2025-04-21 16:07:57.486 UTC [48] LOG:  database system is ready to accept connections
+2025-04-21T16:08:43.2548272Z   done
+2025-04-21T16:08:43.2548423Z  server started
+2025-04-21T16:08:43.2548589Z  CREATE DATABASE
+2025-04-21T16:08:43.2548941Z  
+2025-04-21T16:08:43.2549085Z  
+2025-04-21T16:08:43.2549372Z  /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+2025-04-21T16:08:43.2549722Z  
+2025-04-21T16:08:43.2549924Z  2025-04-21 16:07:57.666 UTC [48] LOG:  received fast shutdown request
+2025-04-21T16:08:43.2550364Z  waiting for server to shut down....2025-04-21 16:07:57.667 UTC [48] LOG:  aborting any active transactions
+2025-04-21T16:08:43.2550945Z  2025-04-21 16:07:57.669 UTC [48] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
+2025-04-21T16:08:43.2551386Z  2025-04-21 16:07:57.669 UTC [49] LOG:  shutting down
+2025-04-21T16:08:43.2551714Z  2025-04-21 16:07:57.669 UTC [49] LOG:  checkpoint starting: shutdown immediate
+2025-04-21T16:08:43.2552530Z  2025-04-21 16:07:57.690 UTC [49] LOG:  checkpoint complete: wrote 918 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.013 s, sync=0.006 s, total=0.021 s; sync files=301, longest=0.005 s, average=0.001 s; distance=4222 kB, estimate=4222 kB
+2025-04-21T16:08:43.2553308Z  2025-04-21 16:07:57.696 UTC [48] LOG:  database system is shut down
+2025-04-21T16:08:43.2553590Z   done
+2025-04-21T16:08:43.2553737Z  server stopped
+2025-04-21T16:08:43.2553903Z  
+2025-04-21T16:08:43.2554110Z  PostgreSQL init process complete; ready for start up.
+2025-04-21T16:08:43.2554367Z  
+2025-04-21T16:08:43.2559912Z Stop and remove container: b0c800a327e74b8fadd6abace32753b2_postgres15_5ff6b7
+2025-04-21T16:08:43.2564106Z ##[command]/usr/bin/docker rm --force 7c671209bb20880581c762ec9e6b163c4d7171d7952123a8062354887179f218
+2025-04-21T16:08:43.4959239Z 7c671209bb20880581c762ec9e6b163c4d7171d7952123a8062354887179f218
+2025-04-21T16:08:43.4985549Z Remove container network: github_network_5cc8c981bcab4bedbbab41ec40784022
+2025-04-21T16:08:43.4990126Z ##[command]/usr/bin/docker network rm github_network_5cc8c981bcab4bedbbab41ec40784022
+2025-04-21T16:08:43.6075488Z github_network_5cc8c981bcab4bedbbab41ec40784022
+2025-04-21T16:08:43.6133988Z Cleaning up orphan processes
