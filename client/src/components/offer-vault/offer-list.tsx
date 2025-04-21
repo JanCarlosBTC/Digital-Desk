@@ -246,7 +246,7 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
     // Then sort the filtered results
     return filtered.sort((a, b) => {
       switch (sortBy) {
-        case "status":
+        case "status": {
           // Sort by status first (Active first, then Coming Soon, then Archived)
           const statusOrder = { "Active": 0, "Coming Soon": 1, "Archived": 2 };
           const statusDiff = (statusOrder[a.status as keyof typeof statusOrder] || 3) - 
@@ -254,25 +254,28 @@ const OfferList = ({ showNewOffer = false, onDialogClose }: OfferListProps) => {
           if (statusDiff !== 0) return statusDiff;
           // Then sort by created date (newest first)
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
         
         case "newest":
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         
-        case "price-high":
+        case "price-high": {
           // Extract numeric value from price string for comparison
           const getNumericPrice = (price: string) => {
             const match = price.match(/\d+/);
             return match ? parseInt(match[0]) : 0;
           };
           return getNumericPrice(b.price) - getNumericPrice(a.price);
+        }
         
-        case "price-low":
+        case "price-low": {
           // Extract numeric value from price string for comparison
           const getNumericPriceLow = (price: string) => {
             const match = price.match(/\d+/);
             return match ? parseInt(match[0]) : 0;
           };
           return getNumericPriceLow(a.price) - getNumericPriceLow(b.price);
+        }
         
         case "clients":
           return (b.clientCount || 0) - (a.clientCount || 0);

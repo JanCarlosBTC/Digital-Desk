@@ -206,7 +206,7 @@ export function FormBuilder<T extends z.ZodType<any, any>>({
           />
         );
         
-      case 'select':
+      case 'select': {
         const selectField = field as SelectFieldProps;
         return (
           <FormField
@@ -243,8 +243,9 @@ export function FormBuilder<T extends z.ZodType<any, any>>({
             )}
           />
         );
+      }
         
-      case 'checkbox':
+      case 'checkbox': {
         const checkboxField = field as CheckboxFieldProps;
         return (
           <FormField
@@ -272,8 +273,9 @@ export function FormBuilder<T extends z.ZodType<any, any>>({
             )}
           />
         );
+      }
         
-      case 'radio':
+      case 'radio': {
         const radioField = field as RadioFieldProps;
         return (
           <FormField
@@ -309,8 +311,9 @@ export function FormBuilder<T extends z.ZodType<any, any>>({
             )}
           />
         );
+      }
         
-      case 'custom':
+      case 'custom': {
         const customField = field as CustomFieldProps;
         return (
           <FormField
@@ -332,6 +335,7 @@ export function FormBuilder<T extends z.ZodType<any, any>>({
             )}
           />
         );
+      }
         
       default:
         return null;
