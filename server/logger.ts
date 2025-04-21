@@ -1,4 +1,5 @@
-import pino from 'pino';
+// Using require for pino since there are ESM/TypeScript issues with the import
+const pino = require('pino');
 
 // Configure Pino logger
 const logger = pino({

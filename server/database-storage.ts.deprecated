@@ -1,7 +1,11 @@
-import { users, type User, type InsertUser, weeklyReflections, type WeeklyReflection, type InsertWeeklyReflection } from "../shared/schema.js";
-import { db } from "./db";
-import { eq } from "drizzle-orm";
-import { IStorage } from "./storage"; // Assuming IStorage interface is defined in storage.ts
+/**
+ * @deprecated Use PrismaStorage from prisma-storage.ts instead
+ * This file is kept for reference during migration but will be removed in a future version.
+ */
+
+import { type User, type InsertUser, type WeeklyReflection, type InsertWeeklyReflection } from "../shared/prisma-schema";
+import { prisma } from "./prisma";
+import { IStorage } from "./storage";
 
 export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {

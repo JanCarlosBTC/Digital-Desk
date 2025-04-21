@@ -900,7 +900,7 @@ export class MemStorage implements IStorage {
     const offerNote: OfferNote = { 
       ...insertOfferNote, 
       id,
-      content: insertOfferNote.content || null,
+      content: insertOfferNote.content || '',
       createdAt: now, 
       updatedAt: now 
     };
