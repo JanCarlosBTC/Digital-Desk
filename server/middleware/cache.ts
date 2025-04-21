@@ -123,8 +123,8 @@ export function clearCacheMiddleware(resourceType: string) {
         });
       }
       
-      // Call original end method with rest parameters
-      return originalEnd.apply(this, Array.from(arguments));
+      // Call original end method with passed parameters
+      return originalEnd.call(this, chunk, encoding, cb);
     };
     
     next();
