@@ -1,16 +1,11 @@
 /**
  * Demo Storage Service
  * 
- * This service provides local storage functionality for demo purposes with:
- * - Automatic expiration of data after 4 hours
- * - No account required
- * - Persistent storage within the expiration window
+ * This service provides local storage functionality with automatic expiration
+ * for demo purposes. Data stored using this service will expire after 4 hours
+ * to keep demo data fresh and prevent stale data accumulation.
  */
 
-// Define the expiration time (4 hours in milliseconds)
-const EXPIRATION_TIME = 4 * 60 * 60 * 1000; // 4 hours
-
-// Type for stored items with expiration
 interface StoredItem<T> {
   value: T;
   timestamp: number;
@@ -18,6 +13,12 @@ interface StoredItem<T> {
 
 export class DemoStorageService {
   private prefix: string = 'demo_';
+  private expirationTime: number = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
+
+  constructor() {
+    // Clean up any expired items on initialization
+    this.cleanupExpiredItems();
+  }
 
   /**
    * Store data in local storage with expiration
@@ -25,11 +26,17 @@ export class DemoStorageService {
    * @param value Data to store
    */
   setItem<T>(key: string, value: T): void {
-    const item: StoredItem<T> = {
-      value,
-      timestamp: Date.now()
-    };
-    localStorage.setItem(this.prefix + key, JSON.stringify(item));
+    try {
+      const prefixedKey = this.prefix + key;
+      const item: StoredItem<T> = {
+        value,
+        timestamp: Date.now() + this.expirationTime
+      };
+      
+      localStorage.setItem(prefixedKey, JSON.stringify(item));
+    } catch (error) {
+      console.error('Error saving to demo storage:', error);
+    }
   }
 
   /**
@@ -38,26 +45,24 @@ export class DemoStorageService {
    * @returns The stored value or null if expired or not found
    */
   getItem<T>(key: string): T | null {
-    const storedItem = localStorage.getItem(this.prefix + key);
-    
-    if (!storedItem) {
-      return null;
-    }
-    
     try {
-      const item: StoredItem<T> = JSON.parse(storedItem);
-      const now = Date.now();
+      const prefixedKey = this.prefix + key;
+      const storedItem = localStorage.getItem(prefixedKey);
       
-      // Check if item has expired
-      if (now - item.timestamp > EXPIRATION_TIME) {
+      if (!storedItem) return null;
+      
+      const item: StoredItem<T> = JSON.parse(storedItem);
+      
+      // Check if the item has expired
+      if (item.timestamp < Date.now()) {
         // Remove expired item
-        this.removeItem(key);
+        localStorage.removeItem(prefixedKey);
         return null;
       }
       
       return item.value;
     } catch (error) {
-      console.error('Error parsing stored item:', error);
+      console.error('Error retrieving from demo storage:', error);
       return null;
     }
   }
@@ -67,24 +72,31 @@ export class DemoStorageService {
    * @param key Storage key
    */
   removeItem(key: string): void {
-    localStorage.removeItem(this.prefix + key);
+    try {
+      const prefixedKey = this.prefix + key;
+      localStorage.removeItem(prefixedKey);
+    } catch (error) {
+      console.error('Error removing from demo storage:', error);
+    }
   }
 
   /**
    * Clear all demo storage items
    */
   clearAll(): void {
-    // Get all keys that start with our prefix
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith(this.prefix)) {
-        keysToRemove.push(key);
-      }
+    try {
+      // Get all keys in localStorage
+      const keys = Object.keys(localStorage);
+      
+      // Remove only keys with our prefix
+      keys.forEach(key => {
+        if (key.startsWith(this.prefix)) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch (error) {
+      console.error('Error clearing demo storage:', error);
     }
-    
-    // Remove all matching keys
-    keysToRemove.forEach(key => localStorage.removeItem(key));
   }
 
   /**
@@ -93,32 +105,30 @@ export class DemoStorageService {
    * for maintenance purposes
    */
   cleanupExpiredItems(): void {
-    const now = Date.now();
-    const keysToCheck = [];
-    
-    // Get all demo storage keys
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith(this.prefix)) {
-        keysToCheck.push(key);
-      }
-    }
-    
-    // Check each item for expiration
-    keysToCheck.forEach(fullKey => {
-      try {
-        const storedItem = localStorage.getItem(fullKey);
-        if (storedItem) {
-          const item = JSON.parse(storedItem);
-          if (now - item.timestamp > EXPIRATION_TIME) {
-            localStorage.removeItem(fullKey);
+    try {
+      const keys = Object.keys(localStorage);
+      const now = Date.now();
+      
+      keys.forEach(key => {
+        // Only process keys with our prefix
+        if (key.startsWith(this.prefix)) {
+          const storedItem = localStorage.getItem(key);
+          if (storedItem) {
+            try {
+              const item = JSON.parse(storedItem);
+              if (item.timestamp < now) {
+                localStorage.removeItem(key);
+              }
+            } catch (e) {
+              // If we can't parse it, it's not our format, so remove it
+              localStorage.removeItem(key);
+            }
           }
         }
-      } catch (error) {
-        // If there's any issue with the item, remove it
-        localStorage.removeItem(fullKey);
-      }
-    });
+      });
+    } catch (error) {
+      console.error('Error cleaning up expired items:', error);
+    }
   }
 
   /**
@@ -127,27 +137,22 @@ export class DemoStorageService {
    * @returns Remaining time in milliseconds, 0 if expired or not found
    */
   getTimeRemaining(key: string): number {
-    const storedItem = localStorage.getItem(this.prefix + key);
-    
-    if (!storedItem) {
-      return 0;
-    }
-    
     try {
-      const item: StoredItem<any> = JSON.parse(storedItem);
-      const now = Date.now();
-      const elapsed = now - item.timestamp;
+      const prefixedKey = this.prefix + key;
+      const storedItem = localStorage.getItem(prefixedKey);
       
-      if (elapsed > EXPIRATION_TIME) {
-        return 0;
-      }
+      if (!storedItem) return 0;
       
-      return EXPIRATION_TIME - elapsed;
+      const item = JSON.parse(storedItem);
+      const remaining = item.timestamp - Date.now();
+      
+      return remaining > 0 ? remaining : 0;
     } catch (error) {
+      console.error('Error getting time remaining:', error);
       return 0;
     }
   }
 }
 
-// Export a singleton instance for use throughout the app
+// Export a singleton instance
 export const demoStorage = new DemoStorageService();

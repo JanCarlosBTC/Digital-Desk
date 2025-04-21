@@ -269,7 +269,7 @@ export const DemoStorageProvider: React.FC<{ children: React.ReactNode }> = ({ c
         ...updated[index],
         ...insightData,
         updatedAt: new Date(),
-      };
+      } as DemoInsight;
       
       demoStorage.setItem(INSIGHTS_KEY, updated);
       return updated;
@@ -317,7 +317,7 @@ export const DemoStorageProvider: React.FC<{ children: React.ReactNode }> = ({ c
         ...updated[index],
         ...labData,
         updatedAt: new Date(),
-      };
+      } as DemoClarityLab;
       
       demoStorage.setItem(CLARITY_LABS_KEY, updated);
       return updated;
@@ -365,7 +365,7 @@ export const DemoStorageProvider: React.FC<{ children: React.ReactNode }> = ({ c
         ...updated[index],
         ...offerData,
         updatedAt: new Date(),
-      };
+      } as DemoOffer;
       
       demoStorage.setItem(OFFERS_KEY, updated);
       return updated;
@@ -413,7 +413,7 @@ export const DemoStorageProvider: React.FC<{ children: React.ReactNode }> = ({ c
         ...updated[index],
         ...decisionData,
         updatedAt: new Date(),
-      };
+      } as DemoDecision;
       
       demoStorage.setItem(DECISIONS_KEY, updated);
       return updated;
@@ -461,7 +461,7 @@ export const DemoStorageProvider: React.FC<{ children: React.ReactNode }> = ({ c
         ...updated[index],
         ...reflectionData,
         updatedAt: new Date(),
-      };
+      } as DemoWeeklyReflection;
       
       demoStorage.setItem(WEEKLY_REFLECTIONS_KEY, updated);
       return updated;

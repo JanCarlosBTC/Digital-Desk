@@ -13,6 +13,7 @@ import OfferVault from "@/pages/offer-vault";
 import SubscriptionPlans from "@/pages/subscription-plans";
 import SubscriptionSuccess from "@/pages/subscription-success";
 import Login from "@/pages/login";
+import DemoPage from "@/pages/demo-page";
 import { PageTransition } from "@/components/transitions/simple-page-transition";
 import { UserProvider } from "@/context/user-context";
 import { DemoStorageProvider } from "@/context/demo-storage-context";
@@ -41,6 +42,7 @@ function Router() {
           <Route path="/offer-vault" component={OfferVault} />
           <Route path="/subscription-plans" component={SubscriptionPlans} />
           <Route path="/subscription-success" component={SubscriptionSuccess} />
+          <Route path="/demo" component={DemoPage} />
           <Route component={NotFound} />
         </Switch>
       </PageTransition>
