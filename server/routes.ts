@@ -6,7 +6,8 @@ import { storage } from "./storage.js";
 import { 
   insertBrainDumpSchema, insertProblemTreeSchema, insertDraftedPlanSchema, 
   insertClarityLabSchema, insertWeeklyReflectionSchema, insertMonthlyCheckInSchema, 
-  insertPrioritySchema, insertDecisionSchema, insertOfferSchema, insertOfferNoteSchema 
+  insertPrioritySchema, insertDecisionSchema, insertOfferSchema, insertOfferNoteSchema,
+  demoUserSchema
 } from "../shared/schema.js";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -861,14 +862,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Demo user information endpoint
   app.get('/api/user', (req, res) => {
-    // Return a fixed demo user
-    return res.json({
+    // Return a fixed demo user using the demoUserSchema format
+    const demoUser = {
       id: 1,
       name: "Demo User",
       username: "demo",
       initials: "DU",
       plan: "Premium"
-    });
+    };
+    
+    // Validate with schema to ensure it matches expected format
+    try {
+      const validated = demoUserSchema.parse(demoUser);
+      return res.json(validated);
+    } catch (error) {
+      console.error("Demo user validation failed:", error);
+      return res.status(500).json({ message: "Error creating demo user" });
+    }
   });
 
   const httpServer = createServer(app);
