@@ -92,7 +92,7 @@ export function WorkspaceSwitcher() {
   // Create a new workspace
   const createWorkspaceMutation = useMutation({
     mutationFn: (data: CreateWorkspaceFormData) => 
-      apiRequest('/api/workspaces', { method: 'POST', data }) as Promise<any>,
+      apiRequest('POST', '/api/workspaces', data) as Promise<any>,
     onSuccess: () => {
       toast({
         title: 'Workspace created',
