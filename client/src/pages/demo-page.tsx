@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { DemoModeToggle } from '@/components/demo/demo-mode-toggle';
+import { Switch } from '@/components/ui/switch';
 import { useDemoStorage } from '@/context/demo-storage-context';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -87,7 +87,18 @@ const DemoPage: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <DemoModeToggle />
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <div className="font-medium">Demo Mode</div>
+                  <div className="text-sm text-muted-foreground">
+                    Toggle demo mode on/off
+                  </div>
+                </div>
+                <Switch
+                  checked={demoMode}
+                  onCheckedChange={(value) => useDemoStorage().setDemoMode(value)}
+                />
+              </div>
             </CardContent>
           </Card>
         </div>

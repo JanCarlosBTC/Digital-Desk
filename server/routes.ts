@@ -16,7 +16,7 @@ import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
 import { withAuth, withAuthAndUser, withDevAuth } from "./middleware/auth-wrapper.js";
 import authRoutes from "./routes-auth.js";
 import workspaceRoutes from "./routes-workspace.js";
-import { setupAuth } from "./auth.js";
+import { setupAuth } from "./replitAuth.js";
 
 // The Request interface is now augmented via server/types/express.d.ts
 

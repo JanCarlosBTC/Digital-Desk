@@ -1,28 +1,41 @@
 import { Router } from 'express';
 import type { Response, Request } from 'express';
+import { isAuthenticated, AuthenticatedRequest } from './replitAuth.js';
+import { PrismaClient } from '@prisma/client';
 
+const prisma = new PrismaClient();
 const router = Router();
 
-// Just redirect all calls to the main auth endpoints
-// This is needed because the client is still using /api/auth/user
-router.get('/auth/user', (req: Request, res: Response, next: Function) => {
-  console.log("Forwarding from /api/auth/user to /api/user");
-  // Instead of redirecting, forward the request to the /api/user handler
-  // but keep the original URL so client sees response from the expected endpoint
-  req.url = '/user';
-  next();
+// Endpoint to get the current authenticated user
+router.get('/auth/user', isAuthenticated, async (req: Request, res: Response) => {
+  try {
+    // For now, always return a placeholder demo user since 
+    // we're not implementing the full Replit Auth flow
+    const demoUser = {
+      id: "demo123",
+      username: "demo",
+      email: "demo@example.com",
+      name: "Demo User",
+      initials: "DU",
+      plan: "Free",
+      isAuthenticated: true
+    };
+    
+    return res.json(demoUser);
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    return res.status(500).json({ message: "Failed to fetch user information" });
+  }
 });
 
-// Also handle the login endpoint
+// Just redirect auth login to the main login endpoint
 router.get('/auth/login', (req: Request, res: Response) => {
-  console.log("Redirecting from /api/auth/login to /api/login");
   res.redirect('/api/login');
 });
 
-// Handle the logout endpoint
-router.post('/auth/logout', (req: Request, res: Response) => {
-  console.log("Redirecting from /api/auth/logout to /api/logout");
-  res.redirect(307, '/api/logout'); // 307 preserves the POST method
+// Just redirect auth logout to the main logout endpoint
+router.get('/auth/logout', (req: Request, res: Response) => {
+  res.redirect('/api/logout');
 });
 
 export default router;

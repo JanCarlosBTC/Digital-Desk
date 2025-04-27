@@ -1,80 +1,77 @@
-import { PrismaClient, User } from '@prisma/client';
-import prisma from './prisma.js';
+import { PrismaClient } from '@prisma/client';
 
-// Define simple ReplitUser type for our auth storage
-type ReplitUser = {
-  id: string;
-  username: string;
-  firstName?: string | null;
-  lastName?: string | null;
-  email?: string | null;
-  bio?: string | null;
-  profileImageUrl?: string | null;
-};
+const prisma = new PrismaClient();
 
 // Storage interface for Replit Auth
-export interface IAuthStorage {
-  getUser(id: string): Promise<User | null>;
-  upsertUser(user: ReplitUser): Promise<User>;
-}
-
-export class PrismaAuthStorage implements IAuthStorage {
-  private prisma: PrismaClient;
-
-  constructor() {
-    this.prisma = prisma;
-  }
-
-  async getUser(id: string): Promise<User | null> {
+export const authStorage = {
+  /**
+   * Get a user by ID
+   */
+  async getUser(id: string) {
     try {
-      return await this.prisma.user.findUnique({
+      const user = await prisma.user.findUnique({
         where: { id }
       });
+      return user;
     } catch (error) {
-      console.error("Error fetching user:", error);
+      console.error('Error fetching user:', error);
       return null;
     }
-  }
+  },
 
-  async getUserByUsername(username: string): Promise<User | null> {
+  /**
+   * Create or update a user from Replit Auth claims
+   */
+  async upsertUser(userData: {
+    id: string,
+    username: string,
+    email?: string | null,
+    firstName?: string | null,
+    lastName?: string | null,
+    bio?: string | null,
+    profileImageUrl?: string | null
+  }) {
     try {
-      return await this.prisma.user.findUnique({
-        where: { username }
-      });
-    } catch (error) {
-      console.error("Error fetching user by username:", error);
-      return null;
-    }
-  }
+      // Generate a name and initials from the username if not provided
+      const name = userData.firstName && userData.lastName 
+        ? `${userData.firstName} ${userData.lastName}`
+        : userData.username;
+      
+      const initials = userData.firstName && userData.lastName
+        ? `${userData.firstName.charAt(0)}${userData.lastName.charAt(0)}`.toUpperCase()
+        : userData.username.substring(0, 2).toUpperCase();
 
-  async upsertUser(userData: ReplitUser): Promise<User> {
-    try {
-      return await this.prisma.user.upsert({
+      const user = await prisma.user.upsert({
         where: { id: userData.id },
         update: {
           username: userData.username,
-          name: userData.firstName || userData.username || 'User',
-          initials: userData.firstName 
-            ? userData.firstName.charAt(0) + (userData.lastName ? userData.lastName.charAt(0) : '') 
-            : (userData.username ? userData.username.charAt(0) : 'U')
-          // updatedAt will be handled automatically by Prisma
+          email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          bio: userData.bio,
+          profileImageUrl: userData.profileImageUrl,
+          updatedAt: new Date()
         },
         create: {
           id: userData.id,
           username: userData.username,
-          password: "",
-          name: userData.firstName || userData.username || 'User',
-          initials: userData.firstName 
-            ? userData.firstName.charAt(0) + (userData.lastName ? userData.lastName.charAt(0) : '') 
-            : (userData.username ? userData.username.charAt(0) : 'U'),
-          plan: "Free"
+          email: userData.email,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          bio: userData.bio,
+          profileImageUrl: userData.profileImageUrl,
+          // Required fields in the User model
+          name: name,
+          initials: initials,
+          password: "", // Empty password since we're using Replit Auth
+          createdAt: new Date(),
+          updatedAt: new Date()
         }
       });
+      return user;
     } catch (error) {
-      console.error("Error upserting user:", error);
+      console.error('Error upserting user:', error);
       throw error;
     }
   }
-}
-
-export const authStorage = new PrismaAuthStorage();
+};
