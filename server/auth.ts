@@ -6,26 +6,22 @@ import connectPg from "connect-pg-simple";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage.js";
-import type { User } from "@prisma/client";
+import type { User as PrismaUser } from "@prisma/client";
 import logger from "./logger.js";
 
-declare global {
-  namespace Express {
-    // Define the User interface with properties we know it will have
-    interface User {
-      id: string;
-      username: string;
-      email?: string | null;
-      firstName?: string | null;
-      lastName?: string | null;
-      bio?: string | null;
-      profileImageUrl?: string | null;
-      password: string;
-      name: string;
-      initials: string;
-      plan?: string | null;
-    }
-  }
+// Interface for our database User type
+export interface UserData {
+  id: string;
+  username: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  bio?: string | null;
+  profileImageUrl?: string | null;
+  password: string;
+  name: string;
+  initials: string;
+  plan?: string | null;
 }
 
 const scryptAsync = promisify(scrypt);
@@ -109,7 +105,22 @@ export function setupAuth(app: Express) {
         }
         
         logger.info(`User logged in successfully: ${username}`);
-        return done(null, user);
+        // Convert database user to Express User format with claims
+        const expressUser = {
+          id: user.id,
+          username: user.username,
+          name: user.name,
+          initials: user.initials,
+          email: user.email,
+          plan: user.plan,
+          claims: {
+            sub: user.id,
+            email: user.email,
+            username: user.username,
+            name: user.name
+          }
+        };
+        return done(null, expressUser);
       } catch (error) {
         logger.error(`Authentication error: ${error instanceof Error ? error.message : 'Unknown error'}`);
         return done(error as Error);
@@ -127,7 +138,26 @@ export function setupAuth(app: Express) {
     try {
       const user = await storage.getUser(id);
       logger.debug(`Deserialized user: ${id}`);
-      done(null, user);
+      if (user) {
+        // Convert database user to Express User format with claims
+        const expressUser = {
+          id: user.id,
+          username: user.username,
+          name: user.name,
+          initials: user.initials,
+          email: user.email,
+          plan: user.plan,
+          claims: {
+            sub: user.id,
+            email: user.email,
+            username: user.username,
+            name: user.name
+          }
+        };
+        done(null, expressUser);
+      } else {
+        done(null, false);
+      }
     } catch (error) {
       logger.error(`Deserialization error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       done(error as Error);

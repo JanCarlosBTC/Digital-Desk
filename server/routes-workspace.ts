@@ -1,20 +1,9 @@
 import { Router } from "express";
-import type { Request, Response, NextFunction } from "express";
+import type { Response, NextFunction } from "express";
 import { PrismaClient } from "@prisma/client";
-import { isAuthenticated } from "./replitAuth.js";
+import { isAuthenticated, AuthenticatedRequest } from "./replitAuth.js";
 import { UserRole } from "../shared/schema.js";
 import { z } from "zod";
-
-// Extended Request type with user claims
-interface AuthenticatedRequest extends Request {
-  user?: {
-    claims: {
-      sub: string;
-      [key: string]: any;
-    },
-    [key: string]: any;
-  };
-}
 
 const prisma = new PrismaClient();
 const router = Router();
@@ -161,10 +150,10 @@ router.post("/api/workspaces", isAuthenticated, isAdmin, async (req: Authenticat
       }
     });
     
-    res.status(201).json(workspace);
+    return res.status(201).json(workspace);
   } catch (error) {
     console.error("Error creating workspace:", error);
-    res.status(500).json({ message: "Failed to create workspace" });
+    return res.status(500).json({ message: "Failed to create workspace" });
   }
 });
 
