@@ -220,16 +220,16 @@ export function WorkspaceSwitcher() {
               <ChevronDown className="ml-auto h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuContent align="end" className="w-60">
             <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
             <DropdownMenuSeparator />
             
             {/* Current workspace */}
             {currentWorkspace && (
-              <DropdownMenuItem className="justify-between" asChild>
-                <div className="w-full flex justify-between items-center cursor-pointer">
-                  <span>{currentWorkspace.name}</span>
-                  <Settings className="h-4 w-4" />
+              <DropdownMenuItem disabled>
+                <div className="w-full flex justify-between items-center">
+                  <span className="font-semibold">{currentWorkspace.name}</span>
+                  <span className="text-xs text-muted-foreground ml-2">(Current)</span>
                 </div>
               </DropdownMenuItem>
             )}
@@ -253,10 +253,12 @@ export function WorkspaceSwitcher() {
               </>
             )}
             
-            {/* Admin can create new workspaces */}
+            {/* Admin operations */}
             {isAdmin && (
               <>
                 <DropdownMenuSeparator />
+                <DropdownMenuLabel>Admin Actions</DropdownMenuLabel>
+                
                 <DialogTrigger asChild>
                   <DropdownMenuItem>
                     <Plus className="mr-2 h-4 w-4" />
@@ -271,7 +273,7 @@ export function WorkspaceSwitcher() {
 
                 {currentWorkspace && (
                   <DropdownMenuItem 
-                    className="text-destructive focus:text-destructive"
+                    className="text-destructive focus:text-destructive hover:bg-destructive/10"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();

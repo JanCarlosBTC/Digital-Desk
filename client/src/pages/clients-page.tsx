@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useParams } from 'wouter';
 import {
   Table,
   TableBody,
@@ -75,6 +76,9 @@ interface InvitationInfo {
 export default function ClientsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const params = useParams();
+  const workspaceId = params.id; // Get the workspace ID from URL params
+  
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -87,6 +91,17 @@ export default function ClientsPage() {
   });
   const [invitation, setInvitation] = useState<InvitationInfo | null>(null);
   const [copied, setCopied] = useState(false);
+  
+  // Log the workspace ID for debugging
+  useEffect(() => {
+    if (workspaceId) {
+      console.log("Viewing workspace:", workspaceId);
+      toast({
+        title: "Workspace Selected",
+        description: `You are viewing workspace ID: ${workspaceId}`,
+      });
+    }
+  }, [workspaceId, toast]);
 
   // Fetch clients
   const { data: clients = [], isLoading, error, refetch } = useQuery<Client[]>({
