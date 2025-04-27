@@ -50,6 +50,25 @@ export const insertWorkspaceSchema = workspaceSchema.omit({
   updatedAt: true 
 });
 
+// Workspace Invitation schema
+export const workspaceInvitationSchema = z.object({
+  id: z.string().uuid(),
+  email: z.string().email(),
+  workspaceId: z.string().uuid(),
+  status: z.nativeEnum(InvitationStatus).default(InvitationStatus.PENDING),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
+  expiresAt: z.date(),
+});
+
+export type WorkspaceInvitation = z.infer<typeof workspaceInvitationSchema>;
+export const insertWorkspaceInvitationSchema = workspaceInvitationSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  status: true
+});
+
 // Legacy Demo User schema (for compatibility during transition)
 export const demoUserSchema = z.object({
   id: z.number().int().positive(),
@@ -212,3 +231,4 @@ export type InsertDecision = z.infer<typeof insertDecisionSchema>;
 export type InsertOffer = z.infer<typeof insertOfferSchema>;
 export type InsertOfferNote = z.infer<typeof insertOfferNoteSchema>;
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
+export type InsertWorkspaceInvitation = z.infer<typeof insertWorkspaceInvitationSchema>;

@@ -27,6 +27,13 @@ enum Role {
   USER
 }
 
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
 model Workspace {
   id          String    @id @default(uuid())
   name        String
@@ -39,8 +46,24 @@ model Workspace {
   // Relationships
   users       User[]
   creator     User      @relation("WorkspaceCreator", fields: [createdBy], references: [id])
+  invitations WorkspaceInvitation[]
 
   @@map("workspaces")
+}
+
+model WorkspaceInvitation {
+  id          String           @id @default(uuid())
+  email       String
+  workspaceId String           @map("workspace_id")
+  status      InvitationStatus @default(PENDING)
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @default(now()) @map("updated_at")
+  expiresAt   DateTime         @map("expires_at")
+  
+  // Relationships
+  workspace   Workspace        @relation(fields: [workspaceId], references: [id])
+
+  @@map("workspace_invitations")
 }
 
 model User {

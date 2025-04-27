@@ -118,7 +118,7 @@ async function upsertUser(claims: any) {
     
     const role = isAdmin ? "ADMIN" : "CLIENT";
     
-    // Create new user
+    // Create new user first without workspace assignment
     const newUser = await storage.createUser({
       id: claims.sub,
       username: claims.username,
@@ -134,6 +134,43 @@ async function upsertUser(claims: any) {
       role
     });
     
+    // If user has email, check for pending invitations
+    if (claims.email) {
+      const pendingInvitation = await prisma.workspaceInvitation.findFirst({
+        where: {
+          email: claims.email,
+          status: "PENDING",
+          expiresAt: {
+            gte: new Date() // Not expired
+          }
+        },
+        include: {
+          workspace: true
+        }
+      });
+      
+      if (pendingInvitation) {
+        // Assign user to the invited workspace
+        await prisma.user.update({
+          where: { id: newUser.id },
+          data: {
+            workspaceId: pendingInvitation.workspaceId
+          }
+        });
+        
+        // Update invitation status
+        await prisma.workspaceInvitation.update({
+          where: { id: pendingInvitation.id },
+          data: {
+            status: "ACCEPTED"
+          }
+        });
+        
+        console.log(`User ${newUser.username} accepted workspace invitation for ${pendingInvitation.workspace.name}`);
+        return newUser;
+      }
+    }
+    
     // If admin, check if default workspace exists, if not create it
     if (role === "ADMIN") {
       const workspace = await prisma.workspace.findFirst();
@@ -148,8 +185,8 @@ async function upsertUser(claims: any) {
           }
         });
       }
-    } else if (role === "CLIENT") {
-      // For clients, create their own workspace
+    } else if (role === "CLIENT" && !newUser.workspaceId) {
+      // For clients without workspace assignment (no invitation), create their own workspace
       const clientWorkspace = await prisma.workspace.create({
         data: {
           name: `${claims.username}'s Workspace`,

@@ -245,7 +245,7 @@ router.post("/api/workspaces/:id/users", isAuthenticated, isAdmin, async (req: A
         const invitation = await prisma.workspaceInvitation.create({
           data: {
             email,
-            workspaceId: id,
+            workspace: { connect: { id } },
             status: "PENDING",
             expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
           }
@@ -258,6 +258,9 @@ router.post("/api/workspaces/:id/users", isAuthenticated, isAdmin, async (req: A
         });
       }
     }
+    
+    // Default response if neither userId nor email is provided (shouldn't happen due to validation)
+    return res.status(400).json({ message: "Missing required user identification" });
   } catch (error) {
     console.error("Error adding user to workspace:", error);
     return res.status(500).json({ message: "Failed to add user to workspace" });
