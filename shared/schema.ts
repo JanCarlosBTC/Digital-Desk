@@ -26,13 +26,13 @@ export const demoUserSchema = z.object({
 
 // Brain Dump schema
 export const insertBrainDumpSchema = z.object({
-  userId: z.number().int().positive(),
+  userId: z.string(),
   content: z.string().optional(),
 });
 
 // Problem Tree schema
 export const insertProblemTreeSchema = z.object({
-  userId: z.number().int().positive(),
+  userId: z.string(),
   title: z.string().min(1, "Title is required"),
   mainProblem: z.string().min(1, "Main problem is required"),
   subProblems: z.array(z.string()),
@@ -43,7 +43,7 @@ export const insertProblemTreeSchema = z.object({
 
 // Drafted Plans schema
 export const insertDraftedPlanSchema = z.object({
-  userId: z.number().int().positive(),
+  userId: z.string(),
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   status: z.string().default("Draft"),
@@ -56,7 +56,7 @@ export const insertDraftedPlanSchema = z.object({
 
 // Clarity Lab schema
 export const insertClarityLabSchema = z.object({
-  userId: z.number().int().positive(),
+  userId: z.string(),
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   category: z.string().min(1, "Category is required"),
@@ -64,7 +64,7 @@ export const insertClarityLabSchema = z.object({
 
 // Weekly Reflections schema
 export const insertWeeklyReflectionSchema = z.object({
-  userId: z.number().int().positive(),
+  userId: z.string(),
   weekDate: z.preprocess(
     (val) => (typeof val === 'string' ? new Date(val) : val),
     z.date({
@@ -81,7 +81,7 @@ export const insertWeeklyReflectionSchema = z.object({
 
 // Monthly Check-ins schema
 export const insertMonthlyCheckInSchema = z.object({
-  userId: z.number().int().positive(),
+  userId: z.string(),
   month: z.number().int().min(1).max(12),
   year: z.number().int().min(2000),
   completedOn: z.preprocess(
@@ -101,14 +101,14 @@ export const insertMonthlyCheckInSchema = z.object({
 
 // Priorities schema
 export const insertPrioritySchema = z.object({
-  userId: z.number().int().positive(),
+  userId: z.string(),
   priority: z.string().min(1, "Priority is required"),
   order: z.number().int().nonnegative(),
 });
 
 // Decision Log schema
 export const insertDecisionSchema = z.object({
-  userId: z.number().int().positive(),
+  userId: z.string(),
   title: z.string().min(1, "Title is required"),
   category: z.string().min(1, "Category is required"),
   decisionDate: z.preprocess(
@@ -131,7 +131,7 @@ export const insertDecisionSchema = z.object({
 
 // Offer Vault schema
 export const insertOfferSchema = z.object({
-  userId: z.number().int().positive(),
+  userId: z.string(),
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   status: z.string().default("Active"),
@@ -148,13 +148,13 @@ export const insertOfferSchema = z.object({
 
 // Offer Notes schema
 export const insertOfferNoteSchema = z.object({
-  userId: z.number().int().positive(),
+  userId: z.string(),
   content: z.string(),
 });
 
 // Activity schema
 export const insertActivitySchema = z.object({
-  userId: z.number().int().positive(),
+  userId: z.string(),
   type: z.string().min(1, "Activity type is required"),
   entityType: z.string().min(1, "Entity type is required"),
   entityName: z.string().min(1, "Entity name is required"),

@@ -18,20 +18,15 @@ import { withAuth, withAuthAndUser, withDevAuth } from "./middleware/auth-wrappe
 // The Request interface is now augmented via server/types/express.d.ts
 
 /**
- * Helper function to safely parse an ID from request parameters
+ * Helper function to safely validate an ID from request parameters
  */
-function parseAndValidateId(id: string | undefined, res: Response): number | undefined {
+function parseAndValidateId(id: string | undefined, res: Response): string | undefined {
   if (id === undefined) {
     res.status(400).json({ message: "ID parameter is required" });
     return undefined;
   }
-  const idStr = String(id);
-  const parsedId = parseInt(idStr);
-  if (isNaN(parsedId)) {
-    res.status(400).json({ message: "Invalid ID format" });
-    return undefined;
-  }
-  return parsedId;
+  // Just return the ID string as we're using string IDs now with Replit Auth
+  return String(id);
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -52,16 +47,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/brain-dump', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       // User ID comes from auth middleware - will always have a value due to withAuthAndUser
-      const userId = req.userId as number;
+      const userId = req.userId ? String(req.userId) : "";
       
-      const brainDump = await storage.getBrainDumpByUserId(userId);
+      const brainDumps = await storage.getBrainDumps(userId);
       
       // Only return data if found
-      if (!brainDump) {
+      if (!brainDumps || brainDumps.length === 0) {
         return res.status(404).json({ message: "Brain dump not found" });
       }
       
-      return res.json(brainDump || {content: ""});
+      return res.json(brainDumps[0] || {content: ""});
     } catch (error) {
       return res.status(500).json({ message: "Error fetching brain dump" });
     }
@@ -70,7 +65,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/brain-dump', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const data = {
-        userId: req.userId as number, // User ID comes from auth middleware
+        userId: req.userId ? String(req.userId) : "", // User ID comes from auth middleware
         content: req.body.content
       };
       const validatedData = insertBrainDumpSchema.parse(data);
@@ -97,14 +92,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Validate user owns this brain dump (in production)
       if (process.env.NODE_ENV === 'production') {
-        // Use getBrainDumpByUserId which is available in the storage interface
-        const existingBrainDump = await storage.getBrainDumpByUserId(req.userId as number);
+        // Use getBrainDumps which is available in the storage interface
+        const existingBrainDumps = await storage.getBrainDumps(req.userId as string);
+        const existingBrainDump = existingBrainDumps && existingBrainDumps.length > 0 ? existingBrainDumps[0] : null;
         if (!existingBrainDump || existingBrainDump.id !== parsedId) {
           return res.status(403).json({ message: "Not authorized to update this brain dump" });
         }
       }
       
-      const updatedBrainDump = await storage.updateBrainDump(parsedId, content);
+      const updatedBrainDump = await storage.updateBrainDump(parseInt(parsedId.toString()), content);
       if (!updatedBrainDump) {
         return res.status(404).json({ message: "Brain dump not found" });
       }
@@ -119,7 +115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Problem Tree endpoints - secured with auth wrapper
   app.get('/api/problem-trees', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const problemTrees = await storage.getProblemTrees(req.userId as number);
+      const problemTrees = await storage.getProblemTrees(req.userId as string);
       return res.json(problemTrees);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching problem trees" });
@@ -129,7 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/problem-trees', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const data = {
-        userId: req.userId as number,
+        userId: req.userId ? String(req.userId) : "",
         ...req.body
       };
       const validatedData = insertProblemTreeSchema.parse(data);
@@ -205,7 +201,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Drafted Plans endpoints - Secured with auth wrapper
   app.get('/api/drafted-plans', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const draftedPlans = await storage.getDraftedPlans(req.userId as number);
+      const draftedPlans = await storage.getDraftedPlans(req.userId as string);
       return res.json(draftedPlans);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching drafted plans" });
@@ -215,7 +211,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/drafted-plans', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const data = { 
-        userId: req.userId as number, 
+        userId: req.userId ? String(req.userId) : "", 
         ...req.body 
       };
       const validatedData = insertDraftedPlanSchema.parse(data);
@@ -280,7 +276,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/clarity-labs', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const category = req.query.category as string | undefined;
-      const clarityLabs = await storage.getClarityLabs(req.userId as number, category);
+      const clarityLabs = await storage.getClarityLabs(req.userId as string);
       return res.json(clarityLabs);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching clarity labs" });
@@ -290,7 +286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/clarity-labs', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const data = { 
-        userId: req.userId as number, 
+        userId: req.userId ? String(req.userId) : "", 
         ...req.body 
       };
       const validatedData = insertClarityLabSchema.parse(data);
@@ -354,7 +350,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Weekly Reflections endpoints - Secured with auth wrapper
   app.get('/api/weekly-reflections', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const weeklyReflections = await storage.getWeeklyReflections(req.userId as number);
+      const weeklyReflections = await storage.getWeeklyReflections(req.userId as string);
       return res.json(weeklyReflections);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching weekly reflections" });
@@ -367,7 +363,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Creating weekly reflection - request body:', JSON.stringify(req.body));
       
       const data = { 
-        userId: req.userId as number, 
+        userId: req.userId ? String(req.userId) : "", 
         ...req.body 
       };
       
@@ -468,7 +464,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Monthly Check-ins endpoints - Secured with auth wrapper
   app.get('/api/monthly-check-ins', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const monthlyCheckIns = await storage.getMonthlyCheckIns(req.userId as number);
+      const monthlyCheckIns = await storage.getMonthlyCheckIns(req.userId as string);
       return res.json(monthlyCheckIns);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching monthly check-ins" });
@@ -478,7 +474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/monthly-check-ins', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const data = { 
-        userId: req.userId as number, 
+        userId: req.userId ? String(req.userId) : "", 
         ...req.body 
       };
       const validatedData = insertMonthlyCheckInSchema.parse(data);
@@ -505,7 +501,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const monthlyCheckIn = await storage.getMonthlyCheckInByMonthYear(
-        req.userId as number, 
+        req.userId as string, 
         parsedMonth, 
         parsedYear
       );
@@ -531,7 +527,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // In production, verify user owns this monthly check-in
       if (process.env.NODE_ENV === 'production') {
         // Get monthly check-ins for user to verify ownership
-        const userCheckIns = await storage.getMonthlyCheckIns(req.userId as number);
+        const userCheckIns = await storage.getMonthlyCheckIns(req.userId as string);
         const checkInExists = userCheckIns.some(checkIn => checkIn.id === parsedId);
         
         if (!checkInExists) {
@@ -552,7 +548,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Priorities endpoints - Secured with auth wrapper
   app.get('/api/priorities', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const priorities = await storage.getPriorities(req.userId as number);
+      const priorities = await storage.getPriorities(req.userId as string);
       return res.json(priorities);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching priorities" });
@@ -562,7 +558,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/priorities', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const data = { 
-        userId: req.userId as number, 
+        userId: req.userId as string, 
         ...req.body 
       };
       const validatedData = insertPrioritySchema.parse(data);
@@ -584,7 +580,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // In production, verify user owns this priority
       if (process.env.NODE_ENV === 'production') {
         // Get all user priorities to verify ownership
-        const userPriorities = await storage.getPriorities(req.userId as number);
+        const userPriorities = await storage.getPriorities(req.userId as string);
         const priorityExists = userPriorities.some(priority => priority.id === parsedId);
         
         if (!priorityExists) {
@@ -611,7 +607,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // In production, verify user owns this priority
       if (process.env.NODE_ENV === 'production') {
         // Get all user priorities to verify ownership
-        const userPriorities = await storage.getPriorities(req.userId as number);
+        const userPriorities = await storage.getPriorities(req.userId as string);
         const priorityExists = userPriorities.some(priority => priority.id === parsedId);
         
         if (!priorityExists) {
@@ -632,7 +628,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Decision Log endpoints - Protected with auth wrapper
   app.get('/api/decisions', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const decisions = await storage.getDecisions(req.userId as number);
+      const decisions = await storage.getDecisions(req.userId as string);
       return res.json(decisions);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching decisions" });
@@ -644,7 +640,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Received decision creation request with body:", JSON.stringify(req.body, null, 2));
       
       const data = { 
-        userId: req.userId as number, 
+        userId: req.userId as string, 
         ...req.body 
       };
       
@@ -688,13 +684,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this decision
       if (process.env.NODE_ENV === 'production') {
-        const decision = await storage.getDecision(parsedId);
+        const decision = await storage.getDecision(parseInt(parsedId.toString()));
         if (!decision || decision.userId !== req.userId) {
           return res.status(403).json({ message: "Not authorized to update this decision" });
         }
       }
 
-      const updatedDecision = await storage.updateDecision(parsedId, data);
+      const updatedDecision = await storage.updateDecision(parseInt(parsedId.toString()), data);
       if (!updatedDecision) {
         return res.status(404).json({ message: "Decision not found after update" });
       }
@@ -715,14 +711,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this decision
       if (process.env.NODE_ENV === 'production') {
-        const decision = await storage.getDecision(parsedId);
+        const decision = await storage.getDecision(parseInt(parsedId.toString()));
         if (!decision || decision.userId !== req.userId) {
           return res.status(403).json({ message: "Not authorized to delete this decision" });
         }
       }
 
-      const deleted = await storage.deleteDecision(parsedId);
-      if (!deleted) {
+      const deleted = await storage.deleteDecision(parseInt(parsedId.toString()));
+      // Check the result and return appropriate status
+      if (deleted === false) { // checking for explicit false, not falsy values
         return res.status(404).json({ message: "Decision not found after delete attempt" });
       }
       return res.status(204).end();
@@ -734,7 +731,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Offer Vault endpoints - Secured with auth wrapper
   app.get('/api/offers', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const offers = await storage.getOffers(req.userId as number);
+      const offers = await storage.getOffers(req.userId as string);
       return res.json(offers);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching offers" });
@@ -744,7 +741,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/offers', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const data = { 
-        userId: req.userId as number, 
+        userId: req.userId as string, 
         ...req.body 
       };
       const validatedData = insertOfferSchema.parse(data);
@@ -764,13 +761,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this offer
       if (process.env.NODE_ENV === 'production') {
-        const offer = await storage.getOffer(parsedId);
+        const offer = await storage.getOffer(parseInt(parsedId.toString()));
         if (!offer || offer.userId !== req.userId) {
           return res.status(403).json({ message: "Not authorized to update this offer" });
         }
       }
 
-      const updatedOffer = await storage.updateOffer(parsedId, data);
+      const updatedOffer = await storage.updateOffer(parseInt(parsedId.toString()), data);
       if (!updatedOffer) {
         return res.status(404).json({ message: "Offer not found after update" });
       }
@@ -788,14 +785,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this offer
       if (process.env.NODE_ENV === 'production') {
-        const offer = await storage.getOffer(parsedId);
+        const offer = await storage.getOffer(parseInt(parsedId.toString()));
         if (!offer || offer.userId !== req.userId) {
           return res.status(403).json({ message: "Not authorized to delete this offer" });
         }
       }
 
-      const deleted = await storage.deleteOffer(parsedId);
-      if (!deleted) {
+      const deleted = await storage.deleteOffer(parseInt(parsedId.toString()));
+      // Check the result and return appropriate status
+      if (deleted === false) { // checking for explicit false, not falsy values
         return res.status(404).json({ message: "Offer not found after delete attempt" });
       }
       return res.status(204).end();
@@ -807,12 +805,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Offer Notes endpoints - Secured with auth wrapper
   app.get('/api/offer-notes', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      let offerNotes = await storage.getOfferNotesByUserId(req.userId as number);
+      let offerNotes = await storage.getOfferNotesByUserId(req.userId as string);
       
       // Create empty notes if none exist
       if (!offerNotes || offerNotes.length === 0) {
         const newNote = await storage.createOfferNote({ 
-          userId: req.userId as number, 
+          userId: req.userId as string, 
           content: "" 
         });
         offerNotes = [newNote];
@@ -839,7 +837,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // In production, verify user owns these notes
       if (process.env.NODE_ENV === 'production') {
         // Fetch all user's notes to check ownership
-        const userNotes = await storage.getOfferNotesByUserId(req.userId as number);
+        const userNotes = await storage.getOfferNotesByUserId(req.userId as string);
         const noteExists = userNotes.some(note => note.id === parsedId);
         
         if (!noteExists) {
@@ -847,7 +845,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      const updatedOfferNote = await storage.updateOfferNote(parsedId, content);
+      const updatedOfferNote = await storage.updateOfferNote(parseInt(parsedId.toString()), content);
       if (!updatedOfferNote) {
         return res.status(404).json({ message: "Offer notes not found" });
       }

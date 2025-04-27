@@ -12,6 +12,7 @@ export interface IStorage {
   // Brain dump operations
   getBrainDumps(userId: string): Promise<any[]>;
   createBrainDump(data: any): Promise<any>;
+  updateBrainDump(id: number, content: string): Promise<any>;
   
   // Problem tree operations
   getProblemTrees(userId: string): Promise<any[]>; 
@@ -96,6 +97,13 @@ export class DatabaseStorage implements IStorage {
   async createBrainDump(data: any): Promise<any> {
     return await prisma.brainDump.create({
       data
+    });
+  }
+  
+  async updateBrainDump(id: number, content: string): Promise<any> {
+    return await prisma.brainDump.update({
+      where: { id },
+      data: { content }
     });
   }
   
@@ -261,7 +269,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Priorities operations
-  async getPriorities(userId: number): Promise<any[]> {
+  async getPriorities(userId: string): Promise<any[]> {
     return await prisma.priority.findMany({
       where: { userId }
     });
@@ -287,7 +295,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Decisions operations
-  async getDecisions(userId: number): Promise<any[]> {
+  async getDecisions(userId: string): Promise<any[]> {
     return await prisma.decision.findMany({
       where: { userId }
     });
@@ -319,7 +327,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Offers operations
-  async getOffers(userId: number): Promise<any[]> {
+  async getOffers(userId: string): Promise<any[]> {
     return await prisma.offer.findMany({
       where: { userId }
     });
@@ -351,7 +359,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Offer Notes operations
-  async getOfferNotesByUserId(userId: number): Promise<any[]> {
+  async getOfferNotesByUserId(userId: string): Promise<any[]> {
     return await prisma.offerNote.findMany({
       where: { userId }
     });
