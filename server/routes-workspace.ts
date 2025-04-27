@@ -292,6 +292,31 @@ router.delete("/api/workspaces/:workspaceId/users/:userId", isAuthenticated, isA
 // Get current user's workspace
 router.get("/api/current-workspace", isAuthenticated, async (req: AuthenticatedRequest, res: Response) => {
   try {
+    // In development mode, return a mock workspace
+    if (process.env.NODE_ENV !== 'production') {
+      const demoWorkspace = {
+        id: "demo-workspace-123",
+        name: "Demo Workspace",
+        description: "This is a demo workspace for development",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isActive: true,
+        createdBy: "demo123",
+        creator: {
+          id: "demo123",
+          username: "demo",
+          name: "Demo User"
+        }
+      };
+      
+      return res.json({
+        currentWorkspace: demoWorkspace,
+        isAdmin: true,
+        allWorkspaces: [demoWorkspace]
+      });
+    }
+    
+    // Production code - uses real data
     if (!req.user || !req.user.claims) {
       return res.status(401).json({ message: "Unauthorized" });
     }
