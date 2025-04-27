@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import ToolCard from "@/components/tool-card";
 import { BrainIcon, ClipboardCheckIcon, ListChecksIcon, ArchiveIcon, LogInIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,9 +29,13 @@ const Home = () => {
           <div className="text-sm text-gray-600">
             <span>Welcome back, </span>
             <span className="font-semibold">
-              {typeof user === 'object' && 'username' in user 
-                ? String(user.username) 
-                : 'Guest'}
+              {(() => {
+                // Using IIFE to create a proper typed context
+                if (typeof user === 'object' && user !== null && 'username' in user) {
+                  return String(user.username);
+                }
+                return 'Guest';
+              })() as ReactNode}
             </span>
           </div>
         )}

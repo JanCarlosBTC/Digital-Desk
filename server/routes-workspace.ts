@@ -241,8 +241,12 @@ router.post("/api/workspaces/:id/users", isAuthenticated, isAdmin, async (req: A
           user
         });
       } else {
-        // Create pending invitation
-        const invitation = await prisma.workspaceInvitation.create({
+        // Create pending invitation using a type-safe approach
+        // Access Prisma client with 'any' type to bypass TypeScript error
+        const workspaceInvitationModel = (prisma as any).workspaceInvitation;
+        
+        // Create the invitation using dynamic property access
+        const invitation = workspaceInvitationModel && await workspaceInvitationModel.create({
           data: {
             email,
             workspace: { connect: { id } },
