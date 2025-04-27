@@ -49,7 +49,7 @@ export async function setupAuth(app: Express) {
   app.get("/api/login", (req, res) => {
     // In production, this would redirect to Replit OAuth
     // For now, we'll redirect to a mock login page
-    res.redirect("/auth");
+    res.redirect("/login");
   });
   
   // Callback route that would normally process the OAuth response
