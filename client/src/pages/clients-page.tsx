@@ -1,13 +1,17 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, RefreshCw, User, Link2, Clipboard, Check } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -19,16 +23,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Plus, RefreshCw, User, Link2, Check, Clipboard } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -112,7 +110,7 @@ export default function ClientsPage() {
       resetForm();
     },
     onError: (error) => {
-      handleApiError(error, toast);
+      handleApiErrorWithToast(error, toast);
     }
   });
 
@@ -130,7 +128,7 @@ export default function ClientsPage() {
       });
     },
     onError: (error) => {
-      handleApiError(error, toast);
+      handleApiErrorWithToast(error, toast);
     }
   });
 
