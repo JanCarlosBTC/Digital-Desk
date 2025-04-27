@@ -4,7 +4,6 @@ import { Express, Request, Response, NextFunction } from 'express';
 import session from 'express-session';
 import { scrypt, randomBytes, timingSafeEqual } from 'crypto';
 import { promisify } from 'util';
-import { storage } from './storage.js';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { fromZodError } from 'zod-validation-error';
@@ -34,8 +33,6 @@ const scryptAsync = promisify(scrypt);
 export const userSchema = z.object({
   username: z.string().min(3).max(50),
   email: z.string().email().optional().nullable(),
-  firstName: z.string().optional().nullable(),
-  lastName: z.string().optional().nullable(),
   password: z.string().min(6).max(100),
   name: z.string().min(1).max(100),
   initials: z.string().min(1).max(4),
@@ -51,10 +48,6 @@ export interface UserData {
   id: string;
   username: string;
   email?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  bio?: string | null;
-  profileImageUrl?: string | null;
   password: string;
   name: string;
   initials: string;
@@ -130,12 +123,7 @@ export function setupAuth(app: Express) {
         initials: user.initials,
         email: user.email,
         isAdmin: user.isAdmin,
-        claims: {
-          sub: user.id,
-          email: user.email,
-          username: user.username,
-          name: user.name
-        }
+        lastLogin: user.lastLogin
       });
     } catch (error) {
       return done(error);
@@ -159,19 +147,14 @@ export function setupAuth(app: Express) {
       }
       
       // Return user data
-      done(null, {
+      return done(null, {
         id: user.id,
         username: user.username,
         name: user.name,
         initials: user.initials,
         email: user.email,
         isAdmin: user.isAdmin,
-        claims: {
-          sub: user.id,
-          email: user.email,
-          username: user.username,
-          name: user.name
-        }
+        lastLogin: user.lastLogin
       });
     } catch (error) {
       done(error);
@@ -313,7 +296,7 @@ export function setupAuth(app: Express) {
       if (err) {
         return res.status(500).json({ message: 'Logout failed' });
       }
-      res.json({ message: 'Logged out successfully' });
+      return res.json({ message: 'Logged out successfully' });
     });
   });
   
@@ -322,7 +305,7 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: 'Not authenticated' });
     }
-    res.json({
+    return res.json({
       id: req.user.id,
       username: req.user.username,
       name: req.user.name,
