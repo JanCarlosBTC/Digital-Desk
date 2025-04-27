@@ -1,24 +1,14 @@
 import { Router } from 'express';
-import type { Response } from 'express';
-import { isAuthenticated, AuthenticatedRequest } from './replitAuth.js';
-import { authStorage } from './prisma-replit-auth.js';
+import type { Response, Request } from 'express';
 
 const router = Router();
 
-// Endpoint to get the current authenticated user
-router.get('/auth/user', isAuthenticated, async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    if (!req.user || !req.user.claims) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    
-    const userId = req.user.claims.sub;
-    const user = await authStorage.getUser(userId);
-    return res.json(user);
-  } catch (error) {
-    console.error("Error fetching user:", error);
-    return res.status(500).json({ message: "Failed to fetch user information" });
-  }
+// Just redirect all calls to the main auth endpoints
+// This is needed because the client is still using /api/auth/user
+router.get('/auth/user', (req: Request, res: Response) => {
+  console.log("Redirecting from /api/auth/user to /api/user");
+  req.url = '/api/user';
+  return res.redirect('/api/user');
 });
 
 export default router;

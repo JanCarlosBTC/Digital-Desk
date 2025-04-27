@@ -30,21 +30,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated
   } = useAuth();
   
-  // Redirect to Replit Auth login page
+  // Redirect to login page
   const login = () => {
-    // In a real implementation, this would redirect to login
-    window.location.href = '/api/auth/login';
+    // For local authentication, we'll redirect to the login form
+    window.location.href = '/api/login';
   };
 
-  // Logout using Replit Auth
+  // Logout using local auth
   const logout = () => {
-    // In a real implementation, this would call a logout endpoint
-    fetch('/api/auth/logout', { method: 'POST' })
+    fetch('/api/logout', { method: 'POST' })
       .then(() => {
         queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
         toast({
           title: 'Logged out',
           description: 'You have been logged out successfully',
+        });
+      })
+      .catch(error => {
+        console.error('Logout error:', error);
+        toast({
+          title: 'Logout failed',
+          description: 'There was an error logging out. Please try again.',
+          variant: 'destructive'
         });
       });
   };
