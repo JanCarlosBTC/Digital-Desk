@@ -32,7 +32,11 @@ function parseAndValidateId(id: string | undefined, res: Response): string | und
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Authentication has been removed - no setup needed
+  // Setup Replit Auth
+  await setupAuth(app);
+  
+  // Register auth routes
+  app.use('/api', authRoutes);
   
   const handleZodError = (error: unknown, res: Response): Response => {
     if (error instanceof ZodError) {
