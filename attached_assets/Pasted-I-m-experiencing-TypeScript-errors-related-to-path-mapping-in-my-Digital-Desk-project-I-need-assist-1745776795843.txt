@@ -1,0 +1,35 @@
+I'm experiencing TypeScript errors related to path mapping in my Digital-Desk project. I need assistance implementing the following configuration changes:
+Issue Description:
+After converting JavaScript components to TypeScript (.tsx), the application is failing to resolve import paths. The TypeScript compiler is looking for the original .js files but they now exist as .tsx files.
+Required Changes:
+Please update my tsconfig.json file with the following path mappings:
+json
+{
+  "compilerOptions": {
+    "paths": {
+      "../../../shared/components/atoms/button": ["./shared/components/atoms/button.tsx"],
+      "../../../shared/components/atoms/button.js": ["./shared/components/atoms/button.tsx"],
+      "../../../shared/components/molecules/card": ["./shared/components/molecules/card.tsx"],
+      "../../../shared/components/molecules/card.js": ["./shared/components/molecules/card.tsx"],
+      "../../../shared/components/organisms/dashboard-panel": ["./shared/components/organisms/dashboard-panel.tsx"],
+      "../../../shared/components/organisms/dashboard-panel.js": ["./shared/components/organisms/dashboard-panel.tsx"],
+      "../../../../shared/components/atoms/button": ["./shared/components/atoms/button.tsx"],
+      "../../../../shared/components/atoms/button.js": ["./shared/components/atoms/button.tsx"],
+      "../../../../shared/components/molecules/card": ["./shared/components/molecules/card.tsx"],
+      "../../../../shared/components/molecules/card.js": ["./shared/components/molecules/card.tsx"],
+      "../../../../shared/components/organisms/dashboard-panel": ["./shared/components/organisms/dashboard-panel.tsx"],
+      "../../../../shared/components/organisms/dashboard-panel.js": ["./shared/components/organisms/dashboard-panel.tsx"],
+      "@shared/schema": ["./shared/schema.ts"]
+    },
+    "baseUrl": ".",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node"
+  }
+}
+Please ensure these additional settings are applied:
+Set "baseUrl" to "." (the project root)
+Enable "allowJs" to allow importing JavaScript files
+Set "moduleResolution" to "node" for proper path resolution
+If there's a more elegant solution than listing all these explicit paths, please let me know. I'm open to alternative approaches that would achieve the same result.
+Thank you for your assistance!

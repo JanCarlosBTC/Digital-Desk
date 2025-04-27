@@ -43,37 +43,19 @@
       "@hooks/*": ["./client/src/hooks/*"],
       "@features/*": ["./client/src/features/*"],
       
-      /* Component path mappings for JS to TS conversion */
-      "*/atoms/button": ["./shared/components/atoms/button.tsx"],
-      "*/atoms/button.js": ["./shared/components/atoms/button.tsx"],
-      "*/molecules/card": ["./shared/components/molecules/card.tsx"],
-      "*/molecules/card.js": ["./shared/components/molecules/card.tsx"],
-      "*/organisms/dashboard-panel": ["./shared/components/organisms/dashboard-panel.tsx"],
-      "*/organisms/dashboard-panel.js": ["./shared/components/organisms/dashboard-panel.tsx"],
-      
-      /* Handle wild imports with multiple path segments */
-      "*/*/atoms/button": ["./shared/components/atoms/button.tsx"],
-      "*/*/atoms/button.js": ["./shared/components/atoms/button.tsx"],
-      "*/*/molecules/card": ["./shared/components/molecules/card.tsx"],
-      "*/*/molecules/card.js": ["./shared/components/molecules/card.tsx"],
-      "*/*/organisms/dashboard-panel": ["./shared/components/organisms/dashboard-panel.tsx"],
-      "*/*/organisms/dashboard-panel.js": ["./shared/components/organisms/dashboard-panel.tsx"],
-      
-      /* Handle deep imports with multiple path segments */
-      "*/*/*/atoms/button": ["./shared/components/atoms/button.tsx"],
-      "*/*/*/atoms/button.js": ["./shared/components/atoms/button.tsx"],
-      "*/*/*/molecules/card": ["./shared/components/molecules/card.tsx"],
-      "*/*/*/molecules/card.js": ["./shared/components/molecules/card.tsx"],
-      "*/*/*/organisms/dashboard-panel": ["./shared/components/organisms/dashboard-panel.tsx"],
-      "*/*/*/organisms/dashboard-panel.js": ["./shared/components/organisms/dashboard-panel.tsx"],
-      
-      /* Handle very deep imports with multiple path segments */
-      "**/*/*/*/atoms/button": ["./shared/components/atoms/button.tsx"],
-      "**/*/*/*/atoms/button.js": ["./shared/components/atoms/button.tsx"],
-      "**/*/*/*/molecules/card": ["./shared/components/molecules/card.tsx"],
-      "**/*/*/*/molecules/card.js": ["./shared/components/molecules/card.tsx"],
-      "**/*/*/*/organisms/dashboard-panel": ["./shared/components/organisms/dashboard-panel.tsx"],
-      "**/*/*/*/organisms/dashboard-panel.js": ["./shared/components/organisms/dashboard-panel.tsx"]
+      /* Specific relative path mappings as requested */
+      "../../../shared/components/atoms/button": ["./shared/components/atoms/button.tsx"],
+      "../../../shared/components/atoms/button.js": ["./shared/components/atoms/button.tsx"],
+      "../../../shared/components/molecules/card": ["./shared/components/molecules/card.tsx"],
+      "../../../shared/components/molecules/card.js": ["./shared/components/molecules/card.tsx"],
+      "../../../shared/components/organisms/dashboard-panel": ["./shared/components/organisms/dashboard-panel.tsx"],
+      "../../../shared/components/organisms/dashboard-panel.js": ["./shared/components/organisms/dashboard-panel.tsx"],
+      "../../../../shared/components/atoms/button": ["./shared/components/atoms/button.tsx"],
+      "../../../../shared/components/atoms/button.js": ["./shared/components/atoms/button.tsx"],
+      "../../../../shared/components/molecules/card": ["./shared/components/molecules/card.tsx"],
+      "../../../../shared/components/molecules/card.js": ["./shared/components/molecules/card.tsx"],
+      "../../../../shared/components/organisms/dashboard-panel": ["./shared/components/organisms/dashboard-panel.tsx"],
+      "../../../../shared/components/organisms/dashboard-panel.js": ["./shared/components/organisms/dashboard-panel.tsx"]
     },
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
