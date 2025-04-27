@@ -1,13 +1,36 @@
 import React from "react";
 import ToolCard from "@/components/tool-card";
-import { BrainIcon, ClipboardCheckIcon, ListChecksIcon, ArchiveIcon } from "lucide-react";
+import { BrainIcon, ClipboardCheckIcon, ListChecksIcon, ArchiveIcon, LogInIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
 
 const Home = () => {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  
   return (
     <section className="p-6 max-w-6xl mx-auto">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Welcome to your Digital Desk</h1>
-        <p className="text-gray-600 mt-2">Select a tool to get started with your productivity journey</p>
+      <header className="mb-8 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">Welcome to your Digital Desk</h1>
+          <p className="text-gray-600 mt-2">Select a tool to get started with your productivity journey</p>
+        </div>
+        
+        {!isLoading && !isAuthenticated && (
+          <Button asChild variant="outline" className="flex items-center gap-2">
+            <Link href="/api/login">
+              <LogInIcon className="w-4 h-4" />
+              <span>Log In</span>
+            </Link>
+          </Button>
+        )}
+        
+        {!isLoading && isAuthenticated && (
+          <div className="text-sm text-gray-600">
+            <span>Welcome back, </span>
+            <span className="font-semibold">{user?.username}</span>
+          </div>
+        )}
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
