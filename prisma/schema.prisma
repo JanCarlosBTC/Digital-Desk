@@ -76,9 +76,10 @@ model User {
   bio             String?
   profileImageUrl String?   @map("profile_image_url")
   name            String
-  plan            String    @default("Free")
   initials        String
+  isAdmin         Boolean   @default(false) @map("is_admin")
   role            Role      @default(USER)
+  lastLogin       DateTime? @map("last_login")
   workspaceId     String?   @map("workspace_id")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @default(now()) @map("updated_at")
@@ -317,4 +318,14 @@ model ClientAccessToken {
   client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@map("client_access_tokens")
+}
+
+model UserInvite {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  
+  @@map("user_invites")
 }
