@@ -188,6 +188,32 @@ export default function ClientsPage() {
     setIsInviteDialogOpen(true);
   };
 
+  // Delete client mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (clientId: number) => {
+      const response = await apiRequest('DELETE', `/api/clients/${clientId}`);
+      return response.ok;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+      toast({
+        title: 'Success',
+        description: 'Client deleted successfully',
+      });
+      setIsDeleteDialogOpen(false);
+    },
+    onError: (error) => {
+      handleApiErrorWithToast(error, toast);
+    }
+  });
+
+  // Handle client deletion
+  const handleDeleteClient = () => {
+    if (selectedClient) {
+      deleteMutation.mutate(selectedClient.id);
+    }
+  };
+
   // Copy invitation link to clipboard
   const copyToClipboard = async () => {
     if (invitation) {
@@ -358,14 +384,28 @@ export default function ClientsPage() {
                     <TableCell>{client.email}</TableCell>
                     <TableCell>{client.company || '-'}</TableCell>
                     <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleGenerateInvite(client)}
-                      >
-                        <Link2 className="h-4 w-4 mr-2" />
-                        Invite
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleGenerateInvite(client)}
+                        >
+                          <Link2 className="h-4 w-4 mr-2" />
+                          Invite
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => {
+                            setSelectedClient(client);
+                            setIsDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -421,6 +461,28 @@ export default function ClientsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Client</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedClient?.name}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteClient}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
