@@ -36,15 +36,15 @@ interface ScriptMapping {
 
 // Map of script names to file paths
 const scripts: ScriptMapping = {
-  'cleanup-logs': './cleanup_logactivity.js',
-  'copy-controllers': './copy-controllers.js',
-  'update-packages': './update-packages.js',
-  'init-db': './init-db.js',
-  'init-mem-storage': './init-mem-storage.js',
+  'cleanup-logs': './cleanup_logactivity.ts',
+  'copy-controllers': './copy-controllers.ts',
+  'update-packages': './update-packages.ts',
+  'init-db': './init-db.ts',
+  'init-mem-storage': './init-mem-storage.ts',
   'init-prisma-db': './init-prisma-db.ts',
   'migrate-to-prisma': './migrate-to-prisma.ts',
   'update-schema-imports': './update-schema-imports.ts',
-  'db': './db-fix.js'
+  'db': './db-fix.ts'
 };
 
 if (!scriptName) {
