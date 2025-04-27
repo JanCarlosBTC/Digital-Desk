@@ -84,18 +84,26 @@ function updateUserSession(
   user.expires_at = user.claims?.exp;
 }
 
-// First admin's username - REPLACE THIS WITH YOUR USERNAME
+// Admin access configuration
 const ADMIN_USERNAME = "agiledev_agent"; 
+const ADMIN_EMAIL = "v4yl1n@gmail.com"; // Added specific email for admin
 
 async function upsertUser(claims: any) {
   const user = await storage.getUser(claims.sub);
   
   if (user) {
-    // Update existing user
+    // Update existing user with potentially new admin status
+    const isAdmin = 
+      claims.username === ADMIN_USERNAME || 
+      claims.email === ADMIN_EMAIL;
+    
     return await prisma.user.update({
       where: { id: claims.sub },
       data: {
         username: claims.username,
+        email: claims.email,
+        // Update role if this user has admin privileges
+        role: isAdmin ? "ADMIN" : user.role,
         // Fields that currently exist in the schema
         name: claims.first_name || claims.username,
         initials: claims.first_name ? claims.first_name.charAt(0) + (claims.last_name ? claims.last_name.charAt(0) : '') : claims.username.charAt(0)
@@ -103,9 +111,12 @@ async function upsertUser(claims: any) {
     });
   } else {
     // Check if this is first user or admin
-    const isAdmin = claims.username === ADMIN_USERNAME;
-    const userCount = await prisma.user.count();
-    const role = isAdmin || userCount === 0 ? "ADMIN" : "CLIENT";
+    const isAdmin = 
+      claims.username === ADMIN_USERNAME || 
+      claims.email === ADMIN_EMAIL || 
+      await prisma.user.count() === 0;
+    
+    const role = isAdmin ? "ADMIN" : "CLIENT";
     
     // Create new user
     const newUser = await storage.createUser({
