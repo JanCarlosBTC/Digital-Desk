@@ -1,0 +1,54 @@
+The above error occurred in the <NotFound> component:
+
+    at NotFound (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/pages/not-found.tsx:7:3)
+    at Route (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=00e2a6ed:338:16)
+    at Switch (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=00e2a6ed:394:17)
+    at Suspense
+    at div
+    at MotionComponent (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=a8f92aa7:6536:40)
+    at PresenceChild (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=a8f92aa7:7742:24)
+    at AnimatePresence (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=a8f92aa7:7800:26)
+    at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/components/transitions/simple-page-transition.tsx:13:3
+    at div
+    at main
+    at MotionComponent (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=a8f92aa7:6536:40)
+    at div
+    at LazyMotion (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=a8f92aa7:7887:23)
+    at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/components/layout/app-layout.tsx:7:27
+    at Router (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/App.tsx?v=JABbtY1Jsid8jlyjemRwR:27:22)
+    at DemoStorageProvider (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/context/demo-storage-context.tsx:6:39)
+    at UserProvider (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/context/user-context.tsx:17:32)
+    at QueryClientProvider (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=cef92d24:2805:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+
+at NotFound (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/pages/not-found.tsx:7:3)
+at Route (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=00e2a6ed:338:16)
+at Switch (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=00e2a6ed:394:17)
+at Suspense
+at div
+at MotionComponent (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=a8f92aa7:6536:40)
+at PresenceChild (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=a8f92aa7:7742:24)
+at AnimatePresence (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=a8f92aa7:7800:26)
+at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/components/transitions/simple-page-transition.tsx:13:3
+at div
+at main
+at MotionComponent (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=a8f92aa7:6536:40)
+at div
+at LazyMotion (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=a8f92aa7:7887:23)
+at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/components/layout/app-layout.tsx:7:27
+at Router (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/App.tsx?v=JABbtY1Jsid8jlyjemRwR:27:22)
+at DemoStorageProvider (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/context/demo-storage-context.tsx:6:39)
+at UserProvider (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/client/src/context/user-context.tsx:17:32)
+at QueryClientProvider (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=cef92d24:2805:3)
+at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+at t.value (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://2c99c49c-889f-4ff0-96dc-b25f86062046-00-1ktjncdc9115a.spock.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+React is not defined
