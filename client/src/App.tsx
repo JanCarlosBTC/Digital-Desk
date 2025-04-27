@@ -12,6 +12,7 @@ import DecisionLog from "@/pages/decision-log";
 import OfferVault from "@/pages/offer-vault";
 import Login from "@/pages/login";
 import AccountSettings from "@/pages/account-settings";
+import ClientsPage from "@/pages/clients-page";
 import DemoPage from "@/pages/demo-page";
 import { PageTransition } from "@/components/transitions/simple-page-transition";
 import { UserProvider } from "@/context/user-context";
@@ -64,6 +65,9 @@ function Router() {
               </Route>
               <Route path="/account-settings">
                 <ProtectedRoute component={AccountSettings} />
+              </Route>
+              <Route path="/clients">
+                <ProtectedRoute component={ClientsPage} />
               </Route>
               <Route path="/demo" component={DemoPage} />
               <Route component={NotFound} />
