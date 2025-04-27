@@ -41,18 +41,28 @@ export class PrismaStorage implements IStorage {
     });
   }
   // User methods
-  async getUser(id: number): Promise<User | undefined> {
-    const user = await prisma.user.findUnique({
-      where: { id }
-    });
-    return user || undefined;
+  async getUser(id: string): Promise<User | null> {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id }
+      });
+      return user;
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      return null;
+    }
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const user = await prisma.user.findUnique({
-      where: { username }
-    });
-    return user || undefined;
+  async getUserByUsername(username: string): Promise<User | null> {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { username }
+      });
+      return user;
+    } catch (error) {
+      console.error('Error fetching user by username:', error);
+      return null;
+    }
   }
 
   async createUser(user: InsertUser): Promise<User> {
@@ -113,10 +123,15 @@ export class PrismaStorage implements IStorage {
   }
 
   // Problem Tree methods
-  async getProblemTrees(userId: number): Promise<ProblemTree[]> {
-    return await prisma.problemTree.findMany({
-      where: { userId }
-    });
+  async getProblemTrees(userId: string): Promise<ProblemTree[]> {
+    try {
+      return await prisma.problemTree.findMany({
+        where: { userId }
+      });
+    } catch (error) {
+      console.error('Error fetching problem trees:', error);
+      return [];
+    }
   }
 
   async getProblemTree(id: number): Promise<ProblemTree | undefined> {
@@ -220,10 +235,15 @@ export class PrismaStorage implements IStorage {
   }
 
   // Drafted Plans methods
-  async getDraftedPlans(userId: number): Promise<DraftedPlan[]> {
-    return await prisma.draftedPlan.findMany({
-      where: { userId }
-    });
+  async getDraftedPlans(userId: string): Promise<DraftedPlan[]> {
+    try {
+      return await prisma.draftedPlan.findMany({
+        where: { userId }
+      });
+    } catch (error) {
+      console.error('Error fetching drafted plans:', error);
+      return [];
+    }
   }
 
   async getDraftedPlan(id: number): Promise<DraftedPlan | undefined> {
@@ -323,13 +343,18 @@ export class PrismaStorage implements IStorage {
   }
 
   // Clarity Lab methods
-  async getClarityLabs(userId: number, category?: string): Promise<ClarityLab[]> {
-    return await prisma.clarityLab.findMany({
-      where: { 
-        userId,
-        ...(category ? { category } : {})
-      }
-    });
+  async getClarityLabs(userId: string, category?: string): Promise<ClarityLab[]> {
+    try {
+      return await prisma.clarityLab.findMany({
+        where: { 
+          userId,
+          ...(category ? { category } : {})
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching clarity labs:', error);
+      return [];
+    }
   }
 
   async getClarityLab(id: number): Promise<ClarityLab | undefined> {
@@ -368,11 +393,16 @@ export class PrismaStorage implements IStorage {
   }
 
   // Weekly Reflections methods
-  async getWeeklyReflections(userId: number): Promise<WeeklyReflection[]> {
-    return await prisma.weeklyReflection.findMany({
-      where: { userId },
-      orderBy: { weekDate: 'desc' }
-    });
+  async getWeeklyReflections(userId: string): Promise<WeeklyReflection[]> {
+    try {
+      return await prisma.weeklyReflection.findMany({
+        where: { userId },
+        orderBy: { weekDate: 'desc' }
+      });
+    } catch (error) {
+      console.error('Error fetching weekly reflections:', error);
+      return [];
+    }
   }
 
   async getWeeklyReflection(id: number): Promise<WeeklyReflection | undefined> {
@@ -432,21 +462,60 @@ export class PrismaStorage implements IStorage {
   }
 
   // Monthly Check-in methods
-  async getMonthlyCheckIns(userId: number): Promise<MonthlyCheckIn[]> {
-    // First get all check-ins from the database
-    const checkIns = await prisma.monthlyCheckIn.findMany({
-      where: { userId },
-      orderBy: [
-        { year: 'desc' },
-        { month: 'desc' }
-      ]
-    });
-    
-    // Create a new array with properly typed objects
-    const result: MonthlyCheckIn[] = [];
-    
-    // Process each check-in to ensure correct typing
-    for (const checkIn of checkIns) {
+  async getMonthlyCheckIns(userId: string): Promise<MonthlyCheckIn[]> {
+    try {
+      // First get all check-ins from the database
+      const checkIns = await prisma.monthlyCheckIn.findMany({
+        where: { userId },
+        orderBy: [
+          { year: 'desc' },
+          { month: 'desc' }
+        ]
+      });
+      
+      // Create a new array with properly typed objects
+      const result: MonthlyCheckIn[] = [];
+      
+      // Process each check-in to ensure correct typing
+      for (const checkIn of checkIns) {
+        const typedCheckIn: MonthlyCheckIn = {
+          id: checkIn.id,
+          userId: checkIn.userId,
+          month: checkIn.month,
+          year: checkIn.year,
+          completedOn: checkIn.completedOn,
+          achievements: Array.isArray(checkIn.achievements) ? checkIn.achievements : [],
+          challenges: Array.isArray(checkIn.challenges) ? checkIn.challenges : [],
+          nextMonthPriorities: Array.isArray(checkIn.nextMonthPriorities) ? checkIn.nextMonthPriorities : [],
+          // Ensure goalProgress is properly typed
+          goalProgress: this.transformGoalProgress(checkIn.goalProgress),
+          createdAt: checkIn.createdAt,
+          updatedAt: checkIn.updatedAt
+        };
+        
+        result.push(typedCheckIn);
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error fetching monthly check-ins:', error);
+      return [];
+    }
+  }
+
+  async getMonthlyCheckInByMonthYear(userId: string, month: number, year: number): Promise<MonthlyCheckIn | undefined> {
+    try {
+      const checkIn = await prisma.monthlyCheckIn.findFirst({
+        where: { 
+          userId,
+          month,
+          year
+        }
+      });
+      
+      if (!checkIn) return undefined;
+      
+      // Create a properly typed object
       const typedCheckIn: MonthlyCheckIn = {
         id: checkIn.id,
         userId: checkIn.userId,
@@ -462,40 +531,11 @@ export class PrismaStorage implements IStorage {
         updatedAt: checkIn.updatedAt
       };
       
-      result.push(typedCheckIn);
+      return typedCheckIn;
+    } catch (error) {
+      console.error('Error fetching monthly check-in by month/year:', error);
+      return undefined;
     }
-    
-    return result;
-  }
-
-  async getMonthlyCheckInByMonthYear(userId: number, month: number, year: number): Promise<MonthlyCheckIn | undefined> {
-    const checkIn = await prisma.monthlyCheckIn.findFirst({
-      where: { 
-        userId,
-        month,
-        year
-      }
-    });
-    
-    if (!checkIn) return undefined;
-    
-    // Create a properly typed object
-    const typedCheckIn: MonthlyCheckIn = {
-      id: checkIn.id,
-      userId: checkIn.userId,
-      month: checkIn.month,
-      year: checkIn.year,
-      completedOn: checkIn.completedOn,
-      achievements: Array.isArray(checkIn.achievements) ? checkIn.achievements : [],
-      challenges: Array.isArray(checkIn.challenges) ? checkIn.challenges : [],
-      nextMonthPriorities: Array.isArray(checkIn.nextMonthPriorities) ? checkIn.nextMonthPriorities : [],
-      // Ensure goalProgress is properly typed
-      goalProgress: this.transformGoalProgress(checkIn.goalProgress),
-      createdAt: checkIn.createdAt,
-      updatedAt: checkIn.updatedAt
-    };
-    
-    return typedCheckIn;
   }
   
   // Helper method for transforming goalProgress to the correct type
@@ -636,11 +676,16 @@ export class PrismaStorage implements IStorage {
   }
 
   // Priorities methods
-  async getPriorities(userId: number): Promise<Priority[]> {
-    return await prisma.priority.findMany({
-      where: { userId },
-      orderBy: { order: 'asc' }
-    });
+  async getPriorities(userId: string): Promise<Priority[]> {
+    try {
+      return await prisma.priority.findMany({
+        where: { userId },
+        orderBy: { order: 'asc' }
+      });
+    } catch (error) {
+      console.error('Error fetching priorities:', error);
+      return [];
+    }
   }
 
   async createPriority(priority: InsertPriority): Promise<Priority> {
@@ -672,11 +717,16 @@ export class PrismaStorage implements IStorage {
   }
 
   // Decision methods
-  async getDecisions(userId: number): Promise<Decision[]> {
-    return await prisma.decision.findMany({
-      where: { userId },
-      orderBy: { decisionDate: 'desc' }
-    });
+  async getDecisions(userId: string): Promise<Decision[]> {
+    try {
+      return await prisma.decision.findMany({
+        where: { userId },
+        orderBy: { decisionDate: 'desc' }
+      });
+    } catch (error) {
+      console.error('Error fetching decisions:', error);
+      return [];
+    }
   }
 
   async getDecision(id: number): Promise<Decision | undefined> {
@@ -736,11 +786,16 @@ export class PrismaStorage implements IStorage {
   }
 
   // Offer methods
-  async getOffers(userId: number): Promise<Offer[]> {
-    return await prisma.offer.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' }
-    });
+  async getOffers(userId: string): Promise<Offer[]> {
+    try {
+      return await prisma.offer.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' }
+      });
+    } catch (error) {
+      console.error('Error fetching offers:', error);
+      return [];
+    }
   }
 
   async getOffer(id: number): Promise<Offer | undefined> {
@@ -800,11 +855,16 @@ export class PrismaStorage implements IStorage {
   }
 
   // Offer Notes methods
-  async getOfferNotesByUserId(userId: number): Promise<OfferNote[]> {
-    const offerNotes = await prisma.offerNote.findMany({
-      where: { userId }
-    });
-    return offerNotes;
+  async getOfferNotesByUserId(userId: string): Promise<OfferNote[]> {
+    try {
+      const offerNotes = await prisma.offerNote.findMany({
+        where: { userId }
+      });
+      return offerNotes;
+    } catch (error) {
+      console.error('Error fetching offer notes:', error);
+      return [];
+    }
   }
 
   async createOfferNote(offerNote: InsertOfferNote): Promise<OfferNote> {

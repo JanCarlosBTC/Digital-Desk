@@ -93,9 +93,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate user owns this brain dump (in production)
       if (process.env.NODE_ENV === 'production') {
         // Use getBrainDumps which is available in the storage interface
-        const existingBrainDumps = await storage.getBrainDumps(req.userId as string);
+        const existingBrainDumps = await storage.getBrainDumps(req.userId ? String(req.userId) : "");
         const existingBrainDump = existingBrainDumps && existingBrainDumps.length > 0 ? existingBrainDumps[0] : null;
-        if (!existingBrainDump || existingBrainDump.id !== parsedId) {
+        // Explicit conversion for comparison
+        if (!existingBrainDump || parseInt(existingBrainDump.id.toString()) !== parseInt(parsedId.toString())) {
           return res.status(403).json({ message: "Not authorized to update this brain dump" });
         }
       }
@@ -115,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Problem Tree endpoints - secured with auth wrapper
   app.get('/api/problem-trees', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const problemTrees = await storage.getProblemTrees(req.userId as string);
+      const problemTrees = await storage.getProblemTrees(req.userId ? String(req.userId) : "");
       return res.json(problemTrees);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching problem trees" });
@@ -150,13 +151,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this problem tree
       if (process.env.NODE_ENV === 'production') {
-        const problemTree = await storage.getProblemTree(parsedId);
-        if (!problemTree || problemTree.userId !== req.userId) {
+        const problemTree = await storage.getProblemTree(parseInt(parsedId.toString()));
+        if (!problemTree || problemTree.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to update this problem tree" });
         }
       }
 
-      const updatedProblemTree = await storage.updateProblemTree(parsedId, data);
+      const updatedProblemTree = await storage.updateProblemTree(parseInt(parsedId.toString()), data);
       if (!updatedProblemTree) {
         return res.status(404).json({ message: "Problem tree not found" });
       }
@@ -178,16 +179,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this problem tree
       if (process.env.NODE_ENV === 'production') {
-        const problemTree = await storage.getProblemTree(parsedId);
-        if (!problemTree || problemTree.userId !== req.userId) {
+        const problemTree = await storage.getProblemTree(parseInt(parsedId.toString()));
+        if (!problemTree || problemTree.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to delete this problem tree" });
         }
       }
 
-      const deleted = await storage.deleteProblemTree(parsedId);
-      if (!deleted) {
-        return res.status(404).json({ message: "Problem tree not found" });
-      }
+      await storage.deleteProblemTree(parseInt(parsedId.toString()));
       
       // Clear cache after deletion
       clearCacheMiddleware('problem-trees')(req, res, () => {});
@@ -201,7 +199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Drafted Plans endpoints - Secured with auth wrapper
   app.get('/api/drafted-plans', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const draftedPlans = await storage.getDraftedPlans(req.userId as string);
+      const draftedPlans = await storage.getDraftedPlans(req.userId ? String(req.userId) : "");
       return res.json(draftedPlans);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching drafted plans" });
@@ -232,13 +230,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this drafted plan
       if (process.env.NODE_ENV === 'production') {
-        const draftedPlan = await storage.getDraftedPlan(parsedId);
-        if (!draftedPlan || draftedPlan.userId !== req.userId) {
+        const draftedPlan = await storage.getDraftedPlan(parseInt(parsedId.toString()));
+        if (!draftedPlan || draftedPlan.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to update this drafted plan" });
         }
       }
 
-      const updatedDraftedPlan = await storage.updateDraftedPlan(parsedId, data);
+      const updatedDraftedPlan = await storage.updateDraftedPlan(parseInt(parsedId.toString()), data);
       if (!updatedDraftedPlan) {
         return res.status(404).json({ message: "Drafted plan not found" });
       }
@@ -256,14 +254,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this drafted plan
       if (process.env.NODE_ENV === 'production') {
-        const draftedPlan = await storage.getDraftedPlan(parsedId);
-        if (!draftedPlan || draftedPlan.userId !== req.userId) {
+        const draftedPlan = await storage.getDraftedPlan(parseInt(parsedId.toString()));
+        if (!draftedPlan || draftedPlan.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to delete this drafted plan" });
         }
       }
 
-      const deleted = await storage.deleteDraftedPlan(parsedId);
-      if (!deleted) {
+      try {
+        await storage.deleteDraftedPlan(parseInt(parsedId.toString()));
+        // Since deleteDraftedPlan returns void, no check needed
+      } catch (deleteError) {
+        console.error("Error deleting drafted plan:", deleteError);
         return res.status(404).json({ message: "Drafted plan not found" });
       }
       return res.status(204).end();
@@ -276,7 +277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/clarity-labs', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const category = req.query.category as string | undefined;
-      const clarityLabs = await storage.getClarityLabs(req.userId as string);
+      const clarityLabs = await storage.getClarityLabs(req.userId ? String(req.userId) : "");
       return res.json(clarityLabs);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching clarity labs" });
@@ -307,13 +308,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this clarity lab entry
       if (process.env.NODE_ENV === 'production') {
-        const clarityLab = await storage.getClarityLab(parsedId);
-        if (!clarityLab || clarityLab.userId !== req.userId) {
+        const clarityLab = await storage.getClarityLab(parseInt(parsedId.toString()));
+        if (!clarityLab || clarityLab.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to update this clarity lab entry" });
         }
       }
 
-      const updatedClarityLab = await storage.updateClarityLab(parsedId, data);
+      const updatedClarityLab = await storage.updateClarityLab(parseInt(parsedId.toString()), data);
       if (!updatedClarityLab) {
         return res.status(404).json({ message: "Clarity lab entry not found" });
       }
@@ -331,14 +332,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this clarity lab entry
       if (process.env.NODE_ENV === 'production') {
-        const clarityLab = await storage.getClarityLab(parsedId);
-        if (!clarityLab || clarityLab.userId !== req.userId) {
+        const clarityLab = await storage.getClarityLab(parseInt(parsedId.toString()));
+        if (!clarityLab || clarityLab.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to delete this clarity lab entry" });
         }
       }
 
-      const deleted = await storage.deleteClarityLab(parsedId);
-      if (!deleted) {
+      try {
+        await storage.deleteClarityLab(parseInt(parsedId.toString()));
+        // Since deleteClarityLab returns void, we don't check its return value
+      } catch (deleteError) {
+        console.error("Error deleting clarity lab:", deleteError);
         return res.status(404).json({ message: "Clarity lab entry not found" });
       }
       return res.status(204).end();
@@ -350,7 +354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Weekly Reflections endpoints - Secured with auth wrapper
   app.get('/api/weekly-reflections', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const weeklyReflections = await storage.getWeeklyReflections(req.userId as string);
+      const weeklyReflections = await storage.getWeeklyReflections(req.userId ? String(req.userId) : "");
       return res.json(weeklyReflections);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching weekly reflections" });
@@ -402,14 +406,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this weekly reflection
       if (process.env.NODE_ENV === 'production') {
-        const weeklyReflection = await storage.getWeeklyReflection(parsedId);
-        if (!weeklyReflection || weeklyReflection.userId !== req.userId) {
+        const weeklyReflection = await storage.getWeeklyReflection(parseInt(parsedId.toString()));
+        if (!weeklyReflection || weeklyReflection.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to update this weekly reflection" });
         }
       }
 
       try {
-        const updatedWeeklyReflection = await storage.updateWeeklyReflection(parsedId, data);
+        const updatedWeeklyReflection = await storage.updateWeeklyReflection(parseInt(parsedId.toString()), data);
         if (!updatedWeeklyReflection) {
           console.log('Weekly reflection not found:', parsedId);
           return res.status(404).json({ message: "Weekly reflection not found" });
@@ -437,21 +441,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // In production, verify user owns this weekly reflection
       if (process.env.NODE_ENV === 'production') {
-        const reflectionExists = await storage.getWeeklyReflection(parsedId);
-        if (!reflectionExists || reflectionExists.userId !== req.userId) {
+        const reflectionExists = await storage.getWeeklyReflection(parseInt(parsedId.toString()));
+        if (!reflectionExists || reflectionExists.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to delete this weekly reflection" });
         }
       } else {
         // In development, just check if it exists
-        const reflectionExists = await storage.getWeeklyReflection(parsedId);
+        const reflectionExists = await storage.getWeeklyReflection(parseInt(parsedId.toString()));
         if (!reflectionExists) {
           return res.status(404).json({ message: "Weekly reflection not found" });
         }
       }
       
       // Now try to delete it
-      const deleted = await storage.deleteWeeklyReflection(parsedId);
-      if (!deleted) {
+      try {
+        await storage.deleteWeeklyReflection(parseInt(parsedId.toString()));
+        // Since deleteWeeklyReflection returns void, we don't check its return value
+      } catch (deleteError) {
+        console.error("Error deleting weekly reflection:", deleteError);
         return res.status(500).json({ message: "Failed to delete weekly reflection" });
       }
       
@@ -464,7 +471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Monthly Check-ins endpoints - Secured with auth wrapper
   app.get('/api/monthly-check-ins', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const monthlyCheckIns = await storage.getMonthlyCheckIns(req.userId as string);
+      const monthlyCheckIns = await storage.getMonthlyCheckIns(req.userId ? String(req.userId) : "");
       return res.json(monthlyCheckIns);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching monthly check-ins" });
@@ -501,7 +508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const monthlyCheckIn = await storage.getMonthlyCheckInByMonthYear(
-        req.userId as string, 
+        req.userId ? String(req.userId) : "", 
         parsedMonth, 
         parsedYear
       );
@@ -527,7 +534,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // In production, verify user owns this monthly check-in
       if (process.env.NODE_ENV === 'production') {
         // Get monthly check-ins for user to verify ownership
-        const userCheckIns = await storage.getMonthlyCheckIns(req.userId as string);
+        const userCheckIns = await storage.getMonthlyCheckIns(req.userId ? String(req.userId) : "");
         const checkInExists = userCheckIns.some(checkIn => checkIn.id === parsedId);
         
         if (!checkInExists) {
@@ -535,7 +542,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const updatedMonthlyCheckIn = await storage.updateMonthlyCheckIn(parsedId, data);
+      const updatedMonthlyCheckIn = await storage.updateMonthlyCheckIn(parseInt(parsedId.toString()), data);
       if (!updatedMonthlyCheckIn) {
         return res.status(404).json({ message: "Monthly check-in not found" });
       }
@@ -548,7 +555,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Priorities endpoints - Secured with auth wrapper
   app.get('/api/priorities', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const priorities = await storage.getPriorities(req.userId as string);
+      const priorities = await storage.getPriorities(req.userId ? String(req.userId) : "");
       return res.json(priorities);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching priorities" });
@@ -558,7 +565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/priorities', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const data = { 
-        userId: req.userId as string, 
+        userId: req.userId ? String(req.userId) : "", 
         ...req.body 
       };
       const validatedData = insertPrioritySchema.parse(data);
@@ -580,7 +587,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // In production, verify user owns this priority
       if (process.env.NODE_ENV === 'production') {
         // Get all user priorities to verify ownership
-        const userPriorities = await storage.getPriorities(req.userId as string);
+        const userPriorities = await storage.getPriorities(req.userId ? String(req.userId) : "");
         const priorityExists = userPriorities.some(priority => priority.id === parsedId);
         
         if (!priorityExists) {
@@ -588,7 +595,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const updatedPriority = await storage.updatePriority(parsedId, data);
+      const updatedPriority = await storage.updatePriority(parseInt(parsedId.toString()), data);
       if (!updatedPriority) {
         return res.status(404).json({ message: "Priority not found" });
       }
@@ -607,7 +614,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // In production, verify user owns this priority
       if (process.env.NODE_ENV === 'production') {
         // Get all user priorities to verify ownership
-        const userPriorities = await storage.getPriorities(req.userId as string);
+        const userPriorities = await storage.getPriorities(req.userId ? String(req.userId) : "");
         const priorityExists = userPriorities.some(priority => priority.id === parsedId);
         
         if (!priorityExists) {
@@ -615,8 +622,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const deleted = await storage.deletePriority(parsedId);
-      if (!deleted) {
+      try {
+        await storage.deletePriority(parseInt(parsedId.toString()));
+        // Since deletePriority returns void, we don't check its return value
+      } catch (deleteError) {
+        console.error("Error deleting priority:", deleteError);
         return res.status(404).json({ message: "Priority not found" });
       }
       return res.status(204).end();
@@ -628,7 +638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Decision Log endpoints - Protected with auth wrapper
   app.get('/api/decisions', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const decisions = await storage.getDecisions(req.userId as string);
+      const decisions = await storage.getDecisions(req.userId ? String(req.userId) : "");
       return res.json(decisions);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching decisions" });
@@ -640,7 +650,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Received decision creation request with body:", JSON.stringify(req.body, null, 2));
       
       const data = { 
-        userId: req.userId as string, 
+        userId: req.userId ? String(req.userId) : "", 
         ...req.body 
       };
       
@@ -685,7 +695,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // In production, verify user owns this decision
       if (process.env.NODE_ENV === 'production') {
         const decision = await storage.getDecision(parseInt(parsedId.toString()));
-        if (!decision || decision.userId !== req.userId) {
+        if (!decision || decision.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to update this decision" });
         }
       }
@@ -712,14 +722,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // In production, verify user owns this decision
       if (process.env.NODE_ENV === 'production') {
         const decision = await storage.getDecision(parseInt(parsedId.toString()));
-        if (!decision || decision.userId !== req.userId) {
+        if (!decision || decision.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to delete this decision" });
         }
       }
 
-      const deleted = await storage.deleteDecision(parseInt(parsedId.toString()));
-      // Check the result and return appropriate status
-      if (deleted === false) { // checking for explicit false, not falsy values
+      try {
+        await storage.deleteDecision(parseInt(parsedId.toString()));
+        // Since deleteDecision returns void, we don't check its return value
+      } catch (deleteError) {
+        console.error("Error deleting decision:", deleteError);
         return res.status(404).json({ message: "Decision not found after delete attempt" });
       }
       return res.status(204).end();
@@ -731,7 +743,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Offer Vault endpoints - Secured with auth wrapper
   app.get('/api/offers', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      const offers = await storage.getOffers(req.userId as string);
+      const offers = await storage.getOffers(req.userId ? String(req.userId) : "");
       return res.json(offers);
     } catch (error) {
       return res.status(500).json({ message: "Error fetching offers" });
@@ -741,7 +753,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/offers', withAuthAndUser(async (req: Request, res: Response) => {
     try {
       const data = { 
-        userId: req.userId as string, 
+        userId: req.userId ? String(req.userId) : "", 
         ...req.body 
       };
       const validatedData = insertOfferSchema.parse(data);
@@ -762,7 +774,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // In production, verify user owns this offer
       if (process.env.NODE_ENV === 'production') {
         const offer = await storage.getOffer(parseInt(parsedId.toString()));
-        if (!offer || offer.userId !== req.userId) {
+        if (!offer || offer.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to update this offer" });
         }
       }
@@ -786,14 +798,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // In production, verify user owns this offer
       if (process.env.NODE_ENV === 'production') {
         const offer = await storage.getOffer(parseInt(parsedId.toString()));
-        if (!offer || offer.userId !== req.userId) {
+        if (!offer || offer.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to delete this offer" });
         }
       }
 
-      const deleted = await storage.deleteOffer(parseInt(parsedId.toString()));
-      // Check the result and return appropriate status
-      if (deleted === false) { // checking for explicit false, not falsy values
+      try {
+        await storage.deleteOffer(parseInt(parsedId.toString()));
+        // Since deleteOffer returns void, we don't check its return value
+      } catch (deleteError) {
+        console.error("Error deleting offer:", deleteError);
         return res.status(404).json({ message: "Offer not found after delete attempt" });
       }
       return res.status(204).end();
@@ -805,12 +819,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Offer Notes endpoints - Secured with auth wrapper
   app.get('/api/offer-notes', withAuthAndUser(async (req: Request, res: Response) => {
     try {
-      let offerNotes = await storage.getOfferNotesByUserId(req.userId as string);
+      let offerNotes = await storage.getOfferNotesByUserId(req.userId ? String(req.userId) : "");
       
       // Create empty notes if none exist
       if (!offerNotes || offerNotes.length === 0) {
         const newNote = await storage.createOfferNote({ 
-          userId: req.userId as string, 
+          userId: req.userId ? String(req.userId) : "", 
           content: "" 
         });
         offerNotes = [newNote];
@@ -837,7 +851,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // In production, verify user owns these notes
       if (process.env.NODE_ENV === 'production') {
         // Fetch all user's notes to check ownership
-        const userNotes = await storage.getOfferNotesByUserId(req.userId as string);
+        const userNotes = await storage.getOfferNotesByUserId(req.userId ? String(req.userId) : "");
         const noteExists = userNotes.some(note => note.id === parsedId);
         
         if (!noteExists) {
@@ -862,7 +876,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/user', (req, res) => {
     // Return a fixed demo user using the demoUserSchema format
     const demoUser = {
-      id: 1,
+      id: "1",
       name: "Demo User",
       username: "demo",
       initials: "DU",

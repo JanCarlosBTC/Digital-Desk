@@ -35,6 +35,7 @@ export interface IStorage {
   deleteClarityLab(id: number): Promise<void>;
   
   getWeeklyReflections(userId: string): Promise<any[]>;
+  getWeeklyReflection(id: number): Promise<any | null>;
   createWeeklyReflection(data: any): Promise<any>;
   getWeeklyReflectionByWeek(userId: string, weekDate: Date): Promise<any | null>;
   updateWeeklyReflection(id: number, data: any): Promise<any>;
@@ -207,6 +208,12 @@ export class DatabaseStorage implements IStorage {
   async getWeeklyReflections(userId: string): Promise<any[]> {
     return await prisma.weeklyReflection.findMany({
       where: { userId }
+    });
+  }
+  
+  async getWeeklyReflection(id: number): Promise<any | null> {
+    return await prisma.weeklyReflection.findFirst({
+      where: { id }
     });
   }
   
