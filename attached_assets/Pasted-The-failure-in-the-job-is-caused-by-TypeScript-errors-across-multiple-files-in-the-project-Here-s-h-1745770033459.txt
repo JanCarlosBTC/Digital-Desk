@@ -1,0 +1,144 @@
+The failure in the job is caused by TypeScript errors across multiple files in the project. Here's how to address the key issues:
+
+---
+
+### 1. **TypeScript Argument and Type Mismatches**
+#### Errors:
+- Argument of type `{ method: string; data: { name: string; description?: string; }; }` is not assignable to parameter of type `string`.
+- Similar issues occur in `WorkspaceSwitcher.tsx`, `login-form.tsx`, `register-form.tsx`, etc.
+
+#### Solution:
+Verify the function calls and ensure the expected types match. If the function expects a string, but an object is passed, you need either:
+- Adjust the function to accept the object.
+- Convert the object to a string (e.g., using `JSON.stringify`).
+
+For example:
+```typescript
+// Before
+someFunction({ method: "POST", data: { name: "example" } });
+
+// After
+someFunction(JSON.stringify({ method: "POST", data: { name: "example" } }));
+```
+
+---
+
+### 2. **Undefined Variables or Properties**
+#### Errors:
+- `'item' is possibly 'undefined'`.
+- `Property 'id' does not exist on type '{}'`.
+
+#### Solution:
+Add null/undefined checks to ensure values are defined before accessing their properties.
+
+For example:
+```typescript
+// Before
+const id = obj.id;
+
+// After
+const id = obj?.id ?? "defaultId";
+```
+
+---
+
+### 3. **Missing Modules**
+#### Errors:
+- Cannot find module `../../../../shared/components/...`.
+
+#### Solution:
+Ensure the modules exist at the specified paths. If renamed, update the imports. If deleted, replace the references or recreate the modules.
+
+For example:
+```typescript
+// Before
+import Button from '../../../../shared/components/atoms/button.js';
+
+// After (correct path or component name)
+import Button from '../../../../components/common/Button';
+```
+
+---
+
+### 4. **Type Errors in Context and Hooks**
+#### Errors:
+- `Property 'error' does not exist on type '{ user: unknown; isLoading: boolean; isAuthenticated: boolean; }'.`
+- `Not all code paths return a value.`
+
+#### Solution:
+For missing properties in context:
+- Extend the type with missing properties.
+
+For example:
+```typescript
+// Extend the context type
+type UserContextType = {
+  user: unknown;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  error?: string; // Add missing properties
+  redirectToLogin?: () => void;
+  logout?: () => void;
+  refetch?: () => void;
+};
+```
+
+For hooks with missing return paths:
+- Ensure all branches return a value.
+
+For example:
+```typescript
+// Before
+if (condition) {
+  return value;
+}
+
+// After
+if (condition) {
+  return value;
+}
+return fallbackValue; // Add fallback
+```
+
+---
+
+### 5. **Postgres Role Error**
+#### Error:
+- `FATAL: role "root" does not exist`.
+
+#### Solution:
+Ensure the database is configured to accept the correct user. Update `.env` or database configuration files to provide a valid username.
+
+For example, in `.env`:
+```env
+DB_USER=valid_user
+DB_PASSWORD=valid_password
+```
+
+---
+
+### 6. **Code Paths and API Errors**
+#### Errors:
+- `'apiError.data' is possibly 'undefined'`.
+- `Not all code paths return a value.`
+
+#### Solution:
+Use optional chaining and default values for safer access.
+
+For example:
+```typescript
+// Before
+const data = apiError.data;
+
+// After
+const data = apiError?.data ?? {};
+```
+
+---
+
+### Next Steps:
+1. Fix the above issues in the corresponding files.
+2. Run `tsc` locally to verify fixes.
+3. Commit and push changes to trigger a new CI pipeline.
+
+Let me know if you need assistance with any specific file or error!
