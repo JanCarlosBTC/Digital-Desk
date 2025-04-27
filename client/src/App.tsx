@@ -10,8 +10,6 @@ import ThinkingDesk from "@/pages/thinking-desk";
 import PersonalClaritySystem from "@/pages/personal-clarity-system";
 import DecisionLog from "@/pages/decision-log";
 import OfferVault from "@/pages/offer-vault";
-import SubscriptionPlans from "@/pages/subscription-plans";
-import SubscriptionSuccess from "@/pages/subscription-success";
 import Login from "@/pages/login";
 import AccountSettings from "@/pages/account-settings";
 import DemoPage from "@/pages/demo-page";
@@ -66,12 +64,6 @@ function Router() {
               </Route>
               <Route path="/account-settings">
                 <ProtectedRoute component={AccountSettings} />
-              </Route>
-              <Route path="/subscription-plans">
-                <ProtectedRoute component={SubscriptionPlans} />
-              </Route>
-              <Route path="/subscription-success">
-                <ProtectedRoute component={SubscriptionSuccess} />
               </Route>
               <Route path="/demo" component={DemoPage} />
               <Route component={NotFound} />
