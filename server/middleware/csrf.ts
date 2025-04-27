@@ -40,8 +40,84 @@ const requiresValidation = (req: Request): boolean => {
   return ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
 };
 
+// Default configuration
+const DEFAULT_COOKIE_NAME = 'csrf-token';
+const DEFAULT_HEADER_NAME = 'X-CSRF-TOKEN';
+
 /**
- * CSRF Protection Middleware
+ * Sets a CSRF cookie for use in Double Submit Cookie pattern
+ */
+export const setCsrfCookie = (req: Request, res: Response, next: NextFunction): void => {
+  // Configure CSRF cookie settings
+  const secureCookie = process.env.NODE_ENV === 'production';
+  const cookieOptions: CookieOptions = {
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: secureCookie,
+    path: '/'
+  };
+  
+  // Check for existing token in cookie or generate a new one
+  let token = req.cookies && req.cookies[DEFAULT_COOKIE_NAME];
+  
+  if (!token) {
+    token = generateToken();
+    res.cookie(DEFAULT_COOKIE_NAME, token, cookieOptions);
+  }
+  
+  // Expose a method to get the token from the request
+  req.csrfToken = () => token;
+  
+  next();
+};
+
+/**
+ * Validates the CSRF token in the request header against the cookie value
+ */
+export const validateCsrfToken = (req: Request, res: Response, next: NextFunction): void | Response => {
+  // Skip CSRF check for non-mutating requests
+  if (!requiresValidation(req)) {
+    return next();
+  }
+  
+  // Get token from request header and cookie
+  const requestToken = req.headers[DEFAULT_HEADER_NAME.toLowerCase()] as string | undefined;
+  const cookieToken = req.cookies && req.cookies[DEFAULT_COOKIE_NAME];
+  
+  // Validate token
+  if (!requestToken || !cookieToken || requestToken !== cookieToken) {
+    // Log potential CSRF attack
+    logSecurityEvent('CSRF validation failed', 'error', {
+      ip: req.ip,
+      path: req.path,
+      method: req.method,
+      userAgent: req.get('user-agent') || 'unknown',
+      cookieToken: !!cookieToken,
+      headerToken: !!requestToken
+    });
+    
+    return res.status(403).json({
+      error: 'CSRF validation failed',
+      message: 'Invalid or missing CSRF token'
+    });
+  }
+  
+  next();
+};
+
+/**
+ * Additional middleware to expose CSRF token to client applications
+ */
+export const sendCsrfToken = (req: Request, res: Response, next: NextFunction): void => {
+  // Add CSRF token to response headers for client access
+  if (req.csrfToken) {
+    res.setHeader('X-CSRF-TOKEN', req.csrfToken());
+  }
+  next();
+};
+
+/**
+ * Full CSRF Protection Middleware (original implementation)
  * 
  * @param options Configuration options
  * @param options.cookieName Name of the cookie to use (default: 'csrf-token')
@@ -49,14 +125,14 @@ const requiresValidation = (req: Request): boolean => {
  * @param options.ignorePaths Paths to ignore CSRF check (default: [])
  * @returns Express middleware function
  */
-function csrfProtection(options: CsrfOptions = {}) {
+const csrfProtection = (options: CsrfOptions = {}) => {
   const {
-    cookieName = 'csrf-token',
-    headerName = 'X-CSRF-TOKEN',
+    cookieName = DEFAULT_COOKIE_NAME,
+    headerName = DEFAULT_HEADER_NAME,
     ignorePaths = []
   } = options;
   
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, res: Response, next: NextFunction): void | Response => {
     // Configure CSRF cookie settings
     const secureCookie = process.env.NODE_ENV === 'production';
     const cookieOptions: CookieOptions = {
@@ -109,6 +185,8 @@ function csrfProtection(options: CsrfOptions = {}) {
     
     next();
   };
-}
+};
 
+// Export both the individual middlewares and the full protection function
+export { csrfProtection };
 export default csrfProtection;

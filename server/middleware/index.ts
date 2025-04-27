@@ -18,7 +18,7 @@ import { log } from '../vite.js';
  * 
  * @param app Express application instance
  */
-export function setupMiddleware(app: Express): void {
+export async function setupMiddleware(app: Express): Promise<void> {
   // Apply security headers first (before any response is sent)
   app.use(securityHeaders);
   
@@ -60,12 +60,20 @@ export function setupMiddleware(app: Express): void {
   // Apply CSRF protection for state-changing operations
   // This must be after session setup but before routes
   try {
-    // Import statically to avoid await in non-async function
+    // Import the CSRF middleware from our TypeScript version
     // We've moved the error handling into a try/catch to safely handle
     // any missing modules during development/compilation
     let csrfMiddleware;
     try {
-      csrfMiddleware = require('./csrf.js');
+      // Dynamic import with fallback
+      try {
+        // Try to import the TypeScript version first
+        csrfMiddleware = await import('./csrf.js');
+      } catch (e) {
+        console.error('Could not import TypeScript CSRF middleware:', e);
+        // Fall back to JavaScript version as a backup
+        csrfMiddleware = require('./csrf.js');
+      }
     } catch (error) {
       // Type assertion to handle unknown error type
       const importError = error as Error;

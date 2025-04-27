@@ -9,7 +9,7 @@ import { Request, Response, NextFunction } from 'express';
 import { log } from '../vite.js';
 
 // Define handler function type
-type RequestHandler = (req: Request, res: Response, next: NextFunction) => void | Promise<void>;
+type RequestHandler = (req: Request, res: Response, next: NextFunction) => any;
 
 /**
  * Simplified middleware that always uses a demo user ID
