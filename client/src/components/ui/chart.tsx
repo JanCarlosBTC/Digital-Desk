@@ -137,7 +137,8 @@ const ChartTooltipContent = React.forwardRef<
       }
 
       const [item] = payload
-      const key = `${labelKey || item.dataKey || item.name || "value"}`
+      // Added null check for item to fix TS18048 error
+      const key = item ? `${labelKey || item.dataKey || item.name || "value"}` : "value"
       const itemConfig = getPayloadConfigFromPayload(config, item, key)
       const value =
         !labelKey && typeof label === "string"

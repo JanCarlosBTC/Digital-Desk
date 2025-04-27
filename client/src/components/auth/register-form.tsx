@@ -122,7 +122,7 @@ export function RegisterForm({ onSuccess, redirectTo }: RegisterFormProps) {
       const createdUser = await response.json();
       
       // Update the user context
-      login(createdUser);
+      login(); // Called without arguments as per context definition
       
       // Show success message
       toast({
