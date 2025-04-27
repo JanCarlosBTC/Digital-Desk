@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 const router = Router();
 
 // Endpoint to get the current authenticated user
-router.get('/auth/user', isAuthenticated, async (req: Request, res: Response) => {
+router.get('/user', isAuthenticated, async (req: Request, res: Response) => {
   try {
     // For now, always return a placeholder demo user since 
     // we're not implementing the full Replit Auth flow
@@ -28,14 +28,23 @@ router.get('/auth/user', isAuthenticated, async (req: Request, res: Response) =>
   }
 });
 
-// Just redirect auth login to the main login endpoint
-router.get('/auth/login', (req: Request, res: Response) => {
-  res.redirect('/api/login');
+// Login endpoint to start the auth flow
+router.get('/login', (req: Request, res: Response) => {
+  // In a production Replit Auth implementation, this would redirect to OAuth
+  // For now, we'll just redirect to the login page
+  res.redirect('/login');
 });
 
-// Just redirect auth logout to the main logout endpoint
-router.get('/auth/logout', (req: Request, res: Response) => {
-  res.redirect('/api/logout');
+// Logout endpoint
+router.get('/logout', (req: Request, res: Response) => {
+  if (req.logout) {
+    req.logout(() => {
+      res.redirect('/login');
+    });
+  } else {
+    // Fallback if req.logout is not available
+    res.redirect('/login');
+  }
 });
 
 export default router;

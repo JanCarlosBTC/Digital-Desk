@@ -33,7 +33,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Redirect to Replit Auth login page
   const login = () => {
     // In a real implementation, this would redirect to login
-    window.location.href = '/api/auth/login';
+    window.location.href = '/api/login';
   };
 
   // Logout using Replit Auth
@@ -44,7 +44,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Refresh user data from the server
   const refreshUser = () => {
-    queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/user'] });
   };
 
   // Flag to indicate if there's an error (user not authenticated but not loading)
