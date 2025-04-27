@@ -1,6 +1,6 @@
 # Digital Desk
 
-A comprehensive, digital workspace for entrepreneurs to organize their thoughts, brainstorm effectively, and make strategic decisions.
+A comprehensive, digital workspace for entrepreneurs to organize their thoughts, brainstorm effectively, and make strategic decisions. This application serves as an onboarding tool for clients.
 
 ## Documentation
 
@@ -51,29 +51,24 @@ We've recently made several optimizations to improve performance and user experi
    - Improved color contrast for text elements
    - Added proper semantic HTML structure
 
-## Development Guide for Replit
+## Development Guide
 
 ### Environment Setup
 
-1. **Using Replit Workflow:**
-   - The application is configured to run using the Replit workflow system
-   - Use the "Start application" workflow to run the application 
-   - Do NOT manually start the server using npm/yarn commands
+1. **Getting Started:**
+   - Clone the repository
+   - Install dependencies with `npm install`
+   - Set up environment variables (see `.env.example`)
+   - Start the development server with `npm run dev`
 
-2. **Package Management:**
-   - Do NOT modify `package.json` directly
-   - Use the Replit package manager tool to install dependencies
-
-3. **Environment Variables:**
-   - The database connection string is available in the `DATABASE_URL` environment variable
-   - JWT secret is configured for authentication
+2. **Environment Variables:**
+   - The database connection string should be set in the `DATABASE_URL` environment variable
 
 ### Technology Stack
 
 - **Frontend:** React with TypeScript and Tailwind CSS
 - **Backend:** Express.js API with TypeScript
 - **Database:** PostgreSQL with Prisma ORM
-- **Authentication:** JWT-based authentication
 - **UI Components:** ShadCN UI library
 
 ### Architecture Notes
@@ -107,34 +102,25 @@ We've recently made several optimizations to improve performance and user experi
    - See [ERROR-HANDLING.md](./ERROR-HANDLING.md) for the comprehensive error handling guide
    - Always wrap critical components with the ErrorBoundary component
 
-3. **Subscription Features:**
-   - Follow the simplified subscription model (Trial, Monthly, Annual)
-   - Use the `subscription-service.ts` for subscription features
-
-### Replit-Specific Best Practices
+### Best Practices
 
 1. **Environment & Path Configuration:**
    - Use relative URLs for API endpoints (e.g., `/api/offers` not `http://localhost:3000/api/offers`)
-   - Use `0.0.0.0` instead of `localhost` for host bindings
-   - Use relative paths from project root and never reference `/repo/` in code
+   - Use `0.0.0.0` instead of `localhost` for host bindings when deploying
 
-2. **Protected Files & Configuration:**
-   - Never modify system configuration files: Vite (`vite.config.ts`, `server/vite.ts`), TypeScript (`tsconfig.json`, `tsconfig.server.json`), or Replit (`.replit`, `replit.nix`)
-   - Use Replit package manager tool instead of directly modifying `package.json`
-
-3. **Database Operations:**
+2. **Database Operations:**
    - Use Prisma methods for database operations (see [PRISMA-GUIDE.md](./PRISMA-GUIDE.md))
    - Use Prisma migrations for schema changes (`npx prisma db push`)
 
-4. **Performance Considerations:**
+3. **Performance Considerations:**
    - Use React.memo for expensive components
    - Leverage React Query's caching capabilities
    - Use proper code splitting with lazy loading
 
-### Debugging in Replit
+### Debugging
 
 1. **Application Logs:**
-   - Check the Replit workflow logs for backend errors
+   - Check the server logs for backend errors
    - Use the browser console for frontend errors
    - Review structured logs in Pino format with proper context
 
@@ -152,13 +138,3 @@ We've recently made several optimizations to improve performance and user experi
 4. **Utility Scripts:**
    - See [SCRIPTS.md](./SCRIPTS.md) for all available utility scripts
    - Use centralized script runner: `./scripts/run.sh <script-name>`
-
-### Subscription Testing
-
-The system now uses a simplified subscription model:
-
-- **Trial Plan:** 7-day free trial with limited features
-- **Monthly Plan:** $28/month with unlimited features
-- **Annual Plan:** $285.60/year (15% discount) with unlimited features
-
-To test subscription features, navigate to `/subscription-plans`
