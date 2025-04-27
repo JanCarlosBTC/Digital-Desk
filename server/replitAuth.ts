@@ -1,17 +1,21 @@
+import passport from "passport";
+import session from "express-session";
 import type { Express, Request, Response, NextFunction } from "express";
 import { PrismaClient } from "@prisma/client";
-import session from "express-session";
-import passport from "passport";
 
 const prisma = new PrismaClient();
 
-// Simplified auth request interface
+// Type for the authenticated request with user
 export interface AuthenticatedRequest extends Request {
   user?: any;
 }
 
-// Simple middleware to check if a user is authenticated
-export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
+// Middleware to check if the user is authenticated
+export function isAuthenticated(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   if (req.isAuthenticated && req.isAuthenticated()) {
     return next();
   }
@@ -19,7 +23,7 @@ export function isAuthenticated(req: Request, res: Response, next: NextFunction)
   return res.status(401).json({ message: "Unauthorized" });
 }
 
-// Setup basic auth routes
+// Setup auth for the Express app
 export async function setupAuth(app: Express) {
   // Session setup
   app.use(session({
@@ -41,12 +45,11 @@ export async function setupAuth(app: Express) {
     done(null, user);
   });
   
-  // In production, these routes would connect to Replit Auth
-  // For now, they're just placeholder redirects
-  
-  // Login route
+  // Login route - redirects to Replit Auth
   app.get("/api/login", (req, res) => {
-    res.redirect("https://replit.com/auth/login");
+    // In production, this would redirect to Replit OAuth
+    // For now, we'll redirect to a mock login page
+    res.redirect("/auth");
   });
   
   // Callback route that would normally process the OAuth response
@@ -61,5 +64,5 @@ export async function setupAuth(app: Express) {
     });
   });
   
-  console.log("Auth routes configured (placeholder implementation)");
+  console.log("Auth routes configured (simplified implementation)");
 }
