@@ -1,12 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/context/user-context';
 import { useAuth } from '@/hooks/useAuth';
+import { useLocation } from 'wouter';
 
 const Login = () => {
   const { login } = useUser();
-  const { isLoading } = useAuth();
+  const { isLoading, isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
+  
+  // In development mode, auto-redirect to home page if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      setLocation('/');
+    }
+  }, [isAuthenticated, setLocation]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-blue-50 to-white px-4">

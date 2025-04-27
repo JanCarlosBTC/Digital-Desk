@@ -9,19 +9,18 @@ const router = Router();
 // Endpoint to get the current authenticated user
 router.get('/user', isAuthenticated, async (req: Request, res: Response) => {
   try {
-    // For now, always return a placeholder demo user since 
-    // we're not implementing the full Replit Auth flow
-    const demoUser = {
-      id: "demo123",
-      username: "demo",
-      email: "demo@example.com",
-      name: "Demo User",
-      initials: "DU",
-      plan: "Free",
-      isAuthenticated: true
-    };
+    // The user should be provided by the isAuthenticated middleware
+    // We can just return the user object from the request
+    const user = req.user;
     
-    return res.json(demoUser);
+    if (!user) {
+      return res.status(401).json({ message: "No user found" });
+    }
+    
+    return res.json({
+      ...user,
+      isAuthenticated: true
+    });
   } catch (error) {
     console.error("Error fetching user:", error);
     return res.status(500).json({ message: "Failed to fetch user information" });

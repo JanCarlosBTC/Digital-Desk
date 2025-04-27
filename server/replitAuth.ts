@@ -16,6 +16,21 @@ export function isAuthenticated(
   res: Response,
   next: NextFunction
 ) {
+  // In development mode, bypass authentication for easier testing
+  if (process.env.NODE_ENV !== 'production') {
+    // Add a demo user to the request
+    (req as any).user = {
+      id: "demo123",
+      username: "demo",
+      email: "demo@example.com",
+      name: "Demo User",
+      initials: "DU",
+      plan: "Free"
+    };
+    return next();
+  }
+  
+  // In production, check if the user is authenticated
   if (req.isAuthenticated && req.isAuthenticated()) {
     return next();
   }
