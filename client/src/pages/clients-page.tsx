@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams } from 'wouter';
+import { useParams, useLocation } from 'wouter';
 import {
   Table,
   TableBody,
@@ -86,12 +86,14 @@ interface InvitationInfo {
 export default function ClientsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [_, navigate] = useLocation();
   const params = useParams();
   const workspaceId = params.id; // Get the workspace ID from URL params
   
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleteWorkspaceDialogOpen, setIsDeleteWorkspaceDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState<ClientFormData>({
     name: '',
@@ -158,6 +160,45 @@ export default function ClientsPage() {
     }
   });
 
+  // Delete client mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (clientId: number) => {
+      const response = await apiRequest('DELETE', `/api/clients/${clientId}`);
+      return response.ok;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+      toast({
+        title: 'Success',
+        description: 'Client deleted successfully',
+      });
+      setIsDeleteDialogOpen(false);
+    },
+    onError: (error) => {
+      handleApiErrorWithToast(error, toast);
+    }
+  });
+
+  // Delete workspace mutation
+  const deleteWorkspaceMutation = useMutation({
+    mutationFn: async (workspaceId: string) => {
+      const response = await apiRequest('DELETE', `/api/workspaces/${workspaceId}`);
+      return response.ok;
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Workspace deleted successfully',
+      });
+      setIsDeleteWorkspaceDialogOpen(false);
+      // Navigate back to clients page
+      navigate('/clients');
+    },
+    onError: (error) => {
+      handleApiErrorWithToast(error, toast);
+    }
+  });
+
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -188,29 +229,17 @@ export default function ClientsPage() {
     setIsInviteDialogOpen(true);
   };
 
-  // Delete client mutation
-  const deleteMutation = useMutation({
-    mutationFn: async (clientId: number) => {
-      const response = await apiRequest('DELETE', `/api/clients/${clientId}`);
-      return response.ok;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
-      toast({
-        title: 'Success',
-        description: 'Client deleted successfully',
-      });
-      setIsDeleteDialogOpen(false);
-    },
-    onError: (error) => {
-      handleApiErrorWithToast(error, toast);
-    }
-  });
-
   // Handle client deletion
   const handleDeleteClient = () => {
     if (selectedClient) {
       deleteMutation.mutate(selectedClient.id);
+    }
+  };
+
+  // Handle workspace deletion
+  const handleDeleteWorkspace = () => {
+    if (workspaceId) {
+      deleteWorkspaceMutation.mutate(workspaceId);
     }
   };
 
@@ -257,94 +286,106 @@ export default function ClientsPage() {
     <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Client Management</h1>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Add Client
+        <div className="flex gap-2">
+          {workspaceId && (
+            <Button 
+              variant="outline" 
+              className="text-destructive hover:bg-destructive/10"
+              onClick={() => setIsDeleteWorkspaceDialogOpen(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Workspace
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Client</DialogTitle>
-              <DialogDescription>
-                Add a new client to your workspace. They'll receive an invitation link.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
-                    Name
-                  </Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="col-span-3"
-                    required
-                  />
+          )}
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" /> Add Client
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Client</DialogTitle>
+                <DialogDescription>
+                  Add a new client to your workspace. They'll receive an invitation link.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmit}>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="name" className="text-right">
+                      Name
+                    </Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="col-span-3"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="email" className="text-right">
+                      Email
+                    </Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="col-span-3"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="company" className="text-right">
+                      Company
+                    </Label>
+                    <Input
+                      id="company"
+                      name="company"
+                      value={formData.company}
+                      onChange={handleInputChange}
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="phone" className="text-right">
+                      Phone
+                    </Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="col-span-3"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="notes" className="text-right">
+                      Notes
+                    </Label>
+                    <Textarea
+                      id="notes"
+                      name="notes"
+                      value={formData.notes}
+                      onChange={handleInputChange}
+                      className="col-span-3"
+                      rows={3}
+                    />
+                  </div>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="email" className="text-right">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="col-span-3"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="company" className="text-right">
-                    Company
-                  </Label>
-                  <Input
-                    id="company"
-                    name="company"
-                    value={formData.company}
-                    onChange={handleInputChange}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="phone" className="text-right">
-                    Phone
-                  </Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="notes" className="text-right">
-                    Notes
-                  </Label>
-                  <Textarea
-                    id="notes"
-                    name="notes"
-                    value={formData.notes}
-                    onChange={handleInputChange}
-                    className="col-span-3"
-                    rows={3}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? 'Creating...' : 'Create Client'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <DialogFooter>
+                  <Button type="submit" disabled={createMutation.isPending}>
+                    {createMutation.isPending ? 'Creating...' : 'Create Client'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Card>
@@ -462,7 +503,7 @@ export default function ClientsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Client Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -479,6 +520,28 @@ export default function ClientsPage() {
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Workspace Dialog */}
+      <AlertDialog open={isDeleteWorkspaceDialogOpen} onOpenChange={setIsDeleteWorkspaceDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Workspace</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this workspace? All client associations will be removed, but client data will be preserved. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteWorkspace}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteWorkspaceMutation.isPending}
+            >
+              {deleteWorkspaceMutation.isPending ? 'Deleting...' : 'Delete Workspace'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
