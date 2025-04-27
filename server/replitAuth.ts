@@ -3,11 +3,32 @@ import { Strategy } from "openid-client/passport";
 
 import passport from "passport";
 import session from "express-session";
-import type { Express, RequestHandler } from "express";
+import type { Express, Request, Response, NextFunction, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import prisma from "./prisma.js";
 import { storage } from "./prisma-storage-replit.js";
+
+// Extend Express namespace to add our custom User type
+declare global {
+  namespace Express {
+    interface User {
+      claims: {
+        sub: string;
+        [key: string]: any;
+      };
+      access_token?: string;
+      refresh_token?: string;
+      expires_at?: number;
+      [key: string]: any;
+    }
+  }
+}
+
+// Extended Request type with proper user property typing
+export interface AuthenticatedRequest extends Request {
+  user?: Express.User;
+}
 
 // Define the verify callback type
 type VerifyCallback = (
@@ -205,19 +226,18 @@ export async function setupAuth(app: Express) {
   });
 }
 
-export const isAuthenticated: RequestHandler = async (req, res, next) => {
-  const user = req.user as any;
-
-  if (!req.isAuthenticated() || !user.expires_at) {
+// Type-safe authentication middleware
+export const isAuthenticated = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  if (!req.isAuthenticated() || !req.user || !req.user.expires_at) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
   const now = Math.floor(Date.now() / 1000);
-  if (now <= user.expires_at) {
+  if (now <= req.user.expires_at) {
     return next();
   }
 
-  const refreshToken = user.refresh_token;
+  const refreshToken = req.user.refresh_token;
   if (!refreshToken) {
     return res.redirect("/api/login");
   }
@@ -225,7 +245,7 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   try {
     const config = await getOidcConfig();
     const tokenResponse = await client.refreshTokenGrant(config, refreshToken);
-    updateUserSession(user, tokenResponse);
+    updateUserSession(req.user, tokenResponse);
     return next();
   } catch (error) {
     return res.redirect("/api/login");

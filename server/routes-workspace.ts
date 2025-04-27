@@ -35,10 +35,10 @@ const isAdmin = async (req: AuthenticatedRequest, res: Response, next: NextFunct
       return res.status(403).json({ message: "Forbidden: Admin access required" });
     }
     
-    next();
+    return next();
   } catch (error) {
     console.error("Admin check error:", error);
-    res.status(500).json({ message: "Server error checking admin status" });
+    return res.status(500).json({ message: "Server error checking admin status" });
   }
 };
 
@@ -66,10 +66,10 @@ router.get("/api/workspaces", isAuthenticated, isAdmin, async (req: Authenticate
       }
     });
     
-    res.json(workspaces);
+    return res.json(workspaces);
   } catch (error) {
     console.error("Error fetching workspaces:", error);
-    res.status(500).json({ message: "Failed to fetch workspaces" });
+    return res.status(500).json({ message: "Failed to fetch workspaces" });
   }
 });
 
@@ -121,10 +121,10 @@ router.get("/api/workspaces/:id", isAuthenticated, async (req: AuthenticatedRequ
       return res.status(404).json({ message: "Workspace not found" });
     }
     
-    res.json(workspace);
+    return res.json(workspace);
   } catch (error) {
     console.error("Error fetching workspace:", error);
-    res.status(500).json({ message: "Failed to fetch workspace" });
+    return res.status(500).json({ message: "Failed to fetch workspace" });
   }
 });
 
