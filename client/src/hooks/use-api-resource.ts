@@ -13,7 +13,6 @@ import {
   QueryClient,
   useQueryClient
 } from '@tanstack/react-query';
-import type { OnMutateFunction } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useToast } from './use-toast';
 
@@ -211,7 +210,7 @@ export function useApiResource<TData, TVariables = unknown>(
       data: query.data,
       isLoading: query.isLoading,
       isError: query.isError,
-      error: query.error,
+      error: query.error || null, // Explicitly convert undefined to null
       networkError,
       clearNetworkError,
       refetch: query.refetch,
@@ -220,7 +219,7 @@ export function useApiResource<TData, TVariables = unknown>(
       mutate: mutation.mutate,
       mutateAsync: mutation.mutateAsync,
       isLoading: mutation.isPending,
-      error: mutation.error,
+      error: mutation.error || null, // Explicitly convert undefined to null
       resetError: mutation.reset,
     },
   };

@@ -349,9 +349,16 @@ function getPayloadConfigFromPayload(
     ] as string
   }
 
-  return configLabelKey in config
-    ? config[configLabelKey]
-    : config[key as keyof typeof config]
+  // Check if configLabelKey exists in config before accessing it
+  if (configLabelKey in config) {
+    return config[configLabelKey]
+  }
+  // Check if key exists in config before accessing it
+  else if (key in config) {
+    return config[key as keyof typeof config]
+  }
+  
+  return undefined
 }
 
 export {
