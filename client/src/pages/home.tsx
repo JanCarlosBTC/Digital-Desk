@@ -25,11 +25,13 @@ const Home = () => {
           </Button>
         )}
         
-        {!isLoading && isAuthenticated && (
+        {!isLoading && isAuthenticated && user && (
           <div className="text-sm text-gray-600">
             <span>Welcome back, </span>
             <span className="font-semibold">
-              {(user as User)?.username || 'Guest'}
+              {typeof user === 'object' && 'username' in user 
+                ? String(user.username) 
+                : 'Guest'}
             </span>
           </div>
         )}

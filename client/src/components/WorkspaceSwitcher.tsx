@@ -113,10 +113,16 @@ export function WorkspaceSwitcher() {
 
   // Switch to a different workspace
   const switchWorkspaceMutation = useMutation({
-    mutationFn: (workspaceId: string) =>
-      apiRequest('POST', `/api/workspaces/${workspaceId}/users`, { 
-        userId: user?.id || '' 
-      }) as Promise<any>,
+    mutationFn: (workspaceId: string) => {
+      // Safely extract user ID or fallback to empty string
+      const userId = (typeof user === 'object' && user !== null && 'id' in user) 
+        ? String(user.id) 
+        : '';
+      
+      return apiRequest('POST', `/api/workspaces/${workspaceId}/users`, { 
+        userId 
+      }) as Promise<any>;
+    },
     onSuccess: () => {
       toast({
         title: 'Workspace changed',
