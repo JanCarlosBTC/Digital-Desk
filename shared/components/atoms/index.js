@@ -3,5 +3,5 @@
  * Exports all atomic-level components
  */
 
-export * from './button.js';
+export * from './button';
 export * from './input.js';

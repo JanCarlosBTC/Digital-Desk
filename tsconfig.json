@@ -28,10 +28,9 @@
     "skipLibCheck": true,
     "moduleResolution": "bundler",
     "baseUrl": ".",
-      "baseUrl": ".",
-      "types": ["node", "vite/client"],
-      "typeRoots": ["./node_modules/@types", "./client/src/types"],
-      "paths": {
+    "types": ["node", "vite/client"],
+    "typeRoots": ["./node_modules/@types", "./client/src/types"],
+    "paths": {
       "@/*": ["./client/src/*"],
       "@shared/*": ["./shared/*"],
       "@server/*": ["./server/*"],
@@ -40,7 +39,13 @@
       "@components/*": ["./client/src/components/*"],
       "@services/*": ["./client/src/services/*"],
       "@hooks/*": ["./client/src/hooks/*"],
-      "@features/*": ["./client/src/features/*"]
+      "@features/*": ["./client/src/features/*"],
+      
+      /* Component path mappings for JS to TS conversion */
+      "*/atoms/button": ["./shared/components/atoms/button.tsx"],
+      "*/atoms/button.js": ["./shared/components/atoms/button.tsx"],
+      "*/molecules/card": ["./shared/components/molecules/card.tsx"],
+      "*/molecules/card.js": ["./shared/components/molecules/card.tsx"]
     },
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
