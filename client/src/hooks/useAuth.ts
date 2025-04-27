@@ -11,6 +11,8 @@ export interface User {
   name?: string;
   plan?: string;
   initials?: string;
+  isAdmin?: boolean;
+  workspaceId?: string | null;
 }
 
 export function useAuth() {

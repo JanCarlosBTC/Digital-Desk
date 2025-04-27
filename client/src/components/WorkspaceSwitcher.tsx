@@ -272,7 +272,12 @@ export function WorkspaceSwitcher() {
                 {currentWorkspace && (
                   <DropdownMenuItem 
                     className="text-destructive focus:text-destructive"
-                    onClick={() => handleDeleteWorkspace(currentWorkspace)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDeleteWorkspace(currentWorkspace);
+                      console.log("Delete workspace clicked:", currentWorkspace.id);
+                    }}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Delete workspace

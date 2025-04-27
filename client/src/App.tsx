@@ -69,6 +69,9 @@ function Router() {
               <Route path="/clients">
                 <ProtectedRoute component={ClientsPage} />
               </Route>
+              <Route path="/workspace/:id">
+                <ProtectedRoute component={ClientsPage} />
+              </Route>
               <Route path="/demo" component={DemoPage} />
               <Route component={NotFound} />
             </Switch>

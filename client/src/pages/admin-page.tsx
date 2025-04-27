@@ -244,7 +244,10 @@ export default function AdminPage() {
                             className="flex items-center cursor-pointer hover:text-primary transition-colors"
                             onClick={() => {
                               if (user.workspaceId) {
+                                // Using import { navigate } from 'wouter' would be better,
+                                // but this works for a direct demonstration
                                 window.location.href = `/workspace/${user.workspaceId}`;
+                                console.log("Navigating to workspace:", user.workspaceId);
                               } else {
                                 toast({
                                   title: "No workspace assigned",
