@@ -192,7 +192,23 @@ export function setupAuth(app: Express) {
 
       logger.info(`New user registered: ${username}`);
       
-      req.login(user, (err) => {
+      // Convert database user to Express User format with claims
+      const expressUser = {
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        initials: user.initials,
+        email: user.email,
+        plan: user.plan,
+        claims: {
+          sub: user.id,
+          email: user.email,
+          username: user.username,
+          name: user.name
+        }
+      };
+      
+      req.login(expressUser, (err) => {
         if (err) return next(err);
         return res.status(201).json({
           id: user.id,
@@ -279,7 +295,13 @@ export function setupAuth(app: Express) {
           username: 'dev_user',
           name: 'Development User',
           initials: 'DU',
-          plan: 'free'
+          plan: 'free',
+          claims: {
+            sub: '1',
+            username: 'dev_user',
+            name: 'Development User',
+            email: 'dev@example.com'
+          }
         };
       }
       next();
