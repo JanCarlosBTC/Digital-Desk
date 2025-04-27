@@ -136,10 +136,16 @@ const ChartTooltipContent = React.forwardRef<
         return null
       }
 
-      const [item] = payload
-      // Added null check for item to fix TS18048 error
+      // More robust handling of payload extraction
+      const item = payload && payload.length > 0 ? payload[0] : undefined
+      
+      // Safe access to item properties with null checks
       const key = item ? `${labelKey || item.dataKey || item.name || "value"}` : "value"
+      
+      // Pass item safely to the function
       const itemConfig = getPayloadConfigFromPayload(config, item, key)
+      
+      // Safe access to label with null checks
       const value =
         !labelKey && typeof label === "string"
           ? config[label as keyof typeof config]?.label || label
