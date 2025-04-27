@@ -162,7 +162,7 @@ export function setupAuth(app: Express) {
   });
   
   // Login endpoint
-  app.post('/api/login', (req, res, next): void => {
+  app.post('/api/login', (req, res, next) => {
     // Validate login data
     try {
       loginSchema.parse(req.body);
