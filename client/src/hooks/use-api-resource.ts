@@ -16,11 +16,15 @@ import {
 import { useState } from 'react';
 import { useToast } from './use-toast';
 
-// Standard API error type
-export interface ApiError {
+// Standard API error type with enhanced typings
+export interface ApiError extends Error {
   message: string;
   status?: number;
   code?: string;
+  data?: any;
+  // Additional fields to match the library expectations
+  name: string;
+  stack?: string;
 }
 
 // Options for the API resource hook
@@ -85,17 +89,30 @@ async function defaultFetch(url: string, options?: RequestInit): Promise<any> {
   });
 
   if (!response.ok) {
-    const error: ApiError = {
-      message: `Request failed with status ${response.status}`,
-      status: response.status,
-    };
-
+    // Create a proper Error instance for ApiError to extend from
+    const errorMessage = `Request failed with status ${response.status}`;
+    const error = new Error(errorMessage) as ApiError;
+    
+    // Add ApiError properties
+    error.name = 'ApiError';
+    error.status = response.status;
+    error.message = errorMessage;
+    
     try {
       const errorJson = await response.json();
-      error.message = errorJson.message || error.message;
-      error.code = errorJson.code;
+      // If the response has a message field, use it
+      if (errorJson.message) {
+        error.message = errorJson.message;
+      }
+      // Add other properties from the response
+      if (errorJson.code) {
+        error.code = errorJson.code;
+      }
+      // Store the raw error data
+      error.data = errorJson;
     } catch (e) {
       // If we can't parse the error as JSON, use the original error
+      console.debug('Could not parse error response as JSON', e);
     }
 
     throw error;
@@ -190,18 +207,25 @@ export function useApiResource<TData, TVariables = unknown>(
     },
     ...mutationOptions,
     onMutate: async (variables) => {
+      // Store a context value to return, which will be undefined by default
+      let context: unknown = undefined;
+      
       // If there's an optimistic update function, call it
       if (optimisticUpdate && queryClient) {
         optimisticUpdate(queryClient, variables);
       }
       
-      // Call the original onMutate if it exists
-      if (mutationOptions.onMutate) {
-        return mutationOptions.onMutate(variables);
+      // Call the original onMutate if it exists and store its result as context
+      if (mutationOptions && typeof mutationOptions.onMutate === 'function') {
+        try {
+          context = await mutationOptions.onMutate(variables);
+        } catch (error) {
+          console.error('Error in onMutate callback:', error);
+        }
       }
       
-      // Ensure a return value on all code paths
-      return Promise.resolve(undefined);
+      // Always return a value (context could be undefined, but that's a valid return value)
+      return context;
     },
   });
 
