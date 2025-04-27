@@ -16,6 +16,7 @@ import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
 import { withAuth, withAuthAndUser, withDevAuth } from "./middleware/auth-wrapper.js";
 import authRoutes from "./routes-auth.js";
 import workspaceRoutes from "./routes-workspace.js";
+import clientRoutes from "./routes-client.js";
 import { setupAuth } from "./replitAuth.js";
 
 // The Request interface is now augmented via server/types/express.d.ts
@@ -38,6 +39,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register auth routes
   app.use('/api', authRoutes);
+  
+  // Register client routes
+  app.use('/api', clientRoutes);
   
   // Register workspace routes
   app.use('/', workspaceRoutes);

@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { isAuthenticated, AuthenticatedRequest } from './replitAuth.js';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
+import crypto from 'crypto';
 
 // Extend PrismaClient with the models we need
 // This is just for TypeScript - the actual models are defined in Prisma schema
@@ -214,8 +215,54 @@ router.delete('/clients/:id', isAuthenticated, async (req: AuthenticatedRequest,
   }
 });
 
-// Generate new access token for client
-router.post('/clients/:id/token', isAuthenticated, async (req: AuthenticatedRequest, res: Response) => {
+// Verify client invitation token
+router.get('/verify-token', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.query;
+    
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ message: "Invalid token" });
+    }
+    
+    // Find the token in the database
+    const accessToken = await prisma.clientAccessToken.findFirst({
+      where: {
+        token: token,
+        active: true,
+        expiresAt: {
+          gt: new Date() // Token must not be expired
+        }
+      },
+      include: {
+        client: true // Include client data
+      }
+    });
+    
+    if (!accessToken) {
+      return res.status(404).json({ 
+        message: "Invalid or expired token",
+        valid: false
+      });
+    }
+    
+    // Return client information with the token
+    return res.status(200).json({
+      valid: true,
+      client: {
+        id: accessToken.client.id,
+        name: accessToken.client.name,
+        email: accessToken.client.email
+      },
+      expiresAt: accessToken.expiresAt
+    });
+  } catch (error) {
+    console.error("Error verifying token:", error);
+    return res.status(500).json({ message: "Failed to verify token" });
+  }
+});
+
+// Generate new invitation link for client
+router.post('/clients/:id/invite', isAuthenticated, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     // Using the same demo ID for consistency
@@ -257,13 +304,19 @@ router.post('/clients/:id/token', isAuthenticated, async (req: AuthenticatedRequ
       }
     });
     
+    // Generate invitation link using host from request
+    const host = req.headers.host || 'localhost:3000';
+    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    const inviteLink = `${protocol}://${host}/auth?token=${accessToken.token}`;
+    
     return res.json({ 
       token: accessToken.token,
+      inviteLink: inviteLink,
       expiresAt: accessToken.expiresAt
     });
   } catch (error) {
-    console.error("Error generating token:", error);
-    return res.status(500).json({ message: "Failed to generate token" });
+    console.error("Error generating invitation:", error);
+    return res.status(500).json({ message: "Failed to generate invitation" });
   }
 });
 
