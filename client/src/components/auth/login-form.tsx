@@ -69,7 +69,7 @@ export function LoginForm({ onSuccess, redirectTo }: LoginFormProps) {
       const userData = await response.json();
       
       // Update our local user context
-      login(); // Called without arguments as per context definition
+      login(); // Function takes no arguments
       
       toast({
         title: 'Login successful',
