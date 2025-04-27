@@ -5,12 +5,27 @@ import { isAuthenticated } from "./replitAuth.js";
 import { UserRole } from "../shared/schema.js";
 import { z } from "zod";
 
+// Extended Request type with user claims
+interface AuthenticatedRequest extends Request {
+  user?: {
+    claims: {
+      sub: string;
+      [key: string]: any;
+    },
+    [key: string]: any;
+  };
+}
+
 const prisma = new PrismaClient();
 const router = Router();
 
 // Admin middleware to check if user has admin role
-const isAdmin = async (req: any, res: any, next: any) => {
+const isAdmin = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
+    if (!req.user || !req.user.claims) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
     const userId = req.user.claims.sub;
     const user = await prisma.user.findUnique({
       where: { id: userId }
@@ -28,7 +43,7 @@ const isAdmin = async (req: any, res: any, next: any) => {
 };
 
 // Get all workspaces (admin only)
-router.get("/api/workspaces", isAuthenticated, isAdmin, async (req, res) => {
+router.get("/api/workspaces", isAuthenticated, isAdmin, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const workspaces = await prisma.workspace.findMany({
       include: {
@@ -59,9 +74,14 @@ router.get("/api/workspaces", isAuthenticated, isAdmin, async (req, res) => {
 });
 
 // Get workspace by ID (admin or workspace member)
-router.get("/api/workspaces/:id", isAuthenticated, async (req, res) => {
+router.get("/api/workspaces/:id", isAuthenticated, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
+    
+    if (!req.user || !req.user.claims) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
     const userId = req.user.claims.sub;
     
     // Get user to check permissions
@@ -109,7 +129,7 @@ router.get("/api/workspaces/:id", isAuthenticated, async (req, res) => {
 });
 
 // Create new workspace (admin only)
-router.post("/api/workspaces", isAuthenticated, isAdmin, async (req, res) => {
+router.post("/api/workspaces", isAuthenticated, isAdmin, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const createWorkspaceSchema = z.object({
       name: z.string().min(1, "Workspace name is required"),
@@ -125,6 +145,11 @@ router.post("/api/workspaces", isAuthenticated, isAdmin, async (req, res) => {
     }
     
     const { name, description } = validationResult.data;
+    
+    if (!req.user || !req.user.claims) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
     const userId = req.user.claims.sub;
     
     const workspace = await prisma.workspace.create({
@@ -144,7 +169,7 @@ router.post("/api/workspaces", isAuthenticated, isAdmin, async (req, res) => {
 });
 
 // Update workspace (admin only)
-router.put("/api/workspaces/:id", isAuthenticated, isAdmin, async (req, res) => {
+router.put("/api/workspaces/:id", isAuthenticated, isAdmin, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     
@@ -167,15 +192,15 @@ router.put("/api/workspaces/:id", isAuthenticated, isAdmin, async (req, res) => 
       data: validationResult.data
     });
     
-    res.json(workspace);
+    return res.json(workspace);
   } catch (error) {
     console.error("Error updating workspace:", error);
-    res.status(500).json({ message: "Failed to update workspace" });
+    return res.status(500).json({ message: "Failed to update workspace" });
   }
 });
 
 // Add user to workspace (admin only)
-router.post("/api/workspaces/:id/users", isAuthenticated, isAdmin, async (req, res) => {
+router.post("/api/workspaces/:id/users", isAuthenticated, isAdmin, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     
@@ -199,15 +224,15 @@ router.post("/api/workspaces/:id/users", isAuthenticated, isAdmin, async (req, r
       data: { workspaceId: id }
     });
     
-    res.json(user);
+    return res.json(user);
   } catch (error) {
     console.error("Error adding user to workspace:", error);
-    res.status(500).json({ message: "Failed to add user to workspace" });
+    return res.status(500).json({ message: "Failed to add user to workspace" });
   }
 });
 
 // Remove user from workspace (admin only)
-router.delete("/api/workspaces/:workspaceId/users/:userId", isAuthenticated, isAdmin, async (req, res) => {
+router.delete("/api/workspaces/:workspaceId/users/:userId", isAuthenticated, isAdmin, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { userId } = req.params;
     
@@ -217,16 +242,20 @@ router.delete("/api/workspaces/:workspaceId/users/:userId", isAuthenticated, isA
       data: { workspaceId: null }
     });
     
-    res.json({ success: true, message: "User removed from workspace" });
+    return res.json({ success: true, message: "User removed from workspace" });
   } catch (error) {
     console.error("Error removing user from workspace:", error);
-    res.status(500).json({ message: "Failed to remove user from workspace" });
+    return res.status(500).json({ message: "Failed to remove user from workspace" });
   }
 });
 
 // Get current user's workspace
-router.get("/api/current-workspace", isAuthenticated, async (req, res) => {
+router.get("/api/current-workspace", isAuthenticated, async (req: AuthenticatedRequest, res: Response) => {
   try {
+    if (!req.user || !req.user.claims) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
     const userId = req.user.claims.sub;
     
     const user = await prisma.user.findUnique({
@@ -254,6 +283,7 @@ router.get("/api/current-workspace", isAuthenticated, async (req, res) => {
       // For admins, get all workspaces
       const workspaces = await prisma.workspace.findMany({
         include: {
+          users: true,
           creator: {
             select: {
               id: true,
@@ -272,13 +302,13 @@ router.get("/api/current-workspace", isAuthenticated, async (req, res) => {
     }
     
     // For non-admins, just return their workspace
-    res.json({
+    return res.json({
       currentWorkspace: user.workspace,
       isAdmin: false
     });
   } catch (error) {
     console.error("Error fetching user workspace:", error);
-    res.status(500).json({ message: "Failed to fetch user workspace" });
+    return res.status(500).json({ message: "Failed to fetch user workspace" });
   }
 });
 
