@@ -18,14 +18,14 @@ export function isAuthenticated(
 ) {
   // In development mode, bypass authentication for easier testing
   if (process.env.NODE_ENV !== 'production') {
-    // Add a demo user to the request
+    // Add a personal user account to the request
     (req as any).user = {
-      id: "demo123",
-      username: "demo",
-      email: "demo@example.com",
-      name: "Demo User",
-      initials: "DU",
-      plan: "Free"
+      id: "personal123",
+      username: "v4yl1n",
+      email: "v4yl1n@gmail.com",
+      name: "V4YL1N",
+      initials: "V4",
+      plan: "Pro"
     };
     return next();
   }
