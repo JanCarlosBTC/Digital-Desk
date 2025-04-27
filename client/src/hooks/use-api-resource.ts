@@ -13,6 +13,7 @@ import {
   QueryClient,
   useQueryClient
 } from '@tanstack/react-query';
+import type { OnMutateFunction } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useToast } from './use-toast';
 
@@ -52,7 +53,7 @@ export interface ApiQueryResponse<TData> {
   data?: TData;
   isLoading: boolean;
   isError: boolean;
-  error?: ApiError;
+  error?: ApiError | null;  // Updated to allow null values
   networkError: string | null;
   clearNetworkError: () => void;
   refetch: () => Promise<unknown>;
@@ -63,7 +64,7 @@ export interface ApiMutationResponse<TData, TVariables> {
   mutate: (variables: TVariables) => void;
   mutateAsync: (variables: TVariables) => Promise<TData>;
   isLoading: boolean;
-  error?: ApiError;
+  error?: ApiError | null;  // Updated to allow null values
   resetError: () => void;
 }
 
@@ -199,6 +200,9 @@ export function useApiResource<TData, TVariables = unknown>(
       if (mutationOptions.onMutate) {
         return mutationOptions.onMutate(variables);
       }
+      
+      // Ensure a return value on all code paths
+      return Promise.resolve(undefined);
     },
   });
 
