@@ -1,8 +1,8 @@
 import React from 'react';
 import { 
   DashboardPanel 
-} from '../../../../shared/components/organisms/dashboard-panel.js';
-import { Button } from '../../../../shared/components/atoms/button.js';
+} from '../../../../shared/components/organisms/dashboard-panel';
+import { Button } from '../../../../shared/components/atoms/button';
 import { 
   BrainIcon, 
   LightbulbIcon, 
@@ -13,8 +13,8 @@ import {
   BuildingIcon
 } from 'lucide-react';
 
-import { DecisionCard } from '../../decision-log/components/decision-card.js';
-import { MonthlyCheckInCard } from '../../personal-clarity/components/monthly-check-in-card.js';
+import { DecisionCard } from '../../decision-log/components/decision-card';
+import { MonthlyCheckInCard } from '../../personal-clarity/components/monthly-check-in-card';
 
 /**
  * Dashboard Integration Example

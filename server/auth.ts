@@ -277,6 +277,10 @@ export function setupAuth(app: Express) {
           isAdmin: user.isAdmin
         });
       });
+      
+      // This return is needed to satisfy TypeScript's control flow analysis
+      // It won't be reached in practice because the req.login callback handles the response
+      return;
     } catch (error) {
       if (error instanceof z.ZodError) {
         const validationError = fromZodError(error);

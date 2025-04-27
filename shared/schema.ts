@@ -216,7 +216,7 @@ export const insertActivitySchema = z.object({
 });
 
 // Export types from Prisma Client
-export type { BrainDump, ProblemTree, DraftedPlan, ClarityLab, WeeklyReflection, MonthlyCheckIn, Priority, Decision, Offer, OfferNote, Activity } from "@prisma/client";
+export type { BrainDump, ProblemTree, DraftedPlan, ClarityLab, WeeklyReflection, MonthlyCheckIn, Priority, Decision, Offer, OfferNote, Activity, User } from "@prisma/client";
 
 // Legacy types
 export type DemoUser = z.infer<typeof demoUserSchema>;

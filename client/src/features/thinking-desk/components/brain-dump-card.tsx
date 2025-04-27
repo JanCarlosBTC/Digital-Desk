@@ -1,6 +1,6 @@
 import React from 'react';
-import { DashboardPanel } from '../../../../shared/components/organisms/dashboard-panel.js';
-import { Button } from '../../../../shared/components/atoms/button.js';
+import { DashboardPanel } from '../../../../shared/components/organisms/dashboard-panel';
+import { Button } from '../../../../shared/components/atoms/button';
 import { BrainIcon } from 'lucide-react';
 
 interface BrainDumpCardProps {

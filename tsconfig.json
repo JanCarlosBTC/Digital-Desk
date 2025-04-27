@@ -26,7 +26,7 @@
     "jsx": "preserve",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowJs": true,
     "baseUrl": ".",
     "types": ["node", "vite/client"],
