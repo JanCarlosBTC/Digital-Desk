@@ -1,9 +1,9 @@
-import React, { ReactNode } from "react";
+import React from "react";
 import ToolCard from "@/components/tool-card";
 import { BrainIcon, ClipboardCheckIcon, ListChecksIcon, ArchiveIcon, LogInIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { useAuth, User } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 
 const Home = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -28,15 +28,7 @@ const Home = () => {
         {!isLoading && isAuthenticated && user && (
           <div className="text-sm text-gray-600">
             <span>Welcome back, </span>
-            <span className="font-semibold">
-              {(() => {
-                // Using IIFE to create a proper typed context
-                if (typeof user === 'object' && user !== null && 'username' in user) {
-                  return String(user.username);
-                }
-                return 'Guest';
-              })() as ReactNode}
-            </span>
+            <span className="font-semibold">{user.username}</span>
           </div>
         )}
       </header>

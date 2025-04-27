@@ -18,16 +18,8 @@ declare global {
   }
 }
 
-// Extend PrismaClient to include workspaceInvitation
-declare module '@prisma/client' {
-  interface PrismaClient {
-    workspaceInvitation: {
-      findFirst: (args: any) => Promise<any>;
-      create: (args: any) => Promise<any>;
-      update: (args: any) => Promise<any>;
-    }
-  }
-}
+// Note: We don't need to extend PrismaClient for workspaceInvitation as it's already defined
+// in the @prisma/client module. We'll use type casting to any for specific operations instead.
 
 // Extend Express namespace to add our custom User type
 declare global {
