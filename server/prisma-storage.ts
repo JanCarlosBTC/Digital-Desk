@@ -13,8 +13,9 @@ import prisma from './prisma.js';
 import session from 'express-session';
 import connectPg from 'connect-pg-simple';
 import { pool } from './db.js';
+import type { User } from "@prisma/client";
 import {
-  User, InsertUser,
+  ReplitUser,
   BrainDump, InsertBrainDump,
   ProblemTree, InsertProblemTree,
   DraftedPlan, InsertDraftedPlan,
@@ -65,27 +66,42 @@ export class PrismaStorage implements IStorage {
     }
   }
 
-  async createUser(user: InsertUser): Promise<User> {
+  async createUser(user: ReplitUser): Promise<User> {
     return await prisma.user.create({
       data: {
+        id: user.id,
         username: user.username,
-        password: user.password,
-        name: user.name,
-        initials: user.initials,
-        plan: user.plan || undefined // Ensure plan is never null
+        email: user.email || null,
+        firstName: user.firstName || null,
+        lastName: user.lastName || null,
+        bio: user.bio || null,
+        profileImageUrl: user.profileImageUrl || null,
+        // Legacy fields that still exist in the schema
+        password: '',
+        name: user.username,  // Use username as name
+        initials: user.username.substring(0, 2).toUpperCase()  // First two chars as initials
       }
     });
   }
 
-  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+  async updateUser(id: string, userData: Partial<ReplitUser>): Promise<User | undefined> {
     try {
-      const updateData: any = {};
+      const updateData: any = {
+        updatedAt: new Date()
+      };
       
       if (userData.username !== undefined) updateData.username = userData.username;
-      if (userData.password !== undefined) updateData.password = userData.password;
-      if (userData.name !== undefined) updateData.name = userData.name;
-      if (userData.initials !== undefined) updateData.initials = userData.initials;
-      if (userData.plan !== undefined) updateData.plan = userData.plan || undefined;
+      if (userData.email !== undefined) updateData.email = userData.email;
+      if (userData.firstName !== undefined) updateData.firstName = userData.firstName;
+      if (userData.lastName !== undefined) updateData.lastName = userData.lastName;
+      if (userData.bio !== undefined) updateData.bio = userData.bio;
+      if (userData.profileImageUrl !== undefined) updateData.profileImageUrl = userData.profileImageUrl;
+      
+      // Update name and initials if username changes
+      if (userData.username !== undefined) {
+        updateData.name = userData.username;
+        updateData.initials = userData.username.substring(0, 2).toUpperCase();
+      }
       
       return await prisma.user.update({
         where: { id },
@@ -98,11 +114,28 @@ export class PrismaStorage implements IStorage {
   }
 
   // Brain Dump methods
-  async getBrainDumpByUserId(userId: number): Promise<BrainDump | undefined> {
-    const brainDump = await prisma.brainDump.findFirst({
-      where: { userId }
-    });
-    return brainDump || undefined;
+  async getBrainDumps(userId: string): Promise<BrainDump[]> {
+    try {
+      const brainDumps = await prisma.brainDump.findMany({
+        where: { userId }
+      });
+      return brainDumps;
+    } catch (error) {
+      console.error('Error fetching brain dumps:', error);
+      return [];
+    }
+  }
+  
+  async getBrainDumpByUserId(userId: string): Promise<BrainDump | undefined> {
+    try {
+      const brainDump = await prisma.brainDump.findFirst({
+        where: { userId }
+      });
+      return brainDump || undefined;
+    } catch (error) {
+      console.error('Error fetching brain dump:', error);
+      return undefined;
+    }
   }
 
   async createBrainDump(brainDump: InsertBrainDump): Promise<BrainDump> {
@@ -223,14 +256,14 @@ export class PrismaStorage implements IStorage {
     return updatedProblemTree;
   }
 
-  async deleteProblemTree(id: number): Promise<boolean> {
+  async deleteProblemTree(id: number): Promise<void> {
     try {
       await prisma.problemTree.delete({
         where: { id }
       });
-      return true;
     } catch (error) {
-      return false;
+      console.error('Error deleting problem tree:', error);
+      throw error;
     }
   }
 
@@ -331,14 +364,14 @@ export class PrismaStorage implements IStorage {
     return updatedDraftedPlan;
   }
 
-  async deleteDraftedPlan(id: number): Promise<boolean> {
+  async deleteDraftedPlan(id: number): Promise<void> {
     try {
       await prisma.draftedPlan.delete({
         where: { id }
       });
-      return true;
     } catch (error) {
-      return false;
+      console.error('Error deleting drafted plan:', error);
+      throw error;
     }
   }
 
@@ -381,14 +414,14 @@ export class PrismaStorage implements IStorage {
     return updatedClarityLab;
   }
 
-  async deleteClarityLab(id: number): Promise<boolean> {
+  async deleteClarityLab(id: number): Promise<void> {
     try {
       await prisma.clarityLab.delete({
         where: { id }
       });
-      return true;
     } catch (error) {
-      return false;
+      console.error('Error deleting clarity lab:', error);
+      throw error;
     }
   }
 
@@ -416,6 +449,35 @@ export class PrismaStorage implements IStorage {
     return await prisma.weeklyReflection.create({
       data: weeklyReflection
     });
+  }
+  
+  async getWeeklyReflectionByWeek(userId: string, weekDate: Date): Promise<WeeklyReflection | null> {
+    try {
+      // Calculate the start and end of the week for the given date
+      const startOfWeek = new Date(weekDate);
+      startOfWeek.setHours(0, 0, 0, 0);
+      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Start of week (Sunday)
+      
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(endOfWeek.getDate() + 6); // End of week (Saturday)
+      endOfWeek.setHours(23, 59, 59, 999);
+      
+      // Find the weekly reflection within the date range
+      const reflection = await prisma.weeklyReflection.findFirst({
+        where: {
+          userId,
+          weekDate: {
+            gte: startOfWeek,
+            lte: endOfWeek
+          }
+        }
+      });
+      
+      return reflection;
+    } catch (error) {
+      console.error('Error fetching weekly reflection by week:', error);
+      return null;
+    }
   }
 
   async updateWeeklyReflection(id: number, weeklyReflection: Partial<InsertWeeklyReflection>): Promise<WeeklyReflection | undefined> {
@@ -449,15 +511,14 @@ export class PrismaStorage implements IStorage {
     }
   }
 
-  async deleteWeeklyReflection(id: number): Promise<boolean> {
+  async deleteWeeklyReflection(id: number): Promise<void> {
     try {
       await prisma.weeklyReflection.delete({
         where: { id }
       });
-      return true;
     } catch (error) {
       console.error('Error deleting weekly reflection:', error);
-      return false;
+      throw error;
     }
   }
 
@@ -705,14 +766,14 @@ export class PrismaStorage implements IStorage {
     return updatedPriority;
   }
 
-  async deletePriority(id: number): Promise<boolean> {
+  async deletePriority(id: number): Promise<void> {
     try {
       await prisma.priority.delete({
         where: { id }
       });
-      return true;
     } catch (error) {
-      return false;
+      console.error('Error deleting priority:', error);
+      throw error;
     }
   }
 
@@ -766,22 +827,22 @@ export class PrismaStorage implements IStorage {
     return updatedDecision;
   }
 
-  async deleteDecision(id: number): Promise<boolean> {
+  async deleteDecision(id: number): Promise<void> {
     try {
       // Get the decision before deleting it
       const decision = await this.getDecision(id);
-      if (!decision) return false;
+      if (!decision) {
+        console.error(`Decision with ID ${id} not found`);
+        return;
+      }
 
       // Delete the decision
       await prisma.decision.delete({
         where: { id }
       });
-
-
-
-      return true;
     } catch (error) {
-      return false;
+      console.error('Error deleting decision:', error);
+      throw error;
     }
   }
 
@@ -835,22 +896,22 @@ export class PrismaStorage implements IStorage {
     return updatedOffer;
   }
 
-  async deleteOffer(id: number): Promise<boolean> {
+  async deleteOffer(id: number): Promise<void> {
     try {
       // Get the offer before deleting it
       const offer = await this.getOffer(id);
-      if (!offer) return false;
+      if (!offer) {
+        console.error(`Offer with ID ${id} not found`);
+        return;
+      }
 
       // Delete the offer
       await prisma.offer.delete({
         where: { id }
       });
-
-
-
-      return true;
     } catch (error) {
-      return false;
+      console.error('Error deleting offer:', error);
+      throw error;
     }
   }
 

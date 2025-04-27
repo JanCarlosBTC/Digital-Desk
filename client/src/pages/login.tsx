@@ -1,108 +1,48 @@
-import React, { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LoginForm } from "@/components/auth/login-form";
-import { RegisterForm } from "@/components/auth/register-form";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useUser } from "@/context/user-context";
-import { useLocation } from "wouter";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useUser } from '@/context/user-context';
+import { useAuth } from '@/hooks/useAuth';
 
-export default function LoginPage() {
-  const { user, isLoading } = useUser();
-  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
-  const [, setLocation] = useLocation();
-  
-  // If user is already logged in, redirect to home
-  useEffect(() => {
-    if (user && !isLoading) {
-      setLocation("/");
-    }
-  }, [user, isLoading, setLocation]);
-  
-  if (user && !isLoading) {
-    return null; // This will briefly show before the redirect happens
-  }
+const Login = () => {
+  const { login } = useUser();
+  const { isLoading } = useAuth();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-primary">Digital Desk</h1>
-          <p className="text-gray-600">Sign in to your account</p>
-        </div>
-        
-        <Card>
-          <CardHeader className="space-y-1 pb-2">
-            <CardTitle className="text-2xl font-bold">
-              {activeTab === "login" ? "Welcome back" : "Create an account"}
-            </CardTitle>
-            <CardDescription>
-              {activeTab === "login" 
-                ? "Enter your credentials to access your account" 
-                : "Fill out the form below to create your account"}
-            </CardDescription>
-          </CardHeader>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-blue-50 to-white px-4">
+      <Card className="w-full max-w-md shadow-lg border-none">
+        <CardHeader className="space-y-2 text-center">
+          <CardTitle className="text-3xl font-bold text-primary">Digital Desk</CardTitle>
+          <CardDescription className="text-lg">
+            Clarity Client Hub
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="text-center space-y-2 mb-4">
+            <h2 className="text-2xl font-medium">Welcome Back</h2>
+            <p className="text-gray-500">
+              Sign in to continue to your personal workspace
+            </p>
+          </div>
           
-          <CardContent>
-            <Tabs
-              defaultValue="login"
-              value={activeTab}
-              onValueChange={(value) => setActiveTab(value as "login" | "register")}
-              className="space-y-4"
+          <div className="flex flex-col items-center space-y-4">
+            <Button
+              onClick={login}
+              className="w-full py-6 text-lg"
+              disabled={isLoading}
             >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="login" className="space-y-4">
-                <LoginForm redirectTo="/" />
-                
-                <div className="text-center text-sm text-gray-500 mt-4">
-                  <p>
-                    Don't have an account?{" "}
-                    <button
-                      className="text-blue-600 hover:underline"
-                      onClick={() => setActiveTab("register")}
-                    >
-                      Sign up
-                    </button>
-                  </p>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="register" className="space-y-4">
-                <RegisterForm redirectTo="/login" />
-                
-                <div className="text-center text-sm text-gray-500 mt-4">
-                  <p>
-                    Already have an account?{" "}
-                    <button
-                      className="text-blue-600 hover:underline"
-                      onClick={() => setActiveTab("login")}
-                    >
-                      Sign in
-                    </button>
-                  </p>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-        
-        <div className="mt-6 text-center text-sm text-gray-500">
-          <p>
-            By continuing, you agree to our{" "}
-            <a href="#" className="text-blue-600 hover:underline">
-              Terms of Service
-            </a>{" "}
-            and{" "}
-            <a href="#" className="text-blue-600 hover:underline">
-              Privacy Policy
-            </a>
-            .
+              {isLoading ? 'Signing in...' : 'Sign in with Replit'}
+            </Button>
+          </div>
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-2">
+          <p className="text-sm text-center text-gray-500 px-4">
+            By signing in, you agree to our Terms of Service and Privacy Policy.
           </p>
-        </div>
-      </div>
+        </CardFooter>
+      </Card>
     </div>
   );
-} 
+};
+
+export default Login;

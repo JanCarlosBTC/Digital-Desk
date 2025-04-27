@@ -40,6 +40,22 @@ export class PrismaStorage implements IStorage {
     });
   }
   
+  async updateBrainDump(id: number, content: string): Promise<any> {
+    return await prisma.brainDump.update({
+      where: { id },
+      data: { 
+        content,
+        updatedAt: new Date()
+      }
+    });
+  }
+  
+  async getBrainDumpByUserId(userId: string): Promise<any | null> {
+    return await prisma.brainDump.findFirst({
+      where: { userId }
+    });
+  }
+  
   // Problem tree operations
   async getProblemTrees(userId: string): Promise<any[]> {
     return await prisma.problemTree.findMany({
@@ -146,6 +162,12 @@ export class PrismaStorage implements IStorage {
   async createWeeklyReflection(data: any): Promise<any> {
     return await prisma.weeklyReflection.create({
       data
+    });
+  }
+  
+  async getWeeklyReflection(id: number): Promise<any | null> {
+    return await prisma.weeklyReflection.findUnique({
+      where: { id }
     });
   }
   

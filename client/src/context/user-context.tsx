@@ -1,12 +1,13 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { DemoUser } from '@shared/schema';
+import { User } from '@prisma/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UserContextType {
-  user: DemoUser | null;
+  user: User | null;
   isLoading: boolean;
   isError: boolean;
-  login: (userData: Partial<DemoUser>) => void;
+  login: () => void;
   logout: () => void;
   refreshUser: () => void;
 }
@@ -22,82 +23,33 @@ const UserContext = createContext<UserContextType>({
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { toast } = useToast();
+  const { 
+    user, 
+    isLoading, 
+    error: isError, 
+    redirectToLogin, 
+    logout: authLogout,
+    refetch
+  } = useAuth();
   
-  // Create a fixed demo user - no login needed
-  const [user, setUser] = useState<DemoUser | null>(() => {
-    const demoUser: DemoUser = {
-      id: 1,
-      name: "Demo User",
-      username: "demo",
-      initials: "DU",
-      plan: "Premium"
-    };
-    
-    // Store in localStorage to persist between refreshes
-    localStorage.setItem('user', JSON.stringify(demoUser));
-    return demoUser;
-  });
-  
-  const [isLoading, setIsLoading] = useState(false);
-  const [isError, setIsError] = useState(false);
-
-  // Since authentication is removed, login always uses demo user
-  const login = (userData: Partial<DemoUser>) => {
-    // Ignore credentials - always use demo user
-    const demoUser: DemoUser = {
-      id: 1,
-      name: "Demo User",
-      username: "demo",
-      initials: "DU",
-      plan: "Premium",
-      ...userData  // Allow overriding some values if needed
-    };
-
-    localStorage.setItem('user', JSON.stringify(demoUser));
-    setUser(demoUser);
-
-    toast({
-      title: 'Demo mode activated',
-      description: `Using demo account`,
-    });
+  // Redirect to Replit Auth login page
+  const login = () => {
+    redirectToLogin();
   };
 
-  // Logout reinitializes the demo user
+  // Logout using Replit Auth
   const logout = () => {
-    const demoUser: DemoUser = {
-      id: 1,
-      name: "Demo User",
-      username: "demo",
-      initials: "DU",
-      plan: "Premium"
-    };
+    authLogout();
     
-    localStorage.setItem('user', JSON.stringify(demoUser));
-    setUser(demoUser);
-
     toast({
-      title: 'Demo reset',
-      description: 'Using fresh demo account',
+      title: 'Logged out',
+      description: 'You have been logged out successfully',
     });
   };
 
-  // Refresh user retrieves from localStorage but ensures a demo user exists
+  // Refresh user data from the server
   const refreshUser = () => {
-    const stored = localStorage.getItem('user');
-    if (stored) {
-      setUser(JSON.parse(stored) as DemoUser);
-    } else {
-      // If no user in storage, create a new demo user
-      const demoUser: DemoUser = {
-        id: 1,
-        name: "Demo User",
-        username: "demo",
-        initials: "DU",
-        plan: "Premium"
-      };
-      localStorage.setItem('user', JSON.stringify(demoUser));
-      setUser(demoUser);
-    }
+    refetch();
   };
 
   return (
@@ -105,7 +57,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         isLoading,
-        isError,
+        isError: !!isError,
         login,
         logout,
         refreshUser

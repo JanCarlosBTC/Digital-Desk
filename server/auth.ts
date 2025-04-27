@@ -2,15 +2,29 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
 import session from "express-session";
+import connectPg from "connect-pg-simple";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage.js";
-import { User as SelectUser } from "../shared/schema.js";
+import type { User } from "@prisma/client";
 import logger from "./logger.js";
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    // Define the User interface with properties we know it will have
+    interface User {
+      id: string;
+      username: string;
+      email?: string | null;
+      firstName?: string | null;
+      lastName?: string | null;
+      bio?: string | null;
+      profileImageUrl?: string | null;
+      password: string;
+      name: string;
+      initials: string;
+      plan?: string | null;
+    }
   }
 }
 
@@ -54,11 +68,19 @@ export function setupAuth(app: Express) {
     }
   }
 
+  // Create a session store using PostgreSQL
+  const PostgresSessionStore = require('connect-pg-simple')(session);
+  const sessionStore = new PostgresSessionStore({
+    conString: process.env.DATABASE_URL,
+    createTableIfMissing: true,
+    tableName: 'sessions',
+  });
+
   const sessionSettings: session.SessionOptions = {
     secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
-    store: storage.sessionStore,
+    store: sessionStore,
     cookie: {
       secure: process.env.NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
@@ -101,7 +123,7 @@ export function setupAuth(app: Express) {
     done(null, user.id);
   });
   
-  passport.deserializeUser(async (id: number, done) => {
+  passport.deserializeUser(async (id: string, done) => {
     try {
       const user = await storage.getUser(id);
       logger.debug(`Deserialized user: ${id}`);
@@ -159,7 +181,7 @@ export function setupAuth(app: Express) {
 
   // Login endpoint
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: Error | null, user: SelectUser | false, info: { message: string } | undefined) => {
+    passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
       if (err) {
         logger.error(`Login error: ${err.message}`);
         return next(err);
@@ -221,8 +243,14 @@ export function setupAuth(app: Express) {
   if (process.env.NODE_ENV !== "production") {
     app.use((req, res, next) => {
       if (!req.isAuthenticated() && req.path.startsWith('/api/')) {
-        logger.debug(`[auth] [DEV] Using default userId=1 for request to ${req.path}`);
-        (req as any).user = { id: 1 };
+        logger.debug(`[auth] [DEV] Using default userId='1' for request to ${req.path}`);
+        (req as any).user = { 
+          id: '1',
+          username: 'dev_user',
+          name: 'Development User',
+          initials: 'DU',
+          plan: 'free'
+        };
       }
       next();
     });
