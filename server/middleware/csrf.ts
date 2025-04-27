@@ -10,7 +10,7 @@
 
 import crypto from 'crypto';
 import { Request, Response, NextFunction, CookieOptions } from 'express';
-import { logSecurityEvent } from './security-logger';
+import { logSecurityEvent } from './security-logger.js';
 
 // Define options interface
 interface CsrfOptions {

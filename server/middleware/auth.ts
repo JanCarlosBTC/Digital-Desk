@@ -6,7 +6,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { storage } from '../storage';
+import { storage } from '../storage.js';
 
 // Define token payload interface
 interface JwtPayload {
