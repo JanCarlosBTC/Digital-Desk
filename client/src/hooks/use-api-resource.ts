@@ -89,14 +89,14 @@ async function defaultFetch(url: string, options?: RequestInit): Promise<any> {
   });
 
   if (!response.ok) {
-    // Create a proper Error instance for ApiError to extend from
+    // Create an error with all required ApiError properties
     const errorMessage = `Request failed with status ${response.status}`;
     const error = new Error(errorMessage) as ApiError;
     
-    // Add ApiError properties
+    // Set required properties for ApiError interface
     error.name = 'ApiError';
-    error.status = response.status;
     error.message = errorMessage;
+    error.status = response.status;
     
     try {
       const errorJson = await response.json();

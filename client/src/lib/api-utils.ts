@@ -16,16 +16,22 @@ import { useEffect } from 'react';
  * Provides rich error context for better debugging and user feedback
  */
 export interface ApiError extends Error {
-  status?: number;
-  data?: ErrorData;
-  url?: string;
-  method?: string;
-  timestamp: string;
-  originalError?: unknown;
-  requestData?: unknown;
-  retryable?: boolean;
-  errorType?: ErrorType;
-  operationId?: string;
+  // Properties from Error base type
+  name: string;          // Error name (required for Error type)
+  message: string;       // Error message (required for Error type)
+  stack?: string;        // Call stack
+  
+  // Extended API error properties
+  status?: number;       // HTTP status code
+  data?: ErrorData;      // Structured error data
+  url?: string;          // Request URL
+  method?: string;       // HTTP method
+  timestamp: string;     // When the error occurred
+  originalError?: unknown; // Original error object
+  requestData?: unknown;   // Request payload that caused the error
+  retryable?: boolean;     // If the request can be retried
+  errorType?: ErrorType;   // Categorized error type
+  operationId?: string;    // Unique ID for tracking the error
 }
 
 /**
@@ -205,25 +211,27 @@ async function apiRequest<T>(
         // For error responses with parsing issues, try to get text
         try {
           const text = await response.text();
-          throw Object.assign(new Error(`Failed to parse response: ${(parseError as Error).message}`), {
-            status: response.status,
-            responseText: text,
-            parseError,
-            url,
-            method,
-            timestamp: new Date().toISOString(),
-            operationId: requestId
-          });
+          const error = new Error(`Failed to parse response: ${(parseError as Error).message}`) as ApiError;
+          error.name = 'ApiError';
+          error.status = response.status;
+          error.data = { responseText: text };
+          error.url = url;
+          error.method = method;
+          error.timestamp = new Date().toISOString();
+          error.operationId = requestId;
+          error.originalError = parseError;
+          throw error;
         } catch (textError) {
           // Create error with available context if everything fails
-          throw Object.assign(new Error(`Request failed with status ${response.status}`), {
-            status: response.status,
-            parseError,
-            url,
-            method,
-            timestamp: new Date().toISOString(),
-            operationId: requestId
-          });
+          const error = new Error(`Request failed with status ${response.status}`) as ApiError;
+          error.name = 'ApiError';
+          error.status = response.status;
+          error.url = url;
+          error.method = method;
+          error.timestamp = new Date().toISOString();
+          error.operationId = requestId;
+          error.originalError = parseError;
+          throw error;
         }
       }
     }
@@ -241,6 +249,7 @@ async function apiRequest<T>(
         'Unknown API Error';
         
       const apiError = new Error(`API Error: ${errorMessage}`) as ApiError;
+      apiError.name = 'ApiError';
       
       // Enhanced error with rich metadata
       apiError.status = response.status;
