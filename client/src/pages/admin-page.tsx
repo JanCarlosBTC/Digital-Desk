@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Redirect } from "wouter";
+import { Redirect, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, User, Copy, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -62,6 +62,7 @@ interface AdminStats {
 export default function AdminPage() {
   const { user, isLoading } = useAuth();
   const { toast } = useToast();
+  const [_, navigate] = useLocation();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -244,10 +245,13 @@ export default function AdminPage() {
                             className="flex items-center cursor-pointer hover:text-primary transition-colors"
                             onClick={() => {
                               if (user.workspaceId) {
-                                // Using import { navigate } from 'wouter' would be better,
-                                // but this works for a direct demonstration
-                                window.location.href = `/workspace/${user.workspaceId}`;
+                                // Use the proper navigation method from wouter
+                                navigate(`/clients/${user.workspaceId}`);
                                 console.log("Navigating to workspace:", user.workspaceId);
+                                toast({
+                                  title: "Navigating to workspace",
+                                  description: `Opening workspace for ${user.name}`
+                                });
                               } else {
                                 toast({
                                   title: "No workspace assigned",
