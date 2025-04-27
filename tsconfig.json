@@ -26,13 +26,15 @@
     "jsx": "preserve",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
+    "allowJs": true,
     "baseUrl": ".",
     "types": ["node", "vite/client"],
     "typeRoots": ["./node_modules/@types", "./client/src/types"],
     "paths": {
       "@/*": ["./client/src/*"],
       "@shared/*": ["./shared/*"],
+      "@shared/schema": ["./shared/schema.ts"],
       "@server/*": ["./server/*"],
       "@types/*": ["./client/src/types/*"],
       "@utils/*": ["./client/src/lib/*"],
@@ -45,7 +47,33 @@
       "*/atoms/button": ["./shared/components/atoms/button.tsx"],
       "*/atoms/button.js": ["./shared/components/atoms/button.tsx"],
       "*/molecules/card": ["./shared/components/molecules/card.tsx"],
-      "*/molecules/card.js": ["./shared/components/molecules/card.tsx"]
+      "*/molecules/card.js": ["./shared/components/molecules/card.tsx"],
+      "*/organisms/dashboard-panel": ["./shared/components/organisms/dashboard-panel.tsx"],
+      "*/organisms/dashboard-panel.js": ["./shared/components/organisms/dashboard-panel.tsx"],
+      
+      /* Handle wild imports with multiple path segments */
+      "*/*/atoms/button": ["./shared/components/atoms/button.tsx"],
+      "*/*/atoms/button.js": ["./shared/components/atoms/button.tsx"],
+      "*/*/molecules/card": ["./shared/components/molecules/card.tsx"],
+      "*/*/molecules/card.js": ["./shared/components/molecules/card.tsx"],
+      "*/*/organisms/dashboard-panel": ["./shared/components/organisms/dashboard-panel.tsx"],
+      "*/*/organisms/dashboard-panel.js": ["./shared/components/organisms/dashboard-panel.tsx"],
+      
+      /* Handle deep imports with multiple path segments */
+      "*/*/*/atoms/button": ["./shared/components/atoms/button.tsx"],
+      "*/*/*/atoms/button.js": ["./shared/components/atoms/button.tsx"],
+      "*/*/*/molecules/card": ["./shared/components/molecules/card.tsx"],
+      "*/*/*/molecules/card.js": ["./shared/components/molecules/card.tsx"],
+      "*/*/*/organisms/dashboard-panel": ["./shared/components/organisms/dashboard-panel.tsx"],
+      "*/*/*/organisms/dashboard-panel.js": ["./shared/components/organisms/dashboard-panel.tsx"],
+      
+      /* Handle very deep imports with multiple path segments */
+      "**/*/*/*/atoms/button": ["./shared/components/atoms/button.tsx"],
+      "**/*/*/*/atoms/button.js": ["./shared/components/atoms/button.tsx"],
+      "**/*/*/*/molecules/card": ["./shared/components/molecules/card.tsx"],
+      "**/*/*/*/molecules/card.js": ["./shared/components/molecules/card.tsx"],
+      "**/*/*/*/organisms/dashboard-panel": ["./shared/components/organisms/dashboard-panel.tsx"],
+      "**/*/*/*/organisms/dashboard-panel.js": ["./shared/components/organisms/dashboard-panel.tsx"]
     },
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
