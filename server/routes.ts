@@ -12,8 +12,10 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { cacheMiddleware, clearCacheMiddleware } from "./middleware/cache.js";
-// Authentication has been removed - using only API-compatible wrappers
+// Authentication 
 import { withAuth, withAuthAndUser, withDevAuth } from "./middleware/auth-wrapper.js";
+import authRoutes from "./routes-auth.js";
+import { setupAuth } from "./replitAuth.js";
 
 // The Request interface is now augmented via server/types/express.d.ts
 
