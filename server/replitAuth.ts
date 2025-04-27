@@ -25,7 +25,8 @@ export function isAuthenticated(
       email: "v4yl1n@gmail.com",
       name: "V4YL1N",
       initials: "V4",
-      plan: "Pro"
+      isAdmin: true,
+      lastLogin: new Date()
     };
     return next();
   }

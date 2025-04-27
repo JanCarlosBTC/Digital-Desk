@@ -17,6 +17,7 @@ import { withAuth, withAuthAndUser, withDevAuth } from "./middleware/auth-wrappe
 import authRoutes from "./routes-auth.js";
 import workspaceRoutes from "./routes-workspace.js";
 import clientRoutes from "./routes-client.js";
+import adminRoutes from "./routes-admin.js";
 import { setupAuth } from "./replitAuth.js";
 
 // The Request interface is now augmented via server/types/express.d.ts
@@ -45,6 +46,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register workspace routes
   app.use('/', workspaceRoutes);
+  
+  // Register admin routes
+  app.use('/api', adminRoutes);
   
   const handleZodError = (error: unknown, res: Response): Response => {
     if (error instanceof ZodError) {
