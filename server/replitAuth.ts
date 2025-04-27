@@ -63,6 +63,9 @@ function updateUserSession(
   user.expires_at = user.claims?.exp;
 }
 
+// First admin's username - REPLACE THIS WITH YOUR USERNAME
+const ADMIN_USERNAME = "agiledev_agent"; 
+
 async function upsertUser(claims: any) {
   const user = await storage.getUser(claims.sub);
   
@@ -78,16 +81,62 @@ async function upsertUser(claims: any) {
       }
     });
   } else {
+    // Check if this is first user or admin
+    const isAdmin = claims.username === ADMIN_USERNAME;
+    const userCount = await prisma.user.count();
+    const role = isAdmin || userCount === 0 ? "ADMIN" : "CLIENT";
+    
     // Create new user
-    return await storage.createUser({
+    const newUser = await storage.createUser({
       id: claims.sub,
       username: claims.username,
       password: "",
+      email: claims.email,
+      firstName: claims.first_name,
+      lastName: claims.last_name,
+      profileImageUrl: claims.profile_image_url,
       // Fields that currently exist in the schema
       name: claims.first_name || claims.username,
       initials: claims.first_name ? claims.first_name.charAt(0) + (claims.last_name ? claims.last_name.charAt(0) : '') : claims.username.charAt(0),
-      plan: "Free"
+      plan: "Free",
+      role
     });
+    
+    // If admin, check if default workspace exists, if not create it
+    if (role === "ADMIN") {
+      const workspace = await prisma.workspace.findFirst();
+      if (!workspace) {
+        // Create default workspace
+        await prisma.workspace.create({
+          data: {
+            name: "Default Workspace",
+            description: "Default workspace for all users",
+            createdBy: newUser.id,
+            isActive: true
+          }
+        });
+      }
+    } else if (role === "CLIENT") {
+      // For clients, create their own workspace
+      const clientWorkspace = await prisma.workspace.create({
+        data: {
+          name: `${claims.username}'s Workspace`,
+          description: `Workspace for ${claims.username}`,
+          createdBy: newUser.id,
+          isActive: true
+        }
+      });
+      
+      // Assign user to this workspace
+      await prisma.user.update({
+        where: { id: newUser.id },
+        data: {
+          workspaceId: clientWorkspace.id
+        }
+      });
+    }
+
+    return newUser;
   }
 }
 

@@ -1,6 +1,13 @@
 import { z } from "zod";
 import type { BrainDump, ProblemTree, DraftedPlan, ClarityLab, WeeklyReflection, MonthlyCheckIn, Priority, Decision, Offer, OfferNote, Activity } from "@prisma/client";
 
+// User roles
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  CLIENT = 'CLIENT',
+  USER = 'USER'
+}
+
 // Replit Auth user schema definition (Zod validation)
 export const upsertReplitUserSchema = z.object({
   id: z.string(),
@@ -10,10 +17,30 @@ export const upsertReplitUserSchema = z.object({
   lastName: z.string().optional().nullable(),
   bio: z.string().optional().nullable(),
   profileImageUrl: z.string().optional().nullable(),
+  role: z.nativeEnum(UserRole).default(UserRole.USER),
+  workspaceId: z.string().optional().nullable(),
 });
 
 // Type for Replit Auth users
 export type ReplitUser = z.infer<typeof upsertReplitUserSchema>;
+
+// Workspace/Tenant schema
+export const workspaceSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1, "Workspace name is required"),
+  description: z.string().optional(),
+  createdBy: z.string(), // User ID of creator
+  isActive: z.boolean().default(true),
+  createdAt: z.date().optional(),
+  updatedAt: z.date().optional(),
+});
+
+export type Workspace = z.infer<typeof workspaceSchema>;
+export const insertWorkspaceSchema = workspaceSchema.omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true 
+});
 
 // Legacy Demo User schema (for compatibility during transition)
 export const demoUserSchema = z.object({
