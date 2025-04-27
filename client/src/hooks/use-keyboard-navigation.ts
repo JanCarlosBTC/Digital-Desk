@@ -40,9 +40,11 @@ export const useKeyboardNavigation = ({
           event.preventDefault();
           const nextIndex = (currentIndex + 1) % focusableElementsRef.current.length;
           const nextElement = focusableElementsRef.current[nextIndex];
-          nextElement.focus();
-          if (scrollIntoView) {
-            nextElement.scrollIntoView(scrollOptions);
+          if (nextElement) {
+            nextElement.focus();
+            if (scrollIntoView) {
+              nextElement.scrollIntoView(scrollOptions);
+            }
           }
           onNavigate?.('next');
           break;
@@ -57,9 +59,11 @@ export const useKeyboardNavigation = ({
               : (currentIndex - 1 + focusableElementsRef.current.length) %
                 focusableElementsRef.current.length;
           const prevElement = focusableElementsRef.current[prevIndex];
-          prevElement.focus();
-          if (scrollIntoView) {
-            prevElement.scrollIntoView(scrollOptions);
+          if (prevElement) {
+            prevElement.focus();
+            if (scrollIntoView) {
+              prevElement.scrollIntoView(scrollOptions);
+            }
           }
           onNavigate?.('prev');
           break;
@@ -106,9 +110,12 @@ export const useKeyboardNavigation = ({
 
   const focusFirst = useCallback(() => {
     if (focusableElementsRef.current.length > 0) {
-      focusableElementsRef.current[0].focus();
-      if (scrollIntoView) {
-        focusableElementsRef.current[0].scrollIntoView(scrollOptions);
+      const firstElement = focusableElementsRef.current[0];
+      if (firstElement) {
+        firstElement.focus();
+        if (scrollIntoView) {
+          firstElement.scrollIntoView(scrollOptions);
+        }
       }
     }
   }, [scrollIntoView, scrollOptions]);
@@ -116,9 +123,11 @@ export const useKeyboardNavigation = ({
   const focusLast = useCallback(() => {
     if (focusableElementsRef.current.length > 0) {
       const lastElement = focusableElementsRef.current[focusableElementsRef.current.length - 1];
-      lastElement.focus();
-      if (scrollIntoView) {
-        lastElement.scrollIntoView(scrollOptions);
+      if (lastElement) {
+        lastElement.focus();
+        if (scrollIntoView) {
+          lastElement.scrollIntoView(scrollOptions);
+        }
       }
     }
   }, [scrollIntoView, scrollOptions]);
