@@ -1,27 +1,47 @@
 /**
- * Authentication TypeScript Interface Declarations
+ * Authentication Middleware (TypeScript Implementation)
  * 
- * This file provides TypeScript interfaces and type declarations for authentication.
- * 
- * NOTE: This is NOT the active implementation used by the application.
- * The actual implementation is in auth.js which is imported by the controllers.
- * This file serves as a type declaration reference for TypeScript.
+ * This provides JWT token generation, verification, and authentication middleware.
  */
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { storage } from '../storage';
 
-// Use environment variable for JWT secret, with fallback for development
-const JWT_SECRET = process.env.JWT_SECRET || 'temp_development_secret';
-
-// Extended request type with userId
-export interface AuthenticatedRequest extends Request {
+// Define token payload interface
+interface JwtPayload {
   userId: number;
+  [key: string]: any;
 }
+
+// Extend Express Request interface
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: number;
+    }
+  }
+}
+
+// Use environment variable for JWT secret
+let JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('ERROR: JWT_SECRET environment variable is not set. Authentication system is insecure!');
+  // Only allow fallback in development
+  if (process.env.NODE_ENV === 'development') {
+    console.warn('Using insecure temporary JWT secret for DEVELOPMENT ONLY');
+    JWT_SECRET = 'temp_dev_' + Math.random().toString(36).substring(2);
+  } else {
+    throw new Error('JWT_SECRET environment variable must be set in production');
+  }
+}
+
+// Temporary demo user ID until we implement proper authentication
+const DEMO_USER_ID = 1;
 
 /**
  * Middleware to authenticate a user from a JWT token
- * TypeScript interface declaration only - implementation in auth.js
+ * This middleware verifies the JWT token and attaches the userId to the request object
  */
 export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -31,15 +51,10 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
       throw new Error('No token provided');
     }
     
-    const tokenParts = authHeader.split(' ');
-    if (tokenParts.length !== 2) {
-      throw new Error('Invalid authorization format');
-    }
+    const token = authHeader.split(' ')[1] || '';
     
-    // At this point, we know tokenParts[1] exists
-    const token = tokenParts[1];
     if (!token) {
-      throw new Error('Invalid token format');
+      throw new Error('No token provided');
     }
     
     const decoded = verifyToken(token);
@@ -49,7 +64,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     }
     
     // Attach user ID to request
-    (req as AuthenticatedRequest).userId = decoded.userId;
+    req.userId = decoded.userId;
     next();
   } catch (error) {
     res.status(401).json({ message: 'Unauthorized' });
@@ -58,7 +73,10 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
 
 /**
  * Generate a JWT token for a user
- * TypeScript interface declaration only - implementation in auth.js
+ * Used during login and registration
+ * 
+ * @param userId - The ID of the user to generate a token for
+ * @returns The generated JWT token
  */
 export const generateToken = (userId: number): string => {
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' });
@@ -66,12 +84,14 @@ export const generateToken = (userId: number): string => {
 
 /**
  * Verify a JWT token
- * TypeScript interface declaration only - implementation in auth.js
+ * 
+ * @param token - The JWT token to verify
+ * @returns The decoded token payload or null if invalid
  */
-export const verifyToken = (token: string): { userId: number } | null => {
+export const verifyToken = (token: string): JwtPayload | null => {
   try {
-    return jwt.verify(token, JWT_SECRET) as { userId: number };
+    return jwt.verify(token, JWT_SECRET) as JwtPayload;
   } catch (error) {
     return null;
   }
-}; 
+};
