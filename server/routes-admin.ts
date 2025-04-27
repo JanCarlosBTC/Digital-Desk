@@ -128,14 +128,12 @@ router.post('/admin/users', isAuthenticated, isAdmin, async (req: AuthenticatedR
     
     // Generate initials from name
     let initials = "";
-    if (name) {
-      const nameParts = name.split(' ');
-      if (nameParts.length >= 2) {
-        initials = nameParts[0][0] + nameParts[1][0];
-      } else if (nameParts.length === 1) {
-        initials = nameParts[0].substring(0, 2);
-      }
-    } else {
+    const nameParts = name ? name.split(' ') : [];
+    if (nameParts.length >= 2 && nameParts[0] && nameParts[1]) {
+      initials = (nameParts[0][0] || "") + (nameParts[1][0] || "");
+    } else if (nameParts.length === 1 && nameParts[0]) {
+      initials = nameParts[0].substring(0, 2);
+    } else if (username) {
       initials = username.substring(0, 2);
     }
     
@@ -155,13 +153,9 @@ router.post('/admin/users', isAuthenticated, isAdmin, async (req: AuthenticatedR
     });
     
     // Return user without sensitive data
-    const { id, createdAt, ...userData } = user;
+    const { password, ...userData } = user;
     
-    return res.status(201).json({
-      id,
-      ...userData,
-      createdAt
-    });
+    return res.status(201).json(userData);
   } catch (error) {
     console.error("Error creating user:", error);
     return res.status(500).json({ message: "Failed to create user" });
@@ -186,9 +180,13 @@ router.post('/admin/users/:id/invite', isAuthenticated, isAdmin, async (req: Aut
     const token = crypto.randomBytes(32).toString('hex');
     
     // Store token with expiration
+    if (!id) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+    
     const inviteLink = await prisma.userInvite.create({
       data: {
-        userId: id,
+        userId: id as string,
         token,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days expiration
       }
@@ -196,7 +194,7 @@ router.post('/admin/users/:id/invite', isAuthenticated, isAdmin, async (req: Aut
     
     // Generate invitation link using host from request
     const host = req.headers.host || 'localhost:3000';
-    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
     const inviteUrl = `${protocol}://${host}/accept-invite?token=${token}`;
     
     return res.json({
