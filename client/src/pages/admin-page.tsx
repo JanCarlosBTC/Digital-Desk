@@ -45,6 +45,7 @@ interface User {
   lastLogin: Date | null;
   lastLoginFormatted: string;
   createdAt: Date;
+  workspaceId?: string | null;
 }
 
 interface AdminStats {
@@ -239,7 +240,20 @@ export default function AdminPage() {
                     users.map((user: User) => (
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">
-                          <div className="flex items-center">
+                          <div 
+                            className="flex items-center cursor-pointer hover:text-primary transition-colors"
+                            onClick={() => {
+                              if (user.workspaceId) {
+                                window.location.href = `/workspace/${user.workspaceId}`;
+                              } else {
+                                toast({
+                                  title: "No workspace assigned",
+                                  description: "This user is not assigned to any workspace.",
+                                  variant: "destructive"
+                                });
+                              }
+                            }}
+                          >
                             <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center mr-2">
                               {user.initials}
                             </div>
@@ -250,13 +264,15 @@ export default function AdminPage() {
                         <TableCell>{user.isAdmin ? "Yes" : "No"}</TableCell>
                         <TableCell>{user.lastLoginFormatted}</TableCell>
                         <TableCell>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleInvite(user)}
-                          >
-                            <User className="mr-2 h-4 w-4" /> Invite
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleInvite(user)}
+                            >
+                              <User className="mr-2 h-4 w-4" /> Invite
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))

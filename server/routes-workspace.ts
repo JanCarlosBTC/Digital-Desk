@@ -289,6 +289,29 @@ router.delete("/api/workspaces/:workspaceId/users/:userId", isAuthenticated, isA
   }
 });
 
+// Delete workspace (admin only)
+router.delete("/api/workspaces/:id", isAuthenticated, isAdmin, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    // First, update all users to remove them from this workspace
+    await prisma.user.updateMany({
+      where: { workspaceId: id },
+      data: { workspaceId: null }
+    });
+    
+    // Then delete the workspace
+    await prisma.workspace.delete({
+      where: { id }
+    });
+    
+    return res.json({ success: true, message: "Workspace deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting workspace:", error);
+    return res.status(500).json({ message: "Failed to delete workspace" });
+  }
+});
+
 // Get current user's workspace
 router.get("/api/current-workspace", isAuthenticated, async (req: AuthenticatedRequest, res: Response) => {
   try {

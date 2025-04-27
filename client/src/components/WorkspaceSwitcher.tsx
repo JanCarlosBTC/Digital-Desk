@@ -18,7 +18,17 @@ import {
   DialogTitle,
   DialogTrigger 
 } from '@/components/ui/dialog';
-import { Building, ChevronDown, Plus, Settings, Users } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Building, ChevronDown, Plus, Settings, Users, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
@@ -74,6 +84,8 @@ export function WorkspaceSwitcher() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [workspaceToDelete, setWorkspaceToDelete] = useState<WorkspaceWithUsers | null>(null);
   
   // Form for creating a new workspace
   const { register, handleSubmit, reset, formState: { errors } } = useForm<CreateWorkspaceFormData>({
@@ -111,6 +123,27 @@ export function WorkspaceSwitcher() {
     },
   });
 
+  // Delete workspace mutation
+  const deleteWorkspaceMutation = useMutation({
+    mutationFn: (workspaceId: string) => 
+      apiRequest('DELETE', `/api/workspaces/${workspaceId}`) as Promise<any>,
+    onSuccess: () => {
+      toast({
+        title: 'Workspace deleted',
+        description: 'The workspace has been deleted successfully.',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/current-workspace'] });
+      setIsDeleteDialogOpen(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Failed to delete workspace',
+        description: error.message || 'There was an error deleting the workspace.',
+        variant: 'destructive',
+      });
+    },
+  });
+
   // Switch to a different workspace
   const switchWorkspaceMutation = useMutation({
     mutationFn: (workspaceId: string) => {
@@ -142,6 +175,19 @@ export function WorkspaceSwitcher() {
   const onSubmit = (data: CreateWorkspaceFormData) => {
     createWorkspaceMutation.mutate(data);
   };
+  
+  // Handle delete workspace confirmation
+  const handleDeleteWorkspace = (workspace: WorkspaceWithUsers) => {
+    setWorkspaceToDelete(workspace);
+    setIsDeleteDialogOpen(true);
+  };
+
+  // Confirm and execute delete workspace
+  const confirmDeleteWorkspace = () => {
+    if (workspaceToDelete) {
+      deleteWorkspaceMutation.mutate(workspaceToDelete.id);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -164,116 +210,153 @@ export function WorkspaceSwitcher() {
   const { currentWorkspace, isAdmin, allWorkspaces } = workspaceData;
 
   return (
-    <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="w-52 justify-start">
-            <Building className="mr-2 h-4 w-4" />
-            <span>{currentWorkspace?.name || 'No workspace'}</span>
-            <ChevronDown className="ml-auto h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52">
-          <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          
-          {/* Current workspace */}
-          {currentWorkspace && (
-            <DropdownMenuItem className="justify-between">
-              {currentWorkspace.name}
-              <Settings className="h-4 w-4" />
-            </DropdownMenuItem>
-          )}
-          
-          {/* Admin can see all workspaces */}
-          {isAdmin && allWorkspaces && allWorkspaces.length > 0 && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Switch workspace</DropdownMenuLabel>
-              
-              {allWorkspaces.map((workspace) => (
-                workspace.id !== currentWorkspace?.id && (
-                  <DropdownMenuItem 
-                    key={workspace.id}
-                    onClick={() => switchWorkspaceMutation.mutate(workspace.id)}
-                  >
-                    {workspace.name}
-                  </DropdownMenuItem>
-                )
-              ))}
-            </>
-          )}
-          
-          {/* Admin can create new workspaces */}
-          {isAdmin && (
-            <>
-              <DropdownMenuSeparator />
-              <DialogTrigger asChild>
-                <DropdownMenuItem>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create workspace
-                </DropdownMenuItem>
-              </DialogTrigger>
-              
-              <DropdownMenuItem>
-                <Users className="mr-2 h-4 w-4" />
-                Manage users
+    <>
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="w-52 justify-start">
+              <Building className="mr-2 h-4 w-4" />
+              <span>{currentWorkspace?.name || 'No workspace'}</span>
+              <ChevronDown className="ml-auto h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            
+            {/* Current workspace */}
+            {currentWorkspace && (
+              <DropdownMenuItem className="justify-between" asChild>
+                <div className="w-full flex justify-between items-center cursor-pointer">
+                  <span>{currentWorkspace.name}</span>
+                  <Settings className="h-4 w-4" />
+                </div>
               </DropdownMenuItem>
-            </>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-      
-      {/* Create workspace dialog */}
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create new workspace</DialogTitle>
-          <DialogDescription>
-            Add a new workspace for your team or client.
-          </DialogDescription>
-        </DialogHeader>
+            )}
+            
+            {/* Admin can see all workspaces */}
+            {isAdmin && allWorkspaces && allWorkspaces.length > 0 && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Switch workspace</DropdownMenuLabel>
+                
+                {allWorkspaces.map((workspace) => (
+                  workspace.id !== currentWorkspace?.id && (
+                    <DropdownMenuItem 
+                      key={workspace.id}
+                      onClick={() => switchWorkspaceMutation.mutate(workspace.id)}
+                    >
+                      {workspace.name}
+                    </DropdownMenuItem>
+                  )
+                ))}
+              </>
+            )}
+            
+            {/* Admin can create new workspaces */}
+            {isAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DialogTrigger asChild>
+                  <DropdownMenuItem>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create workspace
+                  </DropdownMenuItem>
+                </DialogTrigger>
+                
+                <DropdownMenuItem>
+                  <Users className="mr-2 h-4 w-4" />
+                  Manage users
+                </DropdownMenuItem>
+
+                {currentWorkspace && (
+                  <DropdownMenuItem 
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => handleDeleteWorkspace(currentWorkspace)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete workspace
+                  </DropdownMenuItem>
+                )}
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
         
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-4 py-2 pb-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Workspace name</Label>
-              <Input
-                id="name"
-                placeholder="Enter workspace name"
-                {...register('name')}
-              />
-              {errors.name && (
-                <p className="text-sm text-red-500">{errors.name.message}</p>
-              )}
+        {/* Create workspace dialog */}
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create new workspace</DialogTitle>
+            <DialogDescription>
+              Add a new workspace for your team or client.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="space-y-4 py-2 pb-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Workspace name</Label>
+                <Input
+                  id="name"
+                  placeholder="Enter workspace name"
+                  {...register('name')}
+                />
+                {errors.name && (
+                  <p className="text-sm text-red-500">{errors.name.message}</p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="description">Description (optional)</Label>
+                <Input
+                  id="description"
+                  placeholder="Enter description"
+                  {...register('description')}
+                />
+              </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="description">Description (optional)</Label>
-              <Input
-                id="description"
-                placeholder="Enter description"
-                {...register('description')}
-              />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsCreateDialogOpen(false)}
-              type="button"
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsCreateDialogOpen(false)}
+                type="button"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit"
+                disabled={createWorkspaceMutation.isPending}
+              >
+                {createWorkspaceMutation.isPending ? 'Creating...' : 'Create workspace'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete workspace confirmation dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Workspace</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the workspace "{workspaceToDelete?.name}"? 
+              This action cannot be undone and will remove all users from this workspace.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={confirmDeleteWorkspace}
+              disabled={deleteWorkspaceMutation.isPending}
             >
-              Cancel
-            </Button>
-            <Button 
-              type="submit"
-              disabled={createWorkspaceMutation.isPending}
-            >
-              {createWorkspaceMutation.isPending ? 'Creating...' : 'Create workspace'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+              {deleteWorkspaceMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
