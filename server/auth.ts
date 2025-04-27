@@ -306,5 +306,43 @@ export function setupAuth(app: Express) {
       }
       next();
     });
+    
+    // Add dev route to create a demo user (only in development)
+    app.get("/api/dev/create-demo-user", async (req, res) => {
+      try {
+        // Check if demo user already exists
+        const existingUser = await storage.getUserByUsername("demo");
+        
+        if (existingUser) {
+          return res.json({ 
+            message: "Demo user already exists", 
+            username: existingUser.username, 
+            id: existingUser.id 
+          });
+        }
+        
+        // Create a demo user with a known password
+        const hashedPassword = await hashPassword("demo123");
+        const demoUser = await storage.createUser({
+          username: "demo",
+          password: hashedPassword,
+          name: "Demo User",
+          initials: "DU",
+          plan: "Free"
+        });
+        
+        return res.json({ 
+          message: "Demo user created successfully", 
+          username: demoUser.username,
+          id: demoUser.id
+        });
+      } catch (error) {
+        logger.error("Error creating demo user:", error);
+        return res.status(500).json({ 
+          message: "Failed to create demo user",
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    });
   }
 }

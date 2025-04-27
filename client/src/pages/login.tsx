@@ -14,7 +14,8 @@ const Login = () => {
   const [, setLocation] = useLocation();
   const { user, isLoading } = useAuth();
   
-  const [loginData, setLoginData] = useState({ username: '', password: '' });
+  // Pre-fill with demo credentials for testing
+  const [loginData, setLoginData] = useState({ username: 'demo', password: 'demo123' });
   const [registerData, setRegisterData] = useState({ 
     username: '', 
     password: '', 

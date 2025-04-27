@@ -14,10 +14,22 @@ export interface User {
 }
 
 export function useAuth() {
-  const { data: user, isLoading } = useQuery<User | null>({
+  // Try both API endpoints to ensure we catch responses from either
+  const { data: authUser, isLoading: isLoadingAuth } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
     retry: false,
+    enabled: true,
   });
+  
+  const { data: standardUser, isLoading: isLoadingUser } = useQuery<User | null>({
+    queryKey: ["/api/user"],
+    retry: false,
+    enabled: true,
+  });
+  
+  // Use whichever user data is available
+  const user = authUser || standardUser;
+  const isLoading = isLoadingAuth || isLoadingUser;
 
   return {
     user,

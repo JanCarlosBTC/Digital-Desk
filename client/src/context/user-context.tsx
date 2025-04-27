@@ -33,18 +33,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Redirect to login page
   const login = () => {
     // For local authentication, we'll redirect to the login form
-    window.location.href = '/api/login';
+    window.location.href = '/login';
   };
 
   // Logout using local auth
   const logout = () => {
     fetch('/api/logout', { method: 'POST' })
       .then(() => {
+        // Invalidate all auth-related queries
         queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+        
+        // Clear the cache explicitly by setting null
+        queryClient.setQueryData(['/api/auth/user'], null);
+        queryClient.setQueryData(['/api/user'], null);
+        
         toast({
           title: 'Logged out',
           description: 'You have been logged out successfully',
         });
+        
+        // Force redirect to login page
+        window.location.href = '/login';
       })
       .catch(error => {
         console.error('Logout error:', error);
@@ -59,6 +69,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Refresh user data from the server
   const refreshUser = () => {
     queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+    // Also invalidate the standard endpoint to ensure both are refreshed
+    queryClient.invalidateQueries({ queryKey: ['/api/user'] });
   };
 
   // Flag to indicate if there's an error (user not authenticated but not loading)
