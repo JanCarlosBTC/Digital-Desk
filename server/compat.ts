@@ -15,14 +15,29 @@ const originalRequire = createRequire(import.meta.url);
 // Get the actual project root
 const projectRoot = resolve(__dirname, '..');
 
+// Type for vite config object
+type ViteConfigObject = {
+  plugins: any[];
+  resolve: {
+    alias: {
+      [key: string]: string;
+    };
+  };
+  root: string;
+  build: {
+    outDir: string;
+    emptyOutDir: boolean;
+  };
+};
+
 // Create an enhanced require function that can handle specific files
-const enhancedRequire = (id) => {
+const enhancedRequire = (id: string): any => {
   // Special handling for vite.config.js
   if (id === '../vite.config' || id.endsWith('/vite.config.js')) {
     console.log('Intercepting require for vite.config.js');
     
     // Return a hardcoded config object that mirrors our vite.config.ts
-    return {
+    const viteConfig: ViteConfigObject = {
       plugins: [],
       resolve: {
         alias: {
@@ -36,25 +51,44 @@ const enhancedRequire = (id) => {
         emptyOutDir: true
       }
     };
+    
+    return viteConfig;
   }
   
   // Default behavior for other requires
   return originalRequire(id);
 };
 
-export const require = enhancedRequire;
-export { __filename, __dirname };
+export { enhancedRequire as require, __filename, __dirname };
 
-// Install compatibility layer into global scope
-// This allows other modules to use require without importing it
-globalThis.require = enhancedRequire;
+// We need to use a different approach for TypeScript compatibility
+// Rather than directly trying to replace the Node.js globals,
+// we'll use a type augmentation approach
+
+// Augment the global scope with our types
+declare global {
+  // We're not redefining require/module here, just augmenting
+  interface NodeRequire {
+    // Additional properties for our custom require function
+    __enhanced?: boolean;
+  }
+  
+  interface NodeModule {
+    // Additional properties for module if needed
+    __enhanced?: boolean;
+  }
+}
+
+// This extends the global objects with our implementations
+// without causing TypeScript errors about incompatible types
+(globalThis.require as any) = enhancedRequire;
+(globalThis.require as any).__enhanced = true;
 globalThis.__filename = __filename;
 globalThis.__dirname = __dirname;
 
 // Patch global variables for libraries that expect CommonJS environment
 if (typeof module === 'undefined') {
-  // @ts-expect-error - creating module for CommonJS compatibility
-  globalThis.module = { exports: {} };
+  (globalThis as any).module = { exports: {}, __enhanced: true };
 }
 
 // Create symlinks if they don't exist to ensure proper file access
@@ -69,6 +103,7 @@ try {
   }
 } catch (error) {
   // Silent fail - symlinks might already exist or we don't have permission
+  console.error('Warning: Could not create symlinks. This may be normal in some environments.');
 }
 
 // Log the compatibility setup
