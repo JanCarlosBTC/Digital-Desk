@@ -7,7 +7,8 @@ import {
   ClipboardCheckIcon, 
   ListChecksIcon, 
   ArchiveIcon, 
-  HomeIcon 
+  HomeIcon,
+  UsersIcon 
 } from "lucide-react";
 
 // Define the navigation items for the app
@@ -36,6 +37,11 @@ export const navItems = [
     title: "Offer Vault",
     href: "/offer-vault",
     icon: ArchiveIcon
+  },
+  {
+    title: "Client Management",
+    href: "/clients",
+    icon: UsersIcon
   }
 ];
 
