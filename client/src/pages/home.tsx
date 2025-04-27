@@ -3,7 +3,7 @@ import ToolCard from "@/components/tool-card";
 import { BrainIcon, ClipboardCheckIcon, ListChecksIcon, ArchiveIcon, LogInIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, User } from "@/hooks/useAuth";
 
 const Home = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -28,7 +28,9 @@ const Home = () => {
         {!isLoading && isAuthenticated && (
           <div className="text-sm text-gray-600">
             <span>Welcome back, </span>
-            <span className="font-semibold">{user?.username}</span>
+            <span className="font-semibold">
+              {(user as User)?.username || 'Guest'}
+            </span>
           </div>
         )}
       </header>

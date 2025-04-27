@@ -114,9 +114,8 @@ export function WorkspaceSwitcher() {
   // Switch to a different workspace
   const switchWorkspaceMutation = useMutation({
     mutationFn: (workspaceId: string) =>
-      apiRequest(`/api/workspaces/${workspaceId}/users`, { 
-        method: 'POST', 
-        data: { userId: user?.id || '' } 
+      apiRequest('POST', `/api/workspaces/${workspaceId}/users`, { 
+        userId: user?.id || '' 
       }) as Promise<any>,
     onSuccess: () => {
       toast({
