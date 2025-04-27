@@ -188,13 +188,16 @@ router.put("/api/workspaces/:id", isAuthenticated, isAdmin, async (req: Authenti
   }
 });
 
-// Add user to workspace (admin only)
+// Add user to workspace by user ID (admin only)
 router.post("/api/workspaces/:id/users", isAuthenticated, isAdmin, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     
     const addUserSchema = z.object({
-      userId: z.string(),
+      userId: z.string().optional(),
+      email: z.string().email().optional(),
+    }).refine(data => data.userId || data.email, {
+      message: "Either userId or email must be provided"
     });
     
     const validationResult = addUserSchema.safeParse(req.body);
@@ -205,15 +208,56 @@ router.post("/api/workspaces/:id/users", isAuthenticated, isAdmin, async (req: A
       });
     }
     
-    const { userId } = validationResult.data;
+    const { userId, email } = validationResult.data;
     
-    // Update user's workspace
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: { workspaceId: id }
-    });
-    
-    return res.json(user);
+    if (userId) {
+      // Update user's workspace by ID
+      const user = await prisma.user.update({
+        where: { id: userId },
+        data: { workspaceId: id }
+      });
+      
+      return res.json({
+        success: true,
+        message: "User added to workspace",
+        user
+      });
+    } else if (email) {
+      // Find if user exists with this email
+      const existingUser = await prisma.user.findFirst({
+        where: { email }
+      });
+      
+      if (existingUser) {
+        // Update existing user's workspace
+        const user = await prisma.user.update({
+          where: { id: existingUser.id },
+          data: { workspaceId: id }
+        });
+        
+        return res.json({
+          success: true,
+          message: "Existing user added to workspace",
+          user
+        });
+      } else {
+        // Create pending invitation
+        const invitation = await prisma.workspaceInvitation.create({
+          data: {
+            email,
+            workspaceId: id,
+            status: "PENDING",
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
+          }
+        });
+        
+        return res.json({
+          success: true,
+          message: "Invitation created for new user",
+          invitation
+        });
+      }
+    }
   } catch (error) {
     console.error("Error adding user to workspace:", error);
     return res.status(500).json({ message: "Failed to add user to workspace" });

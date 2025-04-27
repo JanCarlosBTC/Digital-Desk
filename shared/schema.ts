@@ -8,6 +8,14 @@ export enum UserRole {
   USER = 'USER'
 }
 
+// Invitation status
+export enum InvitationStatus {
+  PENDING = 'PENDING',
+  ACCEPTED = 'ACCEPTED',
+  REJECTED = 'REJECTED',
+  EXPIRED = 'EXPIRED'
+}
+
 // Replit Auth user schema definition (Zod validation)
 export const upsertReplitUserSchema = z.object({
   id: z.string(),
