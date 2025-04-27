@@ -1,72 +1,13 @@
 import prisma from './prisma.js';
 import type { User } from '@prisma/client';
 import type { ReplitUser } from '../shared/schema.js';
+import { IStorage } from './storage.js';
 
-// Interface for storage operations
-export interface IStorage {
-  // User operations
-  getUser(id: string): Promise<User | null>;
-  getUserByUsername(username: string): Promise<User | null>;
-  createUser(userData: any): Promise<User>;
-  
-  // Brain dump operations
-  getBrainDumps(userId: string): Promise<any[]>;
-  createBrainDump(data: any): Promise<any>;
-  
-  // Problem tree operations
-  getProblemTrees(userId: string): Promise<any[]>; 
-  createProblemTree(data: any): Promise<any>;
-  getProblemTree(id: number): Promise<any | null>;
-  updateProblemTree(id: number, data: any): Promise<any>;
-  deleteProblemTree(id: number): Promise<void>;
-  
-  // Other operations as needed
-  getDraftedPlans(userId: string): Promise<any[]>;
-  createDraftedPlan(data: any): Promise<any>;
-  getDraftedPlan(id: number): Promise<any | null>;
-  updateDraftedPlan(id: number, data: any): Promise<any>;
-  deleteDraftedPlan(id: number): Promise<void>;
-  
-  getClarityLabs(userId: string): Promise<any[]>;
-  createClarityLab(data: any): Promise<any>;
-  getClarityLab(id: number): Promise<any | null>;
-  updateClarityLab(id: number, data: any): Promise<any>;
-  deleteClarityLab(id: number): Promise<void>;
-  
-  getWeeklyReflections(userId: string): Promise<any[]>;
-  createWeeklyReflection(data: any): Promise<any>;
-  getWeeklyReflectionByWeek(userId: string, weekDate: Date): Promise<any | null>;
-  updateWeeklyReflection(id: number, data: any): Promise<any>;
-  deleteWeeklyReflection(id: number): Promise<void>;
-  
-  getMonthlyCheckIns(userId: string): Promise<any[]>;
-  createMonthlyCheckIn(data: any): Promise<any>;
-  getMonthlyCheckInByMonthYear(userId: string, month: number, year: number): Promise<any | null>;
-  updateMonthlyCheckIn(id: number, data: any): Promise<any>;
-  
-  getPriorities(userId: string): Promise<any[]>;
-  createPriority(data: any): Promise<any>;
-  updatePriority(id: number, data: any): Promise<any>;
-  deletePriority(id: number): Promise<void>;
-  
-  getDecisions(userId: string): Promise<any[]>;
-  createDecision(data: any): Promise<any>;
-  getDecision(id: number): Promise<any | null>;
-  updateDecision(id: number, data: any): Promise<any>;
-  deleteDecision(id: number): Promise<void>;
-  
-  getOffers(userId: string): Promise<any[]>;
-  createOffer(data: any): Promise<any>;
-  getOffer(id: number): Promise<any | null>;
-  updateOffer(id: number, data: any): Promise<any>;
-  deleteOffer(id: number): Promise<void>;
-  
-  getOfferNotesByUserId(userId: string): Promise<any[]>;
-  createOfferNote(data: any): Promise<any>;
-  updateOfferNote(id: number, data: any): Promise<any>;
-}
-
-export class DatabaseStorage implements IStorage {
+/**
+ * Prisma implementation of the storage interface adapted for Replit Auth
+ * This implementation uses string userIds instead of numeric ones
+ */
+export class PrismaStorage implements IStorage {
   // User operations
   async getUser(id: string): Promise<User | null> {
     return await prisma.user.findUnique({
@@ -261,7 +202,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Priorities operations
-  async getPriorities(userId: number): Promise<any[]> {
+  async getPriorities(userId: string): Promise<any[]> {
     return await prisma.priority.findMany({
       where: { userId }
     });
@@ -287,7 +228,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Decisions operations
-  async getDecisions(userId: number): Promise<any[]> {
+  async getDecisions(userId: string): Promise<any[]> {
     return await prisma.decision.findMany({
       where: { userId }
     });
@@ -319,7 +260,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Offers operations
-  async getOffers(userId: number): Promise<any[]> {
+  async getOffers(userId: string): Promise<any[]> {
     return await prisma.offer.findMany({
       where: { userId }
     });
@@ -351,7 +292,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Offer Notes operations
-  async getOfferNotesByUserId(userId: number): Promise<any[]> {
+  async getOfferNotesByUserId(userId: string): Promise<any[]> {
     return await prisma.offerNote.findMany({
       where: { userId }
     });
@@ -371,4 +312,4 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new PrismaStorage();

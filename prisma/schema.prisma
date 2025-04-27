@@ -10,13 +10,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Session {
+  sid       String   @id
+  sess      Json
+  expire    DateTime
+  
+  @@index([expire], name: "IDX_session_expire")
+  @@map("sessions")
+}
+
 model User {
-  id       Int      @id @default(autoincrement())
-  username String   @unique
-  password String
-  name     String
-  plan     String   @default("Free")
-  initials String
+  id             String   @id
+  username       String   @unique
+  password       String   @default("")
+  email          String?  @unique
+  firstName      String?  @map("first_name")
+  lastName       String?  @map("last_name")
+  bio            String?
+  profileImageUrl String?  @map("profile_image_url")
+  name           String
+  plan           String   @default("Free")
+  initials       String
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @map("updated_at")
   
   // Relationships
   brainDumps        BrainDump[]
@@ -36,7 +52,7 @@ model User {
 
 model BrainDump {
   id        Int      @id @default(autoincrement())
-  userId    Int
+  userId    String   @map("user_id")
   content   String?
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @map("updated_at")
@@ -49,7 +65,7 @@ model BrainDump {
 
 model ProblemTree {
   id                Int      @id @default(autoincrement())
-  userId           Int      @map("user_id")
+  userId           String   @map("user_id")
   title            String
   mainProblem      String   @map("main_problem")
   subProblems      String[] @map("sub_problems")
@@ -67,7 +83,7 @@ model ProblemTree {
 
 model DraftedPlan {
   id               Int      @id @default(autoincrement())
-  userId           Int      @map("user_id")
+  userId           String   @map("user_id")
   title            String
   description      String
   status           String   @default("Draft")
@@ -87,7 +103,7 @@ model DraftedPlan {
 
 model ClarityLab {
   id          Int      @id @default(autoincrement())
-  userId      Int      @map("user_id")
+  userId      String   @map("user_id")
   title       String
   description String
   category    String
@@ -102,7 +118,7 @@ model ClarityLab {
 
 model WeeklyReflection {
   id             Int       @id @default(autoincrement())
-  userId         Int       @map("user_id")
+  userId         String    @map("user_id")
   weekDate       DateTime  @map("week_date")
   wentWell       String?   @map("went_well")
   challenges     String?
@@ -120,7 +136,7 @@ model WeeklyReflection {
 
 model MonthlyCheckIn {
   id                  Int       @id @default(autoincrement())
-  userId              Int       @map("user_id")
+  userId              String    @map("user_id")
   month               Int
   year                Int
   completedOn         DateTime? @map("completed_on")
@@ -139,7 +155,7 @@ model MonthlyCheckIn {
 
 model Priority {
   id        Int      @id @default(autoincrement())
-  userId    Int      @map("user_id")
+  userId    String   @map("user_id")
   priority  String
   order     Int
   createdAt DateTime @default(now()) @map("created_at")
@@ -153,7 +169,7 @@ model Priority {
 
 model Decision {
   id              Int       @id @default(autoincrement())
-  userId          Int       @map("user_id")
+  userId          String    @map("user_id")
   title           String
   category        String
   decisionDate    DateTime  @map("decision_date")
@@ -174,7 +190,7 @@ model Decision {
 
 model Offer {
   id             Int       @id @default(autoincrement())
-  userId         Int       @map("user_id")
+  userId         String    @map("user_id")
   title          String
   description    String
   status         String    @default("Active")
@@ -195,7 +211,7 @@ model Offer {
 
 model OfferNote {
   id        Int      @id @default(autoincrement())
-  userId    Int      @map("user_id")
+  userId    String   @map("user_id")
   content   String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @map("updated_at")
@@ -208,7 +224,7 @@ model OfferNote {
 
 model Activity {
   id         Int      @id @default(autoincrement())
-  userId     Int      @map("user_id")
+  userId     String   @map("user_id")
   type       String
   entityType String   @map("entity_type")
   entityName String   @map("entity_name")

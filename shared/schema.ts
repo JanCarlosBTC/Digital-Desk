@@ -1,43 +1,8 @@
 import { z } from "zod";
 import type { BrainDump, ProblemTree, DraftedPlan, ClarityLab, WeeklyReflection, MonthlyCheckIn, Priority, Decision, Offer, OfferNote, Activity } from "@prisma/client";
-import {
-  pgTable,
-  text,
-  varchar,
-  timestamp,
-  jsonb,
-  index,
-} from "drizzle-orm/pg-core";
 
-// Session storage table for Replit Auth
-export const sessions = pgTable(
-  "sessions",
-  {
-    sid: varchar("sid").primaryKey(),
-    sess: jsonb("sess").notNull(),
-    expire: timestamp("expire").notNull(),
-  },
-  (table) => [index("IDX_session_expire").on(table.expire)],
-);
-
-// User storage table for Replit Auth
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().notNull(),
-  username: varchar("username").unique().notNull(),
-  email: varchar("email").unique(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  bio: text("bio"),
-  profileImageUrl: varchar("profile_image_url"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export type UpsertUser = typeof users.$inferInsert;
-export type User = typeof users.$inferSelect;
-
-// User schema for Replit Auth
-export const upsertUserSchema = z.object({
+// Replit Auth user schema definition (Zod validation)
+export const upsertReplitUserSchema = z.object({
   id: z.string(),
   username: z.string(),
   email: z.string().email().optional().nullable(),
@@ -46,6 +11,9 @@ export const upsertUserSchema = z.object({
   bio: z.string().optional().nullable(),
   profileImageUrl: z.string().optional().nullable(),
 });
+
+// Type for Replit Auth users
+export type ReplitUser = z.infer<typeof upsertReplitUserSchema>;
 
 // Legacy Demo User schema (for compatibility during transition)
 export const demoUserSchema = z.object({
@@ -196,8 +164,7 @@ export const insertActivitySchema = z.object({
 // Export types from Prisma Client
 export type { BrainDump, ProblemTree, DraftedPlan, ClarityLab, WeeklyReflection, MonthlyCheckIn, Priority, Decision, Offer, OfferNote, Activity } from "@prisma/client";
 
-// Legacy insert type
-export type InsertUser = z.infer<typeof upsertUserSchema>;
+// Legacy types
 export type DemoUser = z.infer<typeof demoUserSchema>;
 export type InsertBrainDump = z.infer<typeof insertBrainDumpSchema>;
 export type InsertProblemTree = z.infer<typeof insertProblemTreeSchema>;
