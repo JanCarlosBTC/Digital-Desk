@@ -4,8 +4,16 @@
  */
 
 import bcrypt from 'bcrypt';
-import { MemStorage } from '../server/storage';
-import { InsertUser } from '../shared/schema';
+import { storage } from '../server/storage';
+// Define a simple interface for user creation instead of importing from schema
+interface UserInput {
+  id?: string;
+  username: string;
+  password: string;
+  name: string;
+  plan?: string;
+  initials: string;
+}
 
 /**
  * Initialize the in-memory storage with sample data
@@ -14,14 +22,15 @@ const initializeStorage = async (): Promise<void> => {
   try {
     console.log('Creating demo user with MemStorage...');
     
-    // Create a fresh instance of MemStorage
-    const memStorage = new MemStorage();
+    // Use the existing storage instance
+    // If needed, clear previous data
     
     // Hash the password
     const hashedPassword = await bcrypt.hash('password', 10);
     
     // Create demo user data
-    const demoUserData: InsertUser = {
+    const demoUserData: UserInput = {
+      id: 'demo-user-1',  // Add required ID field
       username: 'demo',
       password: hashedPassword,
       name: 'John Doe',
@@ -30,20 +39,20 @@ const initializeStorage = async (): Promise<void> => {
     };
     
     // Create a demo user
-    const user = await memStorage.createUser(demoUserData);
+    const user = await storage.createUser(demoUserData);
     
     console.log(`Created demo user: ${user.name} (${user.username}), ID: ${user.id}`);
     console.log('Login credentials: username="demo", password="password"');
     
     // Create sample brain dump for demo user
-    const brainDump = await memStorage.createBrainDump({
+    const brainDump = await storage.createBrainDump({
       userId: user.id,
       content: 'This is a sample brain dump for the demo user.'
     });
     console.log('Created sample brain dump');
     
     // Create a sample problem tree
-    const problemTree = await memStorage.createProblemTree({
+    const problemTree = await storage.createProblemTree({
       userId: user.id,
       title: 'Sample Problem Tree',
       mainProblem: 'Main problem description',
@@ -55,7 +64,7 @@ const initializeStorage = async (): Promise<void> => {
     console.log('Created sample problem tree');
     
     // Create a sample drafted plan
-    const draftedPlan = await memStorage.createDraftedPlan({
+    const draftedPlan = await storage.createDraftedPlan({
       userId: user.id,
       title: 'Sample Plan',
       description: 'This is a sample drafted plan',

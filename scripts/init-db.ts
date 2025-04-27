@@ -71,6 +71,7 @@ async function initializeDb(): Promise<void> {
       where: { username: 'demo' },
       update: {},
       create: {
+        id: 'demo-user-id', // Add required ID field
         username: 'demo',
         password: hashedPassword, 
         name: 'John Doe',
