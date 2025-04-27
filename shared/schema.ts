@@ -1,16 +1,53 @@
 import { z } from "zod";
-import type { User, BrainDump, ProblemTree, DraftedPlan, ClarityLab, WeeklyReflection, MonthlyCheckIn, Priority, Decision, Offer, OfferNote, Activity } from "@prisma/client";
+import type { BrainDump, ProblemTree, DraftedPlan, ClarityLab, WeeklyReflection, MonthlyCheckIn, Priority, Decision, Offer, OfferNote, Activity } from "@prisma/client";
+import {
+  pgTable,
+  text,
+  varchar,
+  timestamp,
+  jsonb,
+  index,
+} from "drizzle-orm/pg-core";
 
-// User schema
-export const insertUserSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  name: z.string().min(1, "Name is required"),
-  plan: z.string().default("Free"),
-  initials: z.string().min(1, "Initials are required"),
+// Session storage table for Replit Auth
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table for Replit Auth
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().notNull(),
+  username: varchar("username").unique().notNull(),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  bio: text("bio"),
+  profileImageUrl: varchar("profile_image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Demo User schema (without password requirement)
+export type UpsertUser = typeof users.$inferInsert;
+export type User = typeof users.$inferSelect;
+
+// User schema for Replit Auth
+export const upsertUserSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  email: z.string().email().optional().nullable(),
+  firstName: z.string().optional().nullable(),
+  lastName: z.string().optional().nullable(),
+  bio: z.string().optional().nullable(),
+  profileImageUrl: z.string().optional().nullable(),
+});
+
+// Legacy Demo User schema (for compatibility during transition)
 export const demoUserSchema = z.object({
   id: z.number().int().positive(),
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -157,10 +194,10 @@ export const insertActivitySchema = z.object({
 });
 
 // Export types from Prisma Client
-export type { User, BrainDump, ProblemTree, DraftedPlan, ClarityLab, WeeklyReflection, MonthlyCheckIn, Priority, Decision, Offer, OfferNote, Activity };
+export type { BrainDump, ProblemTree, DraftedPlan, ClarityLab, WeeklyReflection, MonthlyCheckIn, Priority, Decision, Offer, OfferNote, Activity } from "@prisma/client";
 
-// Export insert types
-export type InsertUser = z.infer<typeof insertUserSchema>;
+// Legacy insert type
+export type InsertUser = z.infer<typeof upsertUserSchema>;
 export type DemoUser = z.infer<typeof demoUserSchema>;
 export type InsertBrainDump = z.infer<typeof insertBrainDumpSchema>;
 export type InsertProblemTree = z.infer<typeof insertProblemTreeSchema>;
