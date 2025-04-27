@@ -162,7 +162,7 @@ export function setupAuth(app: Express) {
   });
   
   // Login endpoint
-  app.post('/api/login', (req, res, next) => {
+  app.post('/api/login', (req, res, next): void => {
     // Validate login data
     try {
       loginSchema.parse(req.body);
@@ -215,6 +215,10 @@ export function setupAuth(app: Express) {
           lastLogin: new Date()
         });
       });
+      
+      // This return is needed to satisfy TypeScript's control flow analysis
+      // It won't be reached in practice because the req.login callback handles the response
+      return;
     })(req, res, next);
   });
   

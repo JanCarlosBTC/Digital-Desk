@@ -107,7 +107,15 @@ export async function setupAuth(app: Express) {
       tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
       verified: passport.AuthenticateCallback
     ) => {
-      const user = {};
+      const claims = tokens.claims();
+      const user: Express.User = {
+        id: typeof claims?.sub === 'string' ? claims.sub : 'user_id',
+        username: typeof claims?.preferred_username === 'string' ? claims.preferred_username : 'username',
+        name: typeof claims?.name === 'string' ? claims.name : 'User',
+        initials: typeof claims?.name === 'string' ? claims.name.substring(0, 2).toUpperCase() : 'UN',
+        isAdmin: false,
+        email: typeof claims?.email === 'string' ? claims.email : undefined
+      };
       updateUserSession(user, tokens);
       
       // Upsert user in the database (handled by authStorage)
