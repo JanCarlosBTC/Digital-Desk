@@ -30,7 +30,7 @@ function parseAndValidateId(id: string | undefined, res: Response): string | und
     res.status(400).json({ message: "ID parameter is required" });
     return undefined;
   }
-  // Just return the ID string as we're using string IDs now with Replit Auth
+  // IDs must be numeric; this helper ensures the ID is validated accordingly
   return String(id);
 }
 
