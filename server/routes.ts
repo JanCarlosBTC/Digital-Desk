@@ -25,13 +25,19 @@ import { setupAuth } from "./replitAuth.js";
 /**
  * Helper function to safely validate an ID from request parameters
  */
-function parseAndValidateId(id: string | undefined, res: Response): string | undefined {
+function parseAndValidateId(id: string | undefined, res: Response): number | undefined {
   if (id === undefined) {
     res.status(400).json({ message: "ID parameter is required" });
     return undefined;
   }
-  // Just return the ID string as we're using string IDs now with Replit Auth
-  return String(id);
+
+  const parsedId = Number(id);
+  if (Number.isNaN(parsedId)) {
+    res.status(400).json({ message: "Invalid ID" });
+    return undefined;
+  }
+
+  return parsedId;
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -113,13 +119,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Use getBrainDumps which is available in the storage interface
         const existingBrainDumps = await storage.getBrainDumps(req.userId ? String(req.userId) : "");
         const existingBrainDump = existingBrainDumps && existingBrainDumps.length > 0 ? existingBrainDumps[0] : null;
-        // Explicit conversion for comparison
-        if (!existingBrainDump || parseInt(existingBrainDump.id.toString()) !== parseInt(parsedId.toString())) {
+        if (!existingBrainDump || existingBrainDump.id !== parsedId) {
           return res.status(403).json({ message: "Not authorized to update this brain dump" });
         }
       }
-      
-      const updatedBrainDump = await storage.updateBrainDump(parseInt(parsedId.toString()), content);
+
+      const updatedBrainDump = await storage.updateBrainDump(parsedId, content);
       if (!updatedBrainDump) {
         return res.status(404).json({ message: "Brain dump not found" });
       }
@@ -169,13 +174,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this problem tree
       if (process.env.NODE_ENV === 'production') {
-        const problemTree = await storage.getProblemTree(parseInt(parsedId.toString()));
+        const problemTree = await storage.getProblemTree(parsedId);
         if (!problemTree || problemTree.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to update this problem tree" });
         }
       }
 
-      const updatedProblemTree = await storage.updateProblemTree(parseInt(parsedId.toString()), data);
+      const updatedProblemTree = await storage.updateProblemTree(parsedId, data);
       if (!updatedProblemTree) {
         return res.status(404).json({ message: "Problem tree not found" });
       }
@@ -197,13 +202,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this problem tree
       if (process.env.NODE_ENV === 'production') {
-        const problemTree = await storage.getProblemTree(parseInt(parsedId.toString()));
+        const problemTree = await storage.getProblemTree(parsedId);
         if (!problemTree || problemTree.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to delete this problem tree" });
         }
       }
 
-      await storage.deleteProblemTree(parseInt(parsedId.toString()));
+      await storage.deleteProblemTree(parsedId);
       
       // Clear cache after deletion
       clearCacheMiddleware('problem-trees')(req, res, () => {});
@@ -248,13 +253,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this drafted plan
       if (process.env.NODE_ENV === 'production') {
-        const draftedPlan = await storage.getDraftedPlan(parseInt(parsedId.toString()));
+        const draftedPlan = await storage.getDraftedPlan(parsedId);
         if (!draftedPlan || draftedPlan.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to update this drafted plan" });
         }
       }
 
-      const updatedDraftedPlan = await storage.updateDraftedPlan(parseInt(parsedId.toString()), data);
+      const updatedDraftedPlan = await storage.updateDraftedPlan(parsedId, data);
       if (!updatedDraftedPlan) {
         return res.status(404).json({ message: "Drafted plan not found" });
       }
@@ -272,14 +277,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this drafted plan
       if (process.env.NODE_ENV === 'production') {
-        const draftedPlan = await storage.getDraftedPlan(parseInt(parsedId.toString()));
+        const draftedPlan = await storage.getDraftedPlan(parsedId);
         if (!draftedPlan || draftedPlan.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to delete this drafted plan" });
         }
       }
 
       try {
-        await storage.deleteDraftedPlan(parseInt(parsedId.toString()));
+        await storage.deleteDraftedPlan(parsedId);
         // Since deleteDraftedPlan returns void, no check needed
       } catch (deleteError) {
         console.error("Error deleting drafted plan:", deleteError);
@@ -326,13 +331,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this clarity lab entry
       if (process.env.NODE_ENV === 'production') {
-        const clarityLab = await storage.getClarityLab(parseInt(parsedId.toString()));
+        const clarityLab = await storage.getClarityLab(parsedId);
         if (!clarityLab || clarityLab.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to update this clarity lab entry" });
         }
       }
 
-      const updatedClarityLab = await storage.updateClarityLab(parseInt(parsedId.toString()), data);
+      const updatedClarityLab = await storage.updateClarityLab(parsedId, data);
       if (!updatedClarityLab) {
         return res.status(404).json({ message: "Clarity lab entry not found" });
       }
@@ -350,14 +355,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this clarity lab entry
       if (process.env.NODE_ENV === 'production') {
-        const clarityLab = await storage.getClarityLab(parseInt(parsedId.toString()));
+        const clarityLab = await storage.getClarityLab(parsedId);
         if (!clarityLab || clarityLab.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to delete this clarity lab entry" });
         }
       }
 
       try {
-        await storage.deleteClarityLab(parseInt(parsedId.toString()));
+        await storage.deleteClarityLab(parsedId);
         // Since deleteClarityLab returns void, we don't check its return value
       } catch (deleteError) {
         console.error("Error deleting clarity lab:", deleteError);
@@ -424,14 +429,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this weekly reflection
       if (process.env.NODE_ENV === 'production') {
-        const weeklyReflection = await storage.getWeeklyReflection(parseInt(parsedId.toString()));
+        const weeklyReflection = await storage.getWeeklyReflection(parsedId);
         if (!weeklyReflection || weeklyReflection.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to update this weekly reflection" });
         }
       }
 
       try {
-        const updatedWeeklyReflection = await storage.updateWeeklyReflection(parseInt(parsedId.toString()), data);
+        const updatedWeeklyReflection = await storage.updateWeeklyReflection(parsedId, data);
         if (!updatedWeeklyReflection) {
           console.log('Weekly reflection not found:', parsedId);
           return res.status(404).json({ message: "Weekly reflection not found" });
@@ -459,13 +464,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // In production, verify user owns this weekly reflection
       if (process.env.NODE_ENV === 'production') {
-        const reflectionExists = await storage.getWeeklyReflection(parseInt(parsedId.toString()));
+        const reflectionExists = await storage.getWeeklyReflection(parsedId);
         if (!reflectionExists || reflectionExists.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to delete this weekly reflection" });
         }
       } else {
         // In development, just check if it exists
-        const reflectionExists = await storage.getWeeklyReflection(parseInt(parsedId.toString()));
+        const reflectionExists = await storage.getWeeklyReflection(parsedId);
         if (!reflectionExists) {
           return res.status(404).json({ message: "Weekly reflection not found" });
         }
@@ -473,7 +478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Now try to delete it
       try {
-        await storage.deleteWeeklyReflection(parseInt(parsedId.toString()));
+        await storage.deleteWeeklyReflection(parsedId);
         // Since deleteWeeklyReflection returns void, we don't check its return value
       } catch (deleteError) {
         console.error("Error deleting weekly reflection:", deleteError);
@@ -560,7 +565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const updatedMonthlyCheckIn = await storage.updateMonthlyCheckIn(parseInt(parsedId.toString()), data);
+      const updatedMonthlyCheckIn = await storage.updateMonthlyCheckIn(parsedId, data);
       if (!updatedMonthlyCheckIn) {
         return res.status(404).json({ message: "Monthly check-in not found" });
       }
@@ -613,7 +618,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const updatedPriority = await storage.updatePriority(parseInt(parsedId.toString()), data);
+      const updatedPriority = await storage.updatePriority(parsedId, data);
       if (!updatedPriority) {
         return res.status(404).json({ message: "Priority not found" });
       }
@@ -641,7 +646,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       try {
-        await storage.deletePriority(parseInt(parsedId.toString()));
+        await storage.deletePriority(parsedId);
         // Since deletePriority returns void, we don't check its return value
       } catch (deleteError) {
         console.error("Error deleting priority:", deleteError);
@@ -712,13 +717,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this decision
       if (process.env.NODE_ENV === 'production') {
-        const decision = await storage.getDecision(parseInt(parsedId.toString()));
+        const decision = await storage.getDecision(parsedId);
         if (!decision || decision.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to update this decision" });
         }
       }
 
-      const updatedDecision = await storage.updateDecision(parseInt(parsedId.toString()), data);
+      const updatedDecision = await storage.updateDecision(parsedId, data);
       if (!updatedDecision) {
         return res.status(404).json({ message: "Decision not found after update" });
       }
@@ -739,14 +744,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this decision
       if (process.env.NODE_ENV === 'production') {
-        const decision = await storage.getDecision(parseInt(parsedId.toString()));
+        const decision = await storage.getDecision(parsedId);
         if (!decision || decision.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to delete this decision" });
         }
       }
 
       try {
-        await storage.deleteDecision(parseInt(parsedId.toString()));
+        await storage.deleteDecision(parsedId);
         // Since deleteDecision returns void, we don't check its return value
       } catch (deleteError) {
         console.error("Error deleting decision:", deleteError);
@@ -791,13 +796,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this offer
       if (process.env.NODE_ENV === 'production') {
-        const offer = await storage.getOffer(parseInt(parsedId.toString()));
+        const offer = await storage.getOffer(parsedId);
         if (!offer || offer.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to update this offer" });
         }
       }
 
-      const updatedOffer = await storage.updateOffer(parseInt(parsedId.toString()), data);
+      const updatedOffer = await storage.updateOffer(parsedId, data);
       if (!updatedOffer) {
         return res.status(404).json({ message: "Offer not found after update" });
       }
@@ -815,14 +820,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // In production, verify user owns this offer
       if (process.env.NODE_ENV === 'production') {
-        const offer = await storage.getOffer(parseInt(parsedId.toString()));
+        const offer = await storage.getOffer(parsedId);
         if (!offer || offer.userId !== (req.userId ? String(req.userId) : "")) {
           return res.status(403).json({ message: "Not authorized to delete this offer" });
         }
       }
 
       try {
-        await storage.deleteOffer(parseInt(parsedId.toString()));
+        await storage.deleteOffer(parsedId);
         // Since deleteOffer returns void, we don't check its return value
       } catch (deleteError) {
         console.error("Error deleting offer:", deleteError);
@@ -877,7 +882,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      const updatedOfferNote = await storage.updateOfferNote(parseInt(parsedId.toString()), content);
+      const updatedOfferNote = await storage.updateOfferNote(parsedId, content);
       if (!updatedOfferNote) {
         return res.status(404).json({ message: "Offer notes not found" });
       }
